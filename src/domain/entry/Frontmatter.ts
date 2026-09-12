@@ -27,8 +27,8 @@ export class Frontmatter {
         private readonly _supersedes: string | null,
         private readonly _coAuthors: readonly string[],
         private readonly _focus: readonly string[],
-        private readonly _author?: string,
-        private readonly _provenance?: string,
+        private readonly _author: string,
+        private readonly _provenance: string | undefined,
     ) {
     }
 
@@ -64,11 +64,11 @@ export class Frontmatter {
                 input.status,
                 createdResult.value,
                 updatedResult.value,
-                input.domains ?? [],
-                input['applies-to'] ?? [],
-                input.supersedes ?? null,
-                input['co-authors'] ?? [],
-                input.focus ?? [],
+                input.domains,
+                input['applies-to'],
+                input.supersedes,
+                input['co-authors'],
+                input.focus,
                 input.author,
                 input.provenance,
             ));

@@ -18,11 +18,11 @@ export interface FrontmatterInput {
     readonly status: EntryStatus;
     readonly created: string;
     readonly updated: string;
-    readonly domains?: readonly string[];
-    readonly 'applies-to'?: readonly string[];
-    readonly supersedes?: string | null;
-    readonly author?: string;
-    readonly 'co-authors'?: readonly string[];
-    readonly focus?: readonly string[];
-    readonly provenance?: string;
+    readonly domains: readonly string[];
+    readonly 'applies-to': readonly string[];
+    readonly supersedes: string | null;
+    readonly author: string;
+    readonly 'co-authors': readonly string[];
+    readonly focus: readonly string[];
+    readonly provenance?: string|undefined;
 }

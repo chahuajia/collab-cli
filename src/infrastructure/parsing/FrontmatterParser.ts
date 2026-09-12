@@ -15,12 +15,13 @@ const Schema = z.object({
     status: enumOf(EntryStatusValues),
     created: z.string(),
     updated: z.string(),
-    domains: z.array(z.string()).optional(),
-    'applies-to': z.array(z.string()).optional(),
-    supersedes: z.string().nullable().optional(),
-    author: z.string().optional(),
-    'co-authors': z.array(z.string()).optional(),
-    focus: z.array(z.string()).optional(),
+    domains: z.array(z.string()).default([]),
+    'applies-to': z.array(z.string()).default([]),
+    supersedes: z.string().nullable().default(null),
+    'co-authors': z.array(z.string()).default([]),
+    focus: z.array(z.string()).default([]),
+
+    author: z.string().min(1, 'author is required and must not be empty'),
     provenance: z.string().optional(),
 });
 
