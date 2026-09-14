@@ -4,7 +4,7 @@ import {ISODate} from "@/domain/entry/ISODate";
 import {Issue} from "@/domain/validation/Issue";
 import {Ok, Err} from '@/shared/Result';
 import type {FrontmatterInput} from './FrontmatterInput.js';
-import type {EntryStatus, EntryType} from "./types";
+import type {EntryStatus, EntryKind} from "./types";
 import type {Result} from '@/shared/Result.js';
 
 
@@ -18,7 +18,7 @@ import type {Result} from '@/shared/Result.js';
 export class Frontmatter {
     private constructor(
         private readonly _id: EntryId,
-        private readonly _type: EntryType,
+        private readonly _type: EntryKind,
         private readonly _status: EntryStatus,
         private readonly _created: ISODate,
         private readonly _updated: ISODate,
@@ -81,7 +81,7 @@ export class Frontmatter {
         return this._id;
     }
 
-    get type(): EntryType {
+    get type(): EntryKind {
         return this._type;
     }
 

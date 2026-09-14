@@ -1,42 +1,76 @@
-// src/domain/validation/Issue.__tests__.ts
+// src/domain/validation/__tests__/Issue.test.ts
 import { describe, it, expect } from 'vitest';
 import {Issue} from "@/domain/validation/Issue";
-
+import {IssueCodeValues} from "@/domain/validation/IssueCode";
+import {SeverityValues} from "@/domain/validation/Severity";
 
 
 describe('Issue', () => {
-    describe('isBlocking', () => {
-        it('returns true for error severity', () => {
+    describe('工厂方法', () => {
+        it('emptyId produces error severity', () => {
             const issue = Issue.emptyId();
-            expect(issue.isBlocking()).toBe(true);
+            expect(issue.severity).toBe(SeverityValues.Error);
+            expect(issue.code).toBe(IssueCodeValues.EmptyId);
         });
 
-        it('returns false for warning severity', () => {
-            const issue = Issue.missingSection('path', '上下文', 'warning');
-            expect(issue.isBlocking()).toBe(false);
+        it('idPrefixMismatch includes prefix in message', () => {
+            const issue = Issue.idPrefixMismatch('X12', 'skill', 'S');
+            expect(issue.message).toContain('"S"');
+            expect(issue.message).toContain('"X12"');
+        });
+
+        it('invalidDate includes raw value', () => {
+            const issue = Issue.invalidDate('2026-13-01');
+            expect(issue.message).toContain('2026-13-01');
+        });
+
+        it('missingSection with warning severity', () => {
+            const issue = Issue.missingSection('path', '上下文');
+            expect(issue.severity).toBe(SeverityValues.Warning);
         });
     });
 
-    describe('equals', () => {
-        it('returns true for same props', () => {
+    describe('行为', () => {
+        it('isBlocking returns true for error', () => {
+            expect(Issue.emptyId().isBlocking()).toBe(true);
+        });
+
+        it('isBlocking returns false for warning', () => {
+            const issue = Issue.missingSection('path', '上下文');
+            expect(issue.isBlocking()).toBe(false);
+        });
+
+        it('withSuggestion returns new instance (immutable)', () => {
+            const original = Issue.emptyId();
+            const updated = original.withSuggestion('fix it');
+            expect(updated.suggestion).toBe('fix it');
+            expect(original.suggestion).toBeUndefined();
+        });
+
+        it('equals returns true for same props', () => {
             const a = Issue.emptyId();
             const b = Issue.emptyId();
             expect(a.equals(b)).toBe(true);
         });
 
-        it('returns false for different code', () => {
+        it('equals returns false for different code', () => {
             const a = Issue.emptyId();
             const b = Issue.invalidDate('bad');
             expect(a.equals(b)).toBe(false);
         });
     });
 
-    describe('withSuggestion', () => {
-        it('returns new instance with suggestion', () => {
-            const original = Issue.emptyId();
-            const updated = original.withSuggestion('fix it');
-            expect(updated.suggestion).toBe('fix it');
-            expect(original.suggestion).toBeUndefined();  // 不可变
+    describe('format', () => {
+        it('includes severity, code, message', () => {
+            const issue = Issue.emptyId();
+            const formatted = issue.format();
+            expect(formatted).toContain('[ERROR]');
+            expect(formatted).toContain('EMPTY_ID');
+        });
+
+        it('includes path when present', () => {
+            const issue = Issue.missingFrontmatter('a.md');
+            expect(issue.format()).toContain('a.md');
         });
     });
 });

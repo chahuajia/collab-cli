@@ -1,5 +1,5 @@
 // src/domain/entry/EntryId.ts
-import {EntryPrefix, type EntryType} from '@/domain/entry/types'
+import {EntryPrefix, type EntryKind} from '@/domain/entry/types'
 import { Issue} from '@/domain/validation/Issue.js';
 import { type Result, Ok, Err } from '@/shared/Result';
 
@@ -21,7 +21,7 @@ export const EntryId = {
      * @param type - 条目类型，用于校验前缀
      * @returns 成功返回 EntryId，失败返回 Issue
      */
-    create(raw: string, type: EntryType): Result<EntryId, Issue> {
+    create(raw: string, type: EntryKind): Result<EntryId, Issue> {
         if (!raw) return Err(Issue.emptyId());
         const prefix = EntryPrefix[type];
         

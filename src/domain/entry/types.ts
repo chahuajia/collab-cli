@@ -6,9 +6,9 @@ import type { ValueOf } from '@/shared/types';
  *
  * @remarks
  * 命名采用 `*Values` 后缀，因为这个名字表示"值的集合"，而非单一值的类型。
- * 类型 `EntryType` 单独导出，保持简洁。
+ * 类型 `EntryKind` 单独导出，保持简洁。
  */
-export const EntryTypeValues = {
+export const EntryKindValues = {
     Agreement: 'agreement',
     Workflow: 'workflow',
     Skill: 'skill',
@@ -19,22 +19,7 @@ export const EntryTypeValues = {
 /**
  * 条目类型的联合类型。
  */
-export type EntryType = ValueOf<typeof EntryTypeValues>;
-
-/**
- * 条目状态值域。
- */
-export const EntryStatusValues = {
-    Draft: 'draft',
-    Active: 'active',
-    Dormant: 'dormant',
-    Deprecated: 'deprecated',
-} as const;
-
-/**
- * 条目状态的联合类型。
- */
-export type EntryStatus = ValueOf<typeof EntryStatusValues>;
+export type EntryKind = ValueOf<typeof EntryKindValues>;
 
 /**
  * 每种类型允许的 id 前缀。
@@ -59,22 +44,22 @@ export type EntryIdShape =
  * 每种类型的 id 前缀。
  *
  * @remarks
- * 用 `Record<EntryType, string>` 而非散落的字符串，保证：
- * - 加新 EntryType 时，TS 编译期报错，强制补全前缀。
- * - 前缀的拥有者是 EntryType，命名空间清晰。
+ * 用 `Record<EntryKind, string>` 而非散落的字符串，保证：
+ * - 加新 EntryKind 时，TS 编译期报错，强制补全前缀。
+ * - 前缀的拥有者是 EntryKind，命名空间清晰。
  */
-export const EntryPrefix: Record<EntryType, EntryIdPrefix> = {
-    [EntryTypeValues.Agreement]: 'A',
-    [EntryTypeValues.Workflow]: 'W',
-    [EntryTypeValues.Skill]: 'S',
-    [EntryTypeValues.Pattern]: '',
-    [EntryTypeValues.Adr]: 'ADR-',
+export const EntryPrefix: Record<EntryKind, EntryIdPrefix> = {
+    [EntryKindValues.Agreement]: 'A',
+    [EntryKindValues.Workflow]: 'W',
+    [EntryKindValues.Skill]: 'S',
+    [EntryKindValues.Pattern]: '',
+    [EntryKindValues.Adr]: 'ADR-',
 };
 
 /**
  * 每个类型的合法 id 形态。
  */
-export type EntryIdFor<T extends EntryType> =
+export type EntryIdFor<T extends EntryKind> =
     T extends 'agreement' ? `A${number}` :
         T extends 'workflow' ? `W${number}` :
             T extends 'skill' ? `S${number}` :
@@ -82,8 +67,107 @@ export type EntryIdFor<T extends EntryType> =
                     T extends 'pattern' ? `${Lowercase<string>}` :
                         never;
 
-export function isEntryIdFor<T extends EntryType>(id: string, type: T): id is EntryIdFor<T> {
+export function isEntryIdFor<T extends EntryKind>(id: string, type: T): id is EntryIdFor<T> {
     // 运行时校验
     const prefix = EntryPrefix[type];
     return prefix === '' || id.startsWith(prefix);
 }
+
+
+/**
+ * 每种 EntryKind 条目所在的目录。
+ *
+ * @remarks
+ * 与 `EntryPrefix` 对称：
+ * - `EntryPrefix` 约束 **id 的形态**（如 skill 的 id 必须以 S 开头）。
+ * - `EntryKindDir` 约束 **路径的形态**（如 skill 必须放在 skills/ 下）。
+ *
+ * 加新 EntryKind 时，编译期会强制补全此映射。
+ */
+export const EntryKindDir: Record<EntryKind, string> = {
+    [EntryKindValues.Agreement]: 'agreements',
+    [EntryKindValues.Workflow]: 'workflows',
+    [EntryKindValues.Skill]: 'skills',
+    [EntryKindValues.Pattern]: 'patterns',
+    [EntryKindValues.Adr]: 'meta/decision-records',
+};
+
+function isEntryKind(value: string): value is EntryKind {
+  return value in EntryKindDir;
+}
+/**
+ * 目录名 → 期望的 EntryKind。
+ *
+ * @remarks
+ * 用于反向校验：从 `entry.path` 推断"这个条目应该是什么类型"，
+ * 再与 `entry.frontmatter.type` 比较。
+ *
+ * 未识别的目录返回 undefined——这类路径由其他规则或人工处理。
+ */
+const DirToType: Readonly<Record<string, EntryKind>> = Object.freeze(
+  Object.entries(EntryKindDir).reduce<Record<string, EntryKind>>(
+    (acc, [type, dir]) => {
+      if (isEntryKind(type)) {
+        acc[dir] = type;
+      }
+      return acc;
+    },
+    {},
+  ),
+);
+
+export function entryTypeForDir(dir: string): EntryKind | undefined {
+    return DirToType[dir];
+}
+
+export const EntryStatusValues = {
+  // 通用（适用于 agreement / workflow / skill / pattern）
+  Draft: 'draft',
+  Active: 'active',
+  Dormant: 'dormant',
+  Deprecated: 'deprecated',
+  // ADR 专属
+  Proposed: 'proposed',
+  Accepted: 'accepted',
+  Rejected: 'rejected',
+  Withdrawn: 'withdrawn',
+  Superseded: 'superseded',
+} as const;
+
+export type EntryStatus = ValueOf<typeof EntryStatusValues>;
+
+/** 通用 status 集合（非 ADR 类型使用）。 */
+export const CommonStatuses = [
+  EntryStatusValues.Draft,
+  EntryStatusValues.Active,
+  EntryStatusValues.Dormant,
+  EntryStatusValues.Deprecated,
+] as const;
+
+/** ADR 专属 status 集合。 */
+export const AdrStatuses = [
+  EntryStatusValues.Proposed,
+  EntryStatusValues.Accepted,
+  EntryStatusValues.Rejected,
+  EntryStatusValues.Withdrawn,
+  EntryStatusValues.Superseded,
+] as const;
+
+/**
+ * 给定 kind，返回允许的 status 集合。
+ */
+export function allowedStatusesFor(kind: EntryKind): readonly EntryStatus[] {
+  if (kind === EntryKindValues.Adr) return AdrStatuses;
+  return CommonStatuses;
+}
+
+/**
+ * 每种 kind 创建新条目时的默认 status。
+ */
+export const DefaultStatusFor: Record<EntryKind, EntryStatus> = {
+  [EntryKindValues.Agreement]: EntryStatusValues.Draft,
+  [EntryKindValues.Workflow]: EntryStatusValues.Draft,
+  [EntryKindValues.Skill]: EntryStatusValues.Draft,
+  [EntryKindValues.Pattern]: EntryStatusValues.Draft,
+  [EntryKindValues.Adr]: EntryStatusValues.Proposed,  // ← ADR 专属
+};

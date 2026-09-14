@@ -19,6 +19,7 @@ export interface LoadedEntry {
  */
 export interface Workspace {
     readonly entries: readonly LoadedEntry[];
+    readonly indexFiles: ReadonlyMap<string, string>;
 }
 
 /**

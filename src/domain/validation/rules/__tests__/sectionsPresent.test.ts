@@ -1,0 +1,190 @@
+// src/domain/validation/rules/__tests__/sectionsPresent.test.ts
+import { describe, it, expect } from 'vitest';
+import {makeEntry} from "@/domain/entry/__tests__/testHelpers";
+import {IssueCodeValues} from "@/domain/validation/IssueCode";
+import {sectionsPresent} from "@/domain/validation/rules/sectionsPresent";
+import {SeverityValues} from "@/domain/validation/Severity";
+import type {RuleContext} from "@/domain/validation/Rule";
+
+const emptyContext: RuleContext = {
+    allEntries: [],
+    allEntryIds: new Set(),
+    indexFiles: new Map(),
+};
+
+/** 五章节齐全的模板 body，供多个用例裁剪使用。 */
+const FULL_BODY = [
+    '## 上下文',
+    '',
+    '有些背景。',
+    '',
+    '## 问题',
+    '',
+    '有些问题。',
+    '',
+    '## 方案',
+    '',
+    '有些方案。',
+    '',
+    '## 反面',
+    '',
+    '有些反面。',
+    '',
+    '## 关联',
+    '',
+    '- [[S12]]',
+    '',
+].join('\n');
+
+describe('sectionsPresent', () => {
+    // ─────────────────────────────────────────────
+    // 完整场景：E3, E4
+    // ─────────────────────────────────────────────
+    describe('完整场景', () => {
+        it('passes when all five sections are present', () => {
+            const entry = makeEntry({ body: FULL_BODY });
+            expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+        });
+
+        it('passes when sections are in arbitrary order (D2=B)', () => {
+            const entry = makeEntry({
+                body: [
+                    '## 关联',
+                    '- [[S12]]',
+                    '## 方案',
+                    '...',
+                    '## 上下文',
+                    '...',
+                    '## 反面',
+                    '...',
+                    '## 问题',
+                    '...',
+                ].join('\n'),
+            });
+            expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+        });
+    });
+
+    // ─────────────────────────────────────────────
+    // 缺失场景：E1, E2
+    // ─────────────────────────────────────────────
+    describe('缺失场景', () => {
+        it('reports all 5 sections missing for empty body (E1)', () => {
+            const entry = makeEntry({ body: '' });
+            const issues = sectionsPresent(entry, emptyContext);
+            expect(issues).toHaveLength(5);
+            issues.forEach((i) => {
+                expect(i.code).toBe(IssueCodeValues.MissingSection);
+            });
+        });
+
+        it('reports 4 missing when only 方案 exists (E2)', () => {
+            const entry = makeEntry({ body: '## 方案\n\n...\n' });
+            const issues = sectionsPresent(entry, emptyContext);
+            expect(issues).toHaveLength(4);
+
+            const messages = issues.map((i) => i.message).join(' ');
+            expect(messages).toContain('上下文');
+            expect(messages).toContain('问题');
+            expect(messages).toContain('反面');
+            expect(messages).toContain('关联');
+            expect(messages).not.toContain('方案"');  // 方案已存在，不应出现
+        });
+    });
+
+    // ─────────────────────────────────────────────
+    // 标题匹配严格度：E5, E6, E7, E10
+    // ─────────────────────────────────────────────
+    describe('标题匹配严格度', () => {
+        it('accepts ## 方案 with trailing whitespace (E6, D3=B)', () => {
+            const body = FULL_BODY.replace('## 方案\n', '## 方案   \n');
+            const entry = makeEntry({ body });
+            expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+        });
+
+        it('rejects ### 方案 (E5, D5=A)', () => {
+            const body = FULL_BODY.replace('## 方案\n', '### 方案\n');
+            const entry = makeEntry({ body });
+            const issues = sectionsPresent(entry, emptyContext);
+            expect(issues).toHaveLength(1);
+            expect(issues[0]?.message).toContain('方案');
+        });
+
+        it('rejects # 方案 (H1 不是章节)', () => {
+            const body = FULL_BODY.replace('## 方案\n', '# 方案\n');
+            const entry = makeEntry({ body });
+            const issues = sectionsPresent(entry, emptyContext);
+            expect(issues).toHaveLength(1);
+            expect(issues[0]?.message).toContain('方案');
+        });
+
+        it('rejects ## 方案说明 (E7, D3=B)', () => {
+            const body = FULL_BODY.replace('## 方案\n', '## 方案说明\n');
+            const entry = makeEntry({ body });
+            const issues = sectionsPresent(entry, emptyContext);
+            expect(issues).toHaveLength(1);
+            expect(issues[0]?.message).toContain('方案');
+        });
+
+        it('does not match ## 方案 appearing mid-line', () => {
+            // 这一行看起来是"行首 ##"，实际是文本中间
+            const entry = makeEntry({ body: '有些方案 ## 方案\n' });
+            const issues = sectionsPresent(entry, emptyContext);
+            // 5 个章节都应该被认为缺失
+            expect(issues).toHaveLength(5);
+        });
+    });
+
+    // ─────────────────────────────────────────────
+    // 重复章节：E8
+    // ─────────────────────────────────────────────
+    describe('重复章节', () => {
+        it('reports duplicate when ## 方案 appears twice (E8, D4=A)', () => {
+            const body = FULL_BODY + '\n## 方案\n\n重复的方案\n';
+            const entry = makeEntry({ body });
+            const issues = sectionsPresent(entry, emptyContext);
+            const duplicate = issues.find(
+                (i) => i.code === IssueCodeValues.DuplicateSection,
+            );
+            expect(duplicate).toBeDefined();
+            expect(duplicate?.message).toContain('方案');
+        });
+
+        it('distinguishes missing from duplicate', () => {
+            // 只有 方案 出现两次，其他都缺
+            const entry = makeEntry({
+                body: '## 方案\n\n...\n\n## 方案\n\n...\n',
+            });
+            const issues = sectionsPresent(entry, emptyContext);
+            const missing = issues.filter(
+                (i) => i.code === IssueCodeValues.MissingSection,
+            );
+            const duplicates = issues.filter(
+                (i) => i.code === IssueCodeValues.DuplicateSection,
+            );
+            expect(missing).toHaveLength(4);
+            expect(duplicates).toHaveLength(1);
+        });
+    });
+
+    // ─────────────────────────────────────────────
+    // Issue 元数据
+    // ─────────────────────────────────────────────
+    describe('Issue 元数据', () => {
+        it('all missing sections use error severity (D1=A)', () => {
+            const entry = makeEntry({ body: '' });
+            const issues = sectionsPresent(entry, emptyContext);
+            issues.forEach((i) => {
+                expect(i.severity).toBe(SeverityValues.Error);
+            });
+        });
+
+        it('carries path for locating the problem', () => {
+            const entry = makeEntry({ body: '', path: 'skills/S12.md' });
+            const issues = sectionsPresent(entry, emptyContext);
+            issues.forEach((i) => {
+                expect(i.path).toBe('skills/S12.md');
+            });
+        });
+    });
+});

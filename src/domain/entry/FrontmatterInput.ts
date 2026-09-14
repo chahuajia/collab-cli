@@ -1,5 +1,5 @@
 // src/domain/entry/FrontmatterInput.ts
-import type { EntryType, EntryStatus } from './types.js';
+import type { EntryKind, EntryStatus } from './types.js';
 
 /**
  * Frontmatter 工厂的输入契约。
@@ -14,7 +14,7 @@ import type { EntryType, EntryStatus } from './types.js';
  */
 export interface FrontmatterInput {
     readonly id: string;
-    readonly type: EntryType;
+    readonly type: EntryKind;
     readonly status: EntryStatus;
     readonly created: string;
     readonly updated: string;
