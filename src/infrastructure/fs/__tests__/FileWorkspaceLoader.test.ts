@@ -346,4 +346,85 @@ describe("FileWorkspaceLoader", () => {
       expect(ws.entries[0]?.entry?.body).toBe("");
     });
   });
-});
+
+  // ─────────────────────────────────────────────
+  // allMarkdownPaths（新增）
+  // ─────────────────────────────────────────────
+  describe("allMarkdownPaths", () => {
+    it("collects all .md paths including entry files", async () => {
+      await writeFileAt("skills/S1.md", validEntryFile({ id: "S1" }));
+      await writeFileAt("skills/S2.md", validEntryFile({ id: "S2" }));
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      expect(ws.allMarkdownPaths.has("skills/S1")).toBe(true);
+      expect(ws.allMarkdownPaths.has("skills/S2")).toBe(true);
+    });
+
+    it("collects _index.md paths", async () => {
+      await writeFileAt("skills/_index.md", "# 索引\n");
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      expect(ws.allMarkdownPaths.has("skills/_index")).toBe(true);
+    });
+
+    it("collects .md paths OUTSIDE entry directories (ROOT, meta)", async () => {
+      await writeFileAt("ROOT.md", "# 根\n");
+      await writeFileAt("meta/evolution-log.md", "# 日志\n");
+      await writeFileAt("meta/pruning-policy.md", "# 策略\n");
+      await writeFileAt("README.md", "# 说明\n");
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      expect(ws.allMarkdownPaths.has("ROOT")).toBe(true);
+      expect(ws.allMarkdownPaths.has("meta/evolution-log")).toBe(true);
+      expect(ws.allMarkdownPaths.has("meta/pruning-policy")).toBe(true);
+      expect(ws.allMarkdownPaths.has("README")).toBe(true);
+    });
+
+    it("strips .md suffix from paths", async () => {
+      await writeFileAt("skills/S1.md", validEntryFile({ id: "S1" }));
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      // 有 "skills/S1"，但没有 "skills/S1.md"
+      expect(ws.allMarkdownPaths.has("skills/S1")).toBe(true);
+      expect(ws.allMarkdownPaths.has("skills/S1.md")).toBe(false);
+    });
+
+    it("ignores non-.md files", async () => {
+      await writeFileAt("skills/notes.txt", "x");
+      await writeFileAt("skills/config.json", "{}");
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      // 只有 .md 被收集
+      expect(ws.allMarkdownPaths.size).toBe(0);
+    });
+
+    it("collects nested .md paths", async () => {
+      await writeFileAt(
+        "meta/decision-records/ADR-0001.md",
+        "---\nid: ADR-0001\n",
+      );
+      await writeFileAt(
+        "skills/advanced/S12.md",
+        validEntryFile({ id: "S12" }),
+      );
+
+      const loader = new FileWorkspaceLoader(collabDir);
+      const ws = loader.load();
+
+      expect(ws.allMarkdownPaths.has("meta/decision-records/ADR-0001")).toBe(
+        true,
+      );
+      expect(ws.allMarkdownPaths.has("skills/advanced/S12")).toBe(true);
+    });
+  });
+})

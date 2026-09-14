@@ -60,6 +60,7 @@ function makeWorkspace(
       parseIssues: [],
     })),
     indexFiles: new Map(),
+    allMarkdownPaths: new Set(entries.map((e) => e.path)),
   };
 }
 

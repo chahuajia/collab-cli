@@ -7,10 +7,17 @@ import {SeverityValues} from "@/domain/validation/Severity";
 import type {RuleContext} from "@/domain/validation/Rule";
 
 /** 构造 RuleContext 的快捷方式：只需 allEntryIds。 */
-function ctx(ids: readonly string[]): RuleContext {
-    return { allEntries: [], allEntryIds: new Set(ids),indexFiles: new Map(),  };
+function ctx(
+  ids: readonly string[],
+  paths: readonly string[] = [],
+): RuleContext {
+  return {
+    allEntries: [],
+    allEntryIds: new Set(ids),
+    indexFiles: new Map(),
+    allMarkdownPaths: new Set(paths),
+  };
 }
-
 describe('linksResolve', () => {
     // ─────────────────────────────────────────────
     // 基础：E1, E2, E3, E4
@@ -185,23 +192,99 @@ describe('linksResolve', () => {
     // ─────────────────────────────────────────────
     // Issue 元数据
     // ─────────────────────────────────────────────
-    describe('Issue 元数据', () => {
-        it('uses error severity', () => {
-            const entry = makeEntry({ body: '[[S99]]' });
-            const issues = linksResolve(entry, ctx(['S12']));
-            expect(issues[0]?.severity).toBe(SeverityValues.Error);
-        });
+    describe("Issue 元数据", () => {
+      it("uses error severity", () => {
+        const entry = makeEntry({ body: "[[S99]]" });
+        const issues = linksResolve(entry, ctx(["S12"]));
+        expect(issues[0]?.severity).toBe(SeverityValues.Error);
+      });
 
-        it('carries entry path', () => {
-            const entry = makeEntry({ body: '[[S99]]', path: 'skills/S12.md' });
-            const issues = linksResolve(entry, ctx(['S12']));
-            expect(issues[0]?.path).toBe('skills/S12.md');
-        });
+      it("carries entry path", () => {
+        const entry = makeEntry({ body: "[[S99]]", path: "skills/S12.md" });
+        const issues = linksResolve(entry, ctx(["S12"]));
+        expect(issues[0]?.path).toBe("skills/S12.md");
+      });
 
-        it('message contains the original reference (not normalized)', () => {
-            const entry = makeEntry({ body: '[[patterns/S99]]' });
-            const issues = linksResolve(entry, ctx(['S12']));
-            expect(issues[0]?.message).toContain('patterns/S99');
+      it("message contains the original reference (not normalized)", () => {
+        const entry = makeEntry({ body: "[[patterns/S99]]" });
+        const issues = linksResolve(entry, ctx(["S12"]));
+        expect(issues[0]?.message).toContain("patterns/S99");
+      });
+    });
+
+    // ─────────────────────────────────────────────
+    // 文件存在性（新增）
+    // ─────────────────────────────────────────────
+    describe("文件存在性（非条目引用）", () => {
+      it("passes for [[ROOT]] when ROOT.md exists", () => {
+        const entry = makeEntry({ body: "see [[ROOT]]" });
+        const issues = linksResolve(entry, ctx([], ["ROOT"]));
+        expect(issues).toHaveLength(0);
+      });
+
+      it("passes for [[meta/evolution-log]] when file exists", () => {
+        const entry = makeEntry({ body: "see [[meta/evolution-log]]" });
+        const issues = linksResolve(entry, ctx([], ["meta/evolution-log"]));
+        expect(issues).toHaveLength(0);
+      });
+
+      it("passes for [[domains/architecture/_index]] when file exists", () => {
+        const entry = makeEntry({
+          body: "see [[domains/architecture/_index]]",
         });
+        const issues = linksResolve(
+          entry,
+          ctx([], ["domains/architecture/_index"]),
+        );
+        expect(issues).toHaveLength(0);
+      });
+
+      it("passes for [[profiles/_index]] when file exists", () => {
+        const entry = makeEntry({ body: "see [[profiles/_index]]" });
+        const issues = linksResolve(entry, ctx([], ["profiles/_index"]));
+        expect(issues).toHaveLength(0);
+      });
+
+      it("passes for [[rfcs/_index]] when file exists", () => {
+        const entry = makeEntry({ body: "see [[rfcs/_index]]" });
+        const issues = linksResolve(entry, ctx([], ["rfcs/_index"]));
+        expect(issues).toHaveLength(0);
+      });
+
+      it("still reports DEAD_LINK for [[ROOT]] when file does NOT exist", () => {
+        const entry = makeEntry({ body: "see [[ROOT]]" });
+        const issues = linksResolve(entry, ctx([], [])); // 无文件
+        expect(issues).toHaveLength(1);
+        expect(issues[0]?.code).toBe(IssueCodeValues.DeadLink);
+      });
+
+      it("still reports DEAD_LINK for missing file [[meta/gone]]", () => {
+        const entry = makeEntry({ body: "see [[meta/gone]]" });
+        const issues = linksResolve(entry, ctx([], ["meta/evolution-log"]));
+        expect(issues).toHaveLength(1);
+      });
+
+      it("reports DEAD_LINK for directory references ([[meta/decision-records]])", () => {
+        // 目录引用 —— 即使目录存在 —— 也不是 .md 文件 —— 报 DEAD_LINK
+        const entry = makeEntry({ body: "see [[meta/decision-records]]" });
+        const issues = linksResolve(
+          entry,
+          ctx([], ["meta/decision-records/ADR-0001"]),
+        );
+        expect(issues).toHaveLength(1);
+      });
+
+      it("条目 id 优先于文件路径（都命中时不报）", () => {
+        const entry = makeEntry({ body: "see [[S12]]" });
+        // S12 是条目 —— 不需要文件路径
+        const issues = linksResolve(entry, ctx(["S12"], ["S12"]));
+        expect(issues).toHaveLength(0);
+      });
+
+      it("条目 id 和文件路径都不命中时报错", () => {
+        const entry = makeEntry({ body: "see [[S99]]" });
+        const issues = linksResolve(entry, ctx(["S12"], ["ROOT"]));
+        expect(issues).toHaveLength(1);
+      });
     });
 });

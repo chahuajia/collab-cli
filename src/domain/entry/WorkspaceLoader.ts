@@ -18,8 +18,9 @@ export interface LoadedEntry {
  * 工作区快照。
  */
 export interface Workspace {
-    readonly entries: readonly LoadedEntry[];
-    readonly indexFiles: ReadonlyMap<string, string>;
+  readonly entries: readonly LoadedEntry[];
+  readonly indexFiles: ReadonlyMap<string, string>;
+  readonly allMarkdownPaths: ReadonlySet<string>;
 }
 
 /**

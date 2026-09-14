@@ -9,6 +9,7 @@ const emptyContext: RuleContext = {
     allEntries: [],
     allEntryIds: new Set(),
     indexFiles: new Map(),
+    allMarkdownPaths: new Set(),
 };
 
 describe('typeMatchesDir', () => {

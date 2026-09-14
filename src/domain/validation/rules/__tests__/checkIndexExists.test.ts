@@ -12,6 +12,7 @@ function ctx(entries: readonly Entry[], indexDirs: readonly string[]): RuleConte
         allEntries: entries,
         allEntryIds: new Set(entries.map((e) => e.frontmatter.id)),
         indexFiles: new Map(indexDirs.map((d) => [d, ''])),
+        allMarkdownPaths: new Set(entries.map((e) => e.path)),
     };
 }
 

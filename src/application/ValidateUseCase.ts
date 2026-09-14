@@ -69,6 +69,7 @@ export class ValidateUseCase {
             allEntries: entries,
             allEntryIds: new Set(entries.map((e) => e.frontmatter.id)),
             indexFiles: workspace.indexFiles,
+            allMarkdownPaths: workspace.allMarkdownPaths,
         };
 
         // 3. 收集 Issue（先 per-entry，后 global，D3=A）

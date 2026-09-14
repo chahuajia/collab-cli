@@ -9,17 +9,18 @@ import type {Entry} from "../entry/Entry";
  * 用于跨条目的规则（如 deadLink 需要看全部条目）。
  */
 export interface RuleContext {
-    readonly allEntryIds: ReadonlySet<string>;
-    readonly allEntries: readonly Entry[];
+  readonly allEntryIds: ReadonlySet<string>;
+  readonly allEntries: readonly Entry[];
 
-    /**
-     * 所有 `_index.md` 的内容，按所在目录路径索引。
-     *
-     * @remarks
-     * key 是目录相对路径（如 `skills`、`meta/decision-records`），
-     * value 是 `_index.md` 的完整内容。
-     */
-    readonly indexFiles: ReadonlyMap<string, string>;
+  /**
+   * 所有 `_index.md` 的内容，按所在目录路径索引。
+   *
+   * @remarks
+   * key 是目录相对路径（如 `skills`、`meta/decision-records`），
+   * value 是 `_index.md` 的完整内容。
+   */
+  readonly indexFiles: ReadonlyMap<string, string>;
+  readonly allMarkdownPaths: ReadonlySet<string>;
 }
 
 /**

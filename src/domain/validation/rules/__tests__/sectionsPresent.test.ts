@@ -10,6 +10,7 @@ const emptyContext: RuleContext = {
     allEntries: [],
     allEntryIds: new Set(),
     indexFiles: new Map(),
+    allMarkdownPaths: new Set(),
 };
 
 /** 五章节齐全的模板 body，供多个用例裁剪使用。 */

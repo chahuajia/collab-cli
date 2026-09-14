@@ -38,7 +38,7 @@ export async function cmdValidate(args: string[]): Promise<void> {
   if (values.json) {
     process.stdout.write(renderJsonReport(report, entries.length));
   } else {
-    const useColor = process.stdout.isTTY === true;
+    const useColor = process.stdout.isTTY;
     process.stdout.write(
       renderHumanReport(report, entries.length, { useColor }),
     );

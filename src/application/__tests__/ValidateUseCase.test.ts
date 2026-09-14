@@ -14,8 +14,9 @@ function fakeLoader(workspace: Workspace): WorkspaceLoader {
 function workspace(
     entries: Workspace['entries'] = [],
     indexFiles: ReadonlyMap<string, string> = new Map(),
+    allMarkdownPaths: ReadonlySet<string> = new Set(),
 ): Workspace {
-    return { entries, indexFiles };
+    return { entries, indexFiles, allMarkdownPaths };
 }
 
 describe('ValidateUseCase', () => {
