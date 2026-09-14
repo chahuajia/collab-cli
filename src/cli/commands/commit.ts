@@ -7,6 +7,7 @@ import {
 } from "@/application/ValidateUseCase";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { gitRun } from "@/infrastructure/git/gitRunner";
 
 /**
  * `collab commit -m "<message>" [--no-validate]`
@@ -66,7 +67,7 @@ export async function cmdCommit(args: string[]): Promise<void> {
   }
 
   // 4. git add COLLABORATION（D3）
-  gitRun(["add", relCollabDir], gitRoot, "git add");
+  gitRun(["add", relCollabDir], gitRoot);
 
   // 5. 检查是否有 staged 变更（D2）
   if (!hasStagedChanges(gitRoot, relCollabDir)) {
@@ -74,31 +75,11 @@ export async function cmdCommit(args: string[]): Promise<void> {
   }
 
   // 6. git commit
-  gitRun(["commit", "-m", message], gitRoot, "git commit");
+  gitRun(["commit", "-m", message], gitRoot);
 
   console.log(`✔ committed: "${message}"`);
   console.log("");
   console.log("Next: run `collab push` to push to remote."); // D6
-}
-
-/**
- * 运行 git 命令，失败时抛出带操作名的错误。
- *
- * @remarks
- * 用 `stdio: ['ignore', 'pipe', 'pipe']`——不污染终端输出，
- * 由调用方决定是否/如何打印。
- */
-function gitRun(args: string[], cwd: string, op: string): void {
-  try {
-    execFileSync("git", args, {
-      cwd,
-      stdio: ["ignore", "pipe", "pipe"],
-      encoding: "utf8",
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`${op} failed: ${msg}`);
-  }
 }
 
 /**

@@ -3,15 +3,17 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from "node:util";
+import { computeNextId } from "@/application/computeNextId";
+import { extractIdsForKind } from "@/application/extractIdsForKind";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
-import { generateNextId } from "@/cli/lib/generateId";
 import { buildTemplate } from "@/cli/lib/templates";
+import { EntryId } from "@/domain/entry/EntryId";
 import {
   type EntryKind,
   EntryKindDir,
   EntryKindValues,
-  EntryPrefix,
 } from "@/domain/entry/types";
+import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
 
 
 /**
@@ -56,9 +58,26 @@ export async function cmdNew(args: string[]): Promise<void> {
     const { collabDir, gitRoot } = findCollabRoot(process.cwd());
 
     // 3. 解析 id
-    const idArg = positionals[1];
-    validateExplicitId(idArg, type);
-    const id = idArg ?? generateNextId(collabDir, type);
+  const idArg = positionals[1];
+  let id: string;
+
+  if (idArg !== undefined) {
+    // 用户显式给 id —— 用领域层的权威校验
+    const result = EntryId.create(idArg, type);
+    if (!result.ok) {
+      const issue = result.error;
+      // D4：显示 suggestion（如果存在）
+      const suffix = issue.suggestion ? `\n  → ${issue.suggestion}` : "";
+      throw new Error(issue.message + suffix);
+    }
+    id = result.value;
+  } else {
+    // 自动生成 —— 内部保证合法，无需再校验
+    const loader = new FileWorkspaceLoader(collabDir);
+    const workspace = loader.load();
+    const existingIds = extractIdsForKind(workspace, type);
+    id = computeNextId(existingIds, type);
+  }
 
     // 4. 检查文件已存在
     const relDir = EntryKindDir[type];
@@ -91,23 +110,6 @@ export async function cmdNew(args: string[]): Promise<void> {
     console.log(`✔ created ${relPath}`);
     console.log('');
     console.log('Next: run `collab index` to update the directory index.');
-}
-
-/**
- * 若用户显式传入 id，校验其前缀是否匹配类型。
- *
- * @remarks
- * pattern 类型的前缀为空字符串，跳过校验。
- */
-function validateExplicitId(id: string | undefined, type: EntryKind): void {
-    if (!id) return;
-    const prefix = EntryPrefix[type];
-    if (prefix === '') return;
-    if (!id.startsWith(prefix)) {
-        throw new Error(
-            `id "${id}" must start with "${prefix}" for type "${type}"`,
-        );
-    }
 }
 
 /**

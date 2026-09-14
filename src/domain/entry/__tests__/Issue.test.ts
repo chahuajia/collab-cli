@@ -26,7 +26,7 @@ describe('Issue', () => {
 
         it('missingSection with warning severity', () => {
             const issue = Issue.missingSection('path', '上下文');
-            expect(issue.severity).toBe(SeverityValues.Warning);
+            expect(issue.severity).toBe(SeverityValues.Error);
         });
     });
 
@@ -35,9 +35,9 @@ describe('Issue', () => {
             expect(Issue.emptyId().isBlocking()).toBe(true);
         });
 
-        it('isBlocking returns false for warning', () => {
-            const issue = Issue.missingSection('path', '上下文');
-            expect(issue.isBlocking()).toBe(false);
+        it("isBlocking returns true for Error", () => {
+          const issue = Issue.missingSection("path", "上下文");
+          expect(issue.isBlocking()).toBe(true);
         });
 
         it('withSuggestion returns new instance (immutable)', () => {

@@ -1,6 +1,7 @@
 // src/cli/commands/index.ts
 import fs from "node:fs";
 import path from "node:path";
+import { extractAllIdsByKind } from "@/application/extractAllIdsByKind";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { parseIndex } from "@/cli/lib/parseIndex";
 import { renderIndex } from "@/cli/lib/renderIndex";
@@ -29,15 +30,14 @@ export async function cmdIndex(args: string[]): Promise<void> {
 
   const outputLines: string[] = [];
   let totalMissingNames = 0;
-  const allEntryIds = collectAllEntryIds(collabDir);
-
+  const loader = new FileWorkspaceLoader(collabDir);
+  const workspace = loader.load();
+  const allEntryIds = extractAllIdsByKind(workspace);
 
   for (const { kind, dir } of targets) {
     const absDir = path.join(collabDir, dir);
     const indexFilePath = path.join(absDir, "_index.md");
-
     const actualEntries = allEntryIds.get(kind) ?? [];
-
     const existing = fs.existsSync(indexFilePath)
       ? parseIndex(fs.readFileSync(indexFilePath, "utf8"))
       : null;
@@ -110,39 +110,4 @@ function findKindByDir(dir: string): EntryKind | null {
     if (EntryKindDir[kind] === dir) return kind;
   }
   return null;
-}
-
-/**
- * 一次性加载所有条目，按 kind 分组。
- *
- * @remarks
- * 用 `FileWorkspaceLoader` 作为"条目发现"的唯一真相源——
- * 避免"自己遍历目录"与"Loader 的假设"漂移。
- *
- * 返回 `Map<EntryKind, string[]>`，value 是每个 kind 的 `frontmatter.id` 列表。
- */
-function collectAllEntryIds(collabDir: string): Map<EntryKind, string[]> {
-  const loader = new FileWorkspaceLoader(collabDir);
-  const workspace = loader.load();
-
-  const byKind = new Map<EntryKind, string[]>();
-  for (const kind of Object.values(EntryKindValues)) {
-    byKind.set(kind, []);
-  }
-
-  for (const loaded of workspace.entries) {
-    if (loaded.entry === null) continue;
-    const normalizedPath = loaded.path.replace(/\\/g, "/");
-
-    for (const kind of Object.values(EntryKindValues)) {
-      const dir = EntryKindDir[kind];
-      if (normalizedPath.startsWith(dir + "/")) {
-        const arr = byKind.get(kind);
-        if (arr) arr.push(loaded.entry.frontmatter.id);
-        break;
-      }
-    }
-  }
-
-  return byKind;
 }

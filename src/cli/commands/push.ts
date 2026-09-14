@@ -1,10 +1,10 @@
-import { execFileSync } from "node:child_process";
 import { parseArgs } from "node:util";
 import {
   ValidateUseCase,
   standardRules,
-} from "../../application/ValidateUseCase.js";
-import { FileWorkspaceLoader } from "../../infrastructure/fs/FileWorkspaceLoader.js";
+} from "@/application/ValidateUseCase";
+import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { gitRun } from "@/infrastructure/git/gitRunner";
 import { findCollabRoot } from "../lib/findCollabRoot.js";
 
 const MAX_COMMITS_SHOWN = 5;
@@ -125,47 +125,6 @@ export async function cmdPush(args: string[]): Promise<void> {
 // git helpers
 // ─────────────────────────────────────────────
 
-/**
- * 类型守卫：判断 e 是否形如 `{ stderr: unknown }`。
- *
- * @remarks
- * 用类型守卫代替 `as` 断言 —— 断言是"我保证"，守卫是"我验证"。
- * 断言绕过 TS 的类型收窄；守卫让 TS 主动收窄。
- */
-function hasStderr(e: unknown): e is { stderr: unknown } {
-  return typeof e === 'object' && e !== null && 'stderr' in e;
-}
-/**
- * 从未知类型的错误中提取 stderr。
- *
- * @remarks
- * `execFileSync` 抛出的是 `Error` 的子类，附加 `stderr` / `stdout` 字段 ——
- * 但 TS 的标准类型定义不包含它们。用类型守卫安全提取。
- */
-function extractStderr(e: unknown): string {
-  if (!hasStderr(e)) return "";
-  const raw = e.stderr;
-  if (typeof raw === 'string') return raw;
-  if (raw instanceof Uint8Array) return Buffer.from(raw).toString('utf8');
-  return '';
-}
-/**
- * 运行 git 命令，返回 stdout。
- * 失败时抛出带 stderr 的错误。
- */
-function gitRun(args: string[], cwd: string): string {
-  try {
-    return execFileSync("git", args, {
-      cwd,
-      stdio: ["ignore", "pipe", "pipe"],
-      encoding: "utf8",
-    });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    const stderr = extractStderr(e);
-    throw new Error(stderr.trim() || message);
-  }
-}
 /** 检查 remote 是否存在。 */
 function remoteExists(cwd: string, remote: string): boolean {
   try {
