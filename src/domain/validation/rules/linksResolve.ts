@@ -1,4 +1,5 @@
 import {Issue} from "@/domain/validation/Issue";
+import { resolvesRef } from "@/domain/validation/resolvesRef";
 import {extractLinks, lastSegmentOf} from "@/domain/validation/rules/_shared";
 import type {Entry} from "@/domain/entry/Entry";
 import type {RuleContext} from "@/domain/validation/Rule";
@@ -12,21 +13,6 @@ import type {RuleContext} from "@/domain/validation/Rule";
  * 前 10 条足以定位问题；超出部分不会丢失——修好前 10 条后再跑一次即可看到后续。
  */
 export const MAX_DEAD_LINKS = 10;
-
-/**
- * 判断引用是否解析为已知条目。
- *
- * @remarks
- * D2=C 的两步匹配：
- * 1. 精确匹配（长引用直接命中）
- * 2. 取最后一段匹配（短引用 / 长引用统一命中）
- */
-function resolvesTo(ref: string, allEntryIds: ReadonlySet<string>): boolean {
-    if (allEntryIds.has(ref)) return true;
-    const last = lastSegmentOf(ref);
-    return allEntryIds.has(last);
-}
-
 /**
  * 校验条目 body 中的所有 `[[X]]` 引用是否指向已存在的条目。
  *
@@ -53,9 +39,7 @@ export const linksResolve = (
   // 收集失效引用
   const deadRefs: string[] = [];
   for (const [, originalRef] of firstSeen) {
-    const resolvesAsEntry = resolvesTo(originalRef, context.allEntryIds);
-    const resolvesAsFile = context.allMarkdownPaths.has(originalRef);
-    if (!resolvesAsEntry && !resolvesAsFile) {
+    if (!resolvesRef(originalRef, context)) {
       deadRefs.push(originalRef);
     }
   }

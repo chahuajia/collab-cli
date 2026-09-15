@@ -13,16 +13,17 @@ import type { EntryKind, EntryStatus } from './types.js';
  * **不期望任何其他代码手动构造它**。
  */
 export interface FrontmatterInput {
-    readonly id: string;
-    readonly type: EntryKind;
-    readonly status: EntryStatus;
-    readonly created: string;
-    readonly updated: string;
-    readonly domains: readonly string[];
-    readonly 'applies-to': readonly string[];
-    readonly supersedes: string | null;
-    readonly author: string;
-    readonly 'co-authors': readonly string[];
-    readonly focus: readonly string[];
-    readonly provenance?: string|undefined;
+  readonly id: string;
+  readonly type: EntryKind;
+  readonly status: EntryStatus;
+  readonly created: string;
+  readonly updated: string;
+  readonly domains: readonly string[];
+  readonly "applies-to": readonly string[];
+  readonly supersedes: string | null;
+  readonly author: string;
+  readonly "co-authors": readonly string[];
+  readonly focus: readonly string[];
+  readonly provenance?: string | undefined;
+  readonly aliases?: readonly string[] | undefined;
 }

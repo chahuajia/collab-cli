@@ -28,7 +28,7 @@ const Schema = z
     supersedes: z.string().nullable().default(null),
     "co-authors": z.array(z.string()).default([]),
     focus: z.array(z.string()).default([]),
-
+    aliases: z.array(z.string()).optional(),
     author: z
       .string()
       .min(MIN_LENGTH, "author is required and must not be empty"),

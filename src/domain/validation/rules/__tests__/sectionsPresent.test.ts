@@ -171,21 +171,142 @@ describe('sectionsPresent', () => {
     // ─────────────────────────────────────────────
     // Issue 元数据
     // ─────────────────────────────────────────────
-    describe('Issue 元数据', () => {
-        it('all missing sections use error severity (D1=A)', () => {
-            const entry = makeEntry({ body: '' });
-            const issues = sectionsPresent(entry, emptyContext);
-            issues.forEach((i) => {
-                expect(i.severity).toBe(SeverityValues.Error);
-            });
+    describe("Issue 元数据", () => {
+      it("all missing sections use error severity (D1=A)", () => {
+        const entry = makeEntry({ body: "" });
+        const issues = sectionsPresent(entry, emptyContext);
+        issues.forEach((i) => {
+          expect(i.severity).toBe(SeverityValues.Error);
         });
+      });
 
-        it('carries path for locating the problem', () => {
-            const entry = makeEntry({ body: '', path: 'skills/S12.md' });
-            const issues = sectionsPresent(entry, emptyContext);
-            issues.forEach((i) => {
-                expect(i.path).toBe('skills/S12.md');
-            });
+      it("carries path for locating the problem", () => {
+        const entry = makeEntry({ body: "", path: "skills/S12.md" });
+        const issues = sectionsPresent(entry, emptyContext);
+        issues.forEach((i) => {
+          expect(i.path).toBe("skills/S12.md");
         });
+      });
+    });
+
+    // 追加到现有测试文件末尾
+
+    describe("sectionsPresent — 按 kind 分章节（新增）", () => {
+      // ─────────────────────────────────────────────
+      // Skill 的章节集（5 章节）
+      // ─────────────────────────────────────────────
+      it("Skill: passes with 上下文/问题/方案/反面/关联", () => {
+        const entry = makeEntry({
+          type: "Skill",
+          body: "## 上下文\n\n## 问题\n\n## 方案\n\n## 反面\n\n## 关联\n",
+        });
+        expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+      });
+
+      it("Skill: fails with ADR sections", () => {
+        const entry = makeEntry({
+          type: "Skill",
+          body: "## 背景\n\n## 决策\n\n## 后果\n\n## 替代方案\n\n## 关联\n",
+        });
+        const issues = sectionsPresent(entry, emptyContext);
+        // 5 个章节都不匹配 —— 全部 MissingSection
+        expect(issues.length).toBeGreaterThan(0);
+        expect(
+          issues.every((i) => i.code === IssueCodeValues.MissingSection),
+        ).toBe(true);
+      });
+
+      // ─────────────────────────────────────────────
+      // Agreement / Workflow / Pattern 的章节集（同 Skill）
+      // ─────────────────────────────────────────────
+      it.each([
+        ["Agreement", "A1"],
+        ["Workflow", "W1"],
+        ["Pattern", "rooted-graph"],
+      ] as const)("%s: uses the pattern-language sections", (type, id) => {
+        const entry = makeEntry({
+          id,
+          type,
+          body: "## 上下文\n\n## 问题\n\n## 方案\n\n## 反面\n\n## 关联\n",
+        });
+        expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+      });
+
+      // ─────────────────────────────────────────────
+      // ADR 的章节集（背景/决策/后果/替代方案/关联）
+      // ─────────────────────────────────────────────
+      it("ADR: passes with 背景/决策/后果/替代方案/关联", () => {
+        const entry = makeEntry({
+          id: "ADR-0001",
+          type: "Adr",
+          body: "## 背景\n\n## 决策\n\n## 后果\n\n## 替代方案\n\n## 关联\n",
+        });
+        expect(sectionsPresent(entry, emptyContext)).toHaveLength(0);
+      });
+
+      it("ADR: fails with pattern-language sections", () => {
+        const entry = makeEntry({
+          id: "ADR-0001",
+          type: "Adr",
+          body: "## 上下文\n\n## 问题\n\n## 方案\n\n## 反面\n\n## 关联\n",
+        });
+        const issues = sectionsPresent(entry, emptyContext);
+        // ADR 期望:背景/决策/后果/替代方案/关联
+        // 实际给:上下文/问题/方案/反面/关联
+        // 关联 匹配 —— 其他 4 个都缺
+        expect(issues).toHaveLength(4);
+        const messages = issues.map((i) => i.message).join(" ");
+        expect(messages).toContain("背景");
+        expect(messages).toContain("决策");
+        expect(messages).toContain("后果");
+        expect(messages).toContain("替代方案");
+      });
+
+      it("ADR: reports missing 替代方案", () => {
+        const entry = makeEntry({
+          id: "ADR-0001",
+          type: "Adr",
+          body: "## 背景\n\n## 决策\n\n## 后果\n\n## 关联\n",
+        });
+        const issues = sectionsPresent(entry, emptyContext);
+        expect(issues).toHaveLength(1);
+        expect(issues[0]?.message).toContain("替代方案");
+      });
+
+      it("ADR: duplicate 决策 reports DuplicateSection", () => {
+        const entry = makeEntry({
+          id: "ADR-0001",
+          type: "Adr",
+          body: "## 背景\n\n## 决策\n\n## 决策\n\n## 后果\n\n## 替代方案\n\n## 关联\n",
+        });
+        const issues = sectionsPresent(entry, emptyContext);
+        const dup = issues.find(
+          (i) => i.code === IssueCodeValues.DuplicateSection,
+        );
+        expect(dup).toBeDefined();
+        expect(dup?.message).toContain("决策");
+      });
+
+      // ─────────────────────────────────────────────
+      // 每个 kind 的"关联"都必需
+      // ─────────────────────────────────────────────
+      it.each([
+        ["Skill", "S1"],
+        ["Agreement", "A1"],
+        ["Workflow", "W1"],
+        ["Pattern", "rooted-graph"],
+        ["Adr", "ADR-0001"],
+      ] as const)("%s: 关联 is required", (type, id) => {
+        // 构造"没有 ## 关联"的 body
+        let body: string;
+        if (type === "Adr") {
+          body = "## 背景\n\n## 决策\n\n## 后果\n\n## 替代方案\n";
+        } else {
+          body = "## 上下文\n\n## 问题\n\n## 方案\n\n## 反面\n";
+        }
+        const entry = makeEntry({ id, type, body });
+        const issues = sectionsPresent(entry, emptyContext);
+        expect(issues.some((i) => i.message.includes("关联"))).toBe(true);
+      });
     });
 });
