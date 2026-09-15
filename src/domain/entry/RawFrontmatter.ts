@@ -1,5 +1,5 @@
 // domain/entry/RawFrontmatter.ts
-import type { EntryType, EntryStatus } from './types.js';
+import type { EntryKind, EntryStatus } from './types.js';
 
 /**
  * 边界层产物：字段已通过形状校验，但尚未构造为值对象。
@@ -8,7 +8,7 @@ import type { EntryType, EntryStatus } from './types.js';
  */
 export interface RawFrontmatter {
     readonly id: string;
-    readonly type: EntryType;
+    readonly type: EntryKind;
     readonly status: EntryStatus;
     readonly created: string;
     readonly updated: string;

@@ -68,9 +68,10 @@ export default [
         {
           /**
            * 值相同不代表语义相同。当同一个值在不同上下文中有不同业务含义时，
-           * 必须在各自的领域重新定义常量，不得共享跨域的"通用值"。
+           * 必须在各自的领域重新定义常量，不得共享跨域的"通用值";
+           * 但此处是结构性边界值，允许使用;
            */
-          ignore: [],
+          ignore: [-1, 0, 1],
           ignoreArrayIndexes: true,
           ignoreDefaultValues: true,
           enforceConst: true,
@@ -99,6 +100,7 @@ export default [
 
       // ── 禁止空导出（避免误写） ──
       "import/no-empty-named-blocks": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
     },
   },
 

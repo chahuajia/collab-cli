@@ -33,6 +33,15 @@ export const IssueCodeValues = {
     DuplicateId: 'DUPLICATE_ID',
     /** 形状无效 */
     InvalidShape: 'INVALID_SHAPE',
+    /** 重复章节 */
+    DuplicateSection: 'DUPLICATE_SECTION',
+    /** 目录有没有 index */
+    MissingIndex:'MISSING_INDEX',
+    /** 条目是不在index 里 */
+    MissingFromIndex: 'MISSING_FROM_INDEX',
+    /** index引用不存在条目 */
+    DanglingIndexEntry: 'DANGLING_INDEX_ENTRY',
+
 } as const;
 
 export type IssueCode = ValueOf<typeof IssueCodeValues>;

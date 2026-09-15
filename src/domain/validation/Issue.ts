@@ -1,8 +1,9 @@
 // src/domain/validation/Issue.ts
 import {type IssueCode, IssueCodeValues} from '@/domain/validation/IssueCode.js';
 import {type Severity, SeverityValues} from '@/domain/validation/Severity.js';
-import type {EntryType} from '@/domain/entry/types';
+import type {EntryKind} from '@/domain/entry/types';
 
+const basename = (path: string) => path.split('/').pop();
 
 /**
  * Issue 的属性。
@@ -106,15 +107,15 @@ export class Issue {
 
 
     static emptyId(): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.EmptyId,
             message: 'entry id must not be empty',
         })
     }
 
-    static idPrefixMismatch(id: string, type: EntryType, prefix: string): Issue {
-        return this.of({
+    static idPrefixMismatch(id: string, type: EntryKind, prefix: string): Issue {
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.IdPrefixMismatch,
             message: `id "${id}" must start with "${prefix}" for type "${type}"`,
@@ -123,7 +124,7 @@ export class Issue {
     }
 
     static invalidDate(raw: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.InvalidDate,
             message: `"${raw}" is not a valid ISO date`,
@@ -132,7 +133,7 @@ export class Issue {
     }
 
     static dateOrderInvalid(created: string, updated: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.DateOrderInvalid,
             message: `created (${created}) is after updated (${updated})`,
@@ -140,7 +141,7 @@ export class Issue {
     }
 
     static missingFrontmatter(path: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.MissingFrontmatter,
             message: 'missing YAML frontmatter',
@@ -150,7 +151,7 @@ export class Issue {
     }
 
     static invalidYaml(path: string, reason: string): Issue {
-        return this.of({
+        return Issue.of({
 
             severity: SeverityValues.Error,
             code: IssueCodeValues.InvalidYaml,
@@ -160,7 +161,7 @@ export class Issue {
     }
 
     static invalidShape(path: string, reason: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.InvalidShape,
             message: reason,
@@ -168,18 +169,26 @@ export class Issue {
         })
     }
 
-    static typeDirMismatch(path: string, expected: EntryType, actual: EntryType): Issue {
-        return this.of({
+    /**
+     * 类型与目录不匹配。
+     *
+     * @param path - 条目路径
+     * @param actualType - 条目的实际类型
+     * @param expectedDir - 期望所在的目录
+     */
+    static typeDirMismatch(path: string, actualType: EntryKind, expectedDir: string): Issue {
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.TypeDirMismatch,
-            message: `type "${actual}" does not match directory "${expected}"`,
+            message: `entry of type "${actualType}" must be under "${expectedDir}/", but found at "${path}"`,
             path,
+            suggestion: `move to "${expectedDir}/${basename(path)}" or change the type`,
         })
     }
 
-    static missingSection(path: string, section: string, severity: Omit<Severity, 'info'>): Issue {
-        return this.of({
-            severity: severity === SeverityValues.Error ? SeverityValues.Error : SeverityValues.Warning,
+    static missingSection(path: string, section: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
             code: IssueCodeValues.MissingSection,
             message: `missing "## ${section}" section`,
             path,
@@ -188,7 +197,7 @@ export class Issue {
     }
 
     static deadLink(path: string, ref: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.DeadLink,
             message: `dead link [[${ref}]]`,
@@ -198,10 +207,50 @@ export class Issue {
     }
 
     static duplicateId(id: string, firstPath: string, secondPath: string): Issue {
-        return this.of({
+        return Issue.of({
             severity: SeverityValues.Error,
             code: IssueCodeValues.DuplicateId,
             message: `id "${id}" appears in both ${firstPath} and ${secondPath}`,
         })
+    }
+
+    static duplicateSection(path: string, section: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.DuplicateSection,
+            message: `section "## ${section}" appears more than once`,
+            path,
+            suggestion: 'merge the duplicated sections into one',
+        });
+    }
+
+    static missingIndex(dir: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.MissingIndex,
+            message: `directory "${dir}" has no "_index.md"`,
+            path: dir,
+            suggestion: `create "${dir}/_index.md"`,
+        });
+    }
+
+    static missingFromIndex(entryPath: string, id: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.MissingFromIndex,
+            message: `entry "${id}" is not listed in the directory index`,
+            path: entryPath,
+            suggestion: `add "[[${id}]]" to the corresponding _index.md`,
+        });
+    }
+
+    static danglingIndexEntry(indexPath: string, ref: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.DanglingIndexEntry,
+            message: `_index.md lists "[[${ref}]]" but no such entry exists`,
+            path: indexPath,
+            suggestion: 'create the entry or remove the reference',
+        });
     }
 }
