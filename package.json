@@ -3,10 +3,11 @@
   "version": "0.2.0",
   "type": "module",
   "bin": {
-    "collab": "dist/bin/collab.js"
+    "collab": "bin/collab.js"
   },
   "files": [
-    "dist",
+    "bin/",
+    "dist/",
     "README.md"
   ],
   "scripts": {

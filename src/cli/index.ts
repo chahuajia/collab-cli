@@ -1,5 +1,6 @@
 // src/cli/index.ts
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { cmdIndex } from "@/cli/commands";
 import { cmdCommit } from "@/cli/commands/commit";
 import { cmdNew } from "@/cli/commands/new";
@@ -83,31 +84,50 @@ function consumeDirOption(argv: string[]): string[] {
   return result;
 }
 
-async function main(rawArgv: string[]): Promise<void> {
+/**
+ * CLI 主入口。
+ *
+ * @remarks
+ * **导出**：供 `bin/collab.js` import。
+ * **自执行**：当"被直接执行"时（如 `node dist/cli/index.js validate`）。
+ *
+ * 判断方式：`process.argv[1]` 是否等于当前文件路径。
+ * - 是 → 直接执行 → 自执行
+ * - 否 → 被 import → 不执行
+ */
+export async function main(rawArgv: string[]): Promise<void> {
   const argv = consumeDirOption(rawArgv);
   const [cmd, ...rest] = argv;
 
-  if (!cmd || cmd === "--help" || cmd === "-h" || cmd === "help") {
+  if (!cmd || cmd === '--help' || cmd === '-h' || cmd === 'help') {
     printHelp();
     return;
   }
-  if (cmd === "--version" || cmd === "-v") {
-    console.log("collab-cli 0.3.0");
+  if (cmd === '--version' || cmd === '-v') {
+    console.log('collab-cli 0.3.0');
     return;
   }
 
   const handler = COMMANDS[cmd];
   if (!handler) {
-    throw new Error(
-      `Unknown command: ${cmd}. Run \`collab --help\` for usage.`,
-    );
+    throw new Error(`Unknown command: ${cmd}. Run \`collab --help\` for usage.`);
   }
   await handler(rest);
 }
 
 const ARGV_OFFSET = 2;
-main(process.argv.slice(ARGV_OFFSET)).catch((err) => {
-  const msg = err instanceof Error ? err.message : String(err);
-  console.error(`✖ ${msg}`);
-  process.exit(1);
-});
+// ─────────────────────────────────────────────
+// 自执行：仅当"被直接执行"时
+// ─────────────────────────────────────────────
+const thisFile = fileURLToPath(import.meta.url);
+const invokedAsScript =
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === thisFile;
+
+if (invokedAsScript) {
+  main(process.argv.slice(ARGV_OFFSET)).catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`✖ ${msg}`);
+    process.exit(1);
+  });
+}
