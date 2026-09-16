@@ -8,6 +8,7 @@
 | :--- | :--- | :--- |
 | **cli-development** | 🔄 进行中 | `tasks/cli-development/progress.md` |
 | **collab-apply** | ✅ 已实现（E1-E13 全绿） | `tasks/collab-apply/progress.md` |
+| **collab-parse** | 📋 规格待拍板（6 个决策点） | `tasks/collab-parse/spec.md` |
 | **collaboration-refactor** | ✅ 校验归零 / 迁移待办 | `tasks/collaboration-refactor/progress.md` |
 
 ## 辅助文件

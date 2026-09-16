@@ -25,6 +25,18 @@
 
 （空）
 
+## 2026-09-16 追加：`collab index` 修复（实测驱动）
+
+用 `collab index` 跑真库副本时发现它会**摧毁人工索引**（agreements 19 行、skills 35 行被替换成空行）。
+
+- 根因：引用匹配规则有两份 —— `renderIndex` 自己写的 `normalizeRef` 只认短 id，
+  不认真库在用的 `[[S1-h2-output]]` 文件名式引用。
+- 修复：规则收敛为 `refersToIdentity`（`domain/validation/resolvesRef.ts`）一份；
+  `renderIndex` 复用它；`extractAllIdsByKind` → `extractAllIndexEntries`（带 `fileName`）。
+- 验证：真库副本重跑 → agreements / skills / workflows 均 `removed 0`，人工列完好。
+- 测试：`renderIndex.test.ts` +2、`index.test.ts` T5 +1、`extractAllIndexEntries.test.ts` 15 条。
+- 全量：`npm run check` → 477 tests 绿，lint 0 error。
+
 ## 下一步（待定）
 
 **候选方向**（未选）：

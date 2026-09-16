@@ -2,7 +2,18 @@ import { describe, it, expect } from "vitest";
 import { parseIndex } from "@/cli/lib/parseIndex";
 import { renderIndex } from "@/cli/lib/renderIndex";
 import { EntryKindValues } from "@/domain/entry/types";
+import type { IndexEntry } from "@/application/extractIndexEntries";
 
+/**
+ * 构造索引条目。
+ *
+ * @remarks
+ * `fileName` 默认与 `id` 相同（最简情形）。
+ * "文件名与 id 不同"（如 `S1-h2-output` + `id: S1`）由专门的用例覆盖。
+ */
+function entries(...ids: string[]): IndexEntry[] {
+  return ids.map((id) => ({ id, fileName: id }));
+}
 
 describe("renderIndex", () => {
   // ─────────────────────────────────────────────
@@ -13,7 +24,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing: null,
-        actualEntries: ["S1", "S2", "S3"],
+        actualEntries: entries("S1", "S2", "S3"),
       });
       expect(result.content).toContain("# 技能索引");
       expect(result.content).toContain("| [[S1]] |");
@@ -27,7 +38,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Pattern,
         existing: null,
-        actualEntries: ["rooted-graph", "pattern-language"],
+        actualEntries: entries("rooted-graph", "pattern-language"),
       });
       expect(result.content).toContain("[[patterns/rooted-graph]]");
       expect(result.content).toContain("[[patterns/pattern-language]]");
@@ -37,7 +48,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing: null,
-        actualEntries: [],
+        actualEntries: entries(),
       });
       expect(result.content).toContain("# 技能索引");
       expect(result.content).toContain("| ID");
@@ -53,7 +64,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing: null,
-        actualEntries: ["S10", "S2", "S1", "S20", "S3"],
+        actualEntries: entries("S10", "S2", "S1", "S20", "S3"),
       });
       const lines = result.content
         .split("\n")
@@ -69,7 +80,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Pattern,
         existing: null,
-        actualEntries: ["zebra", "alpha", "middle"],
+        actualEntries: entries("zebra", "alpha", "middle"),
       });
       const lines = result.content
         .split("\n")
@@ -83,7 +94,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing: null,
-        actualEntries: ["S2", "S1", "misc"],
+        actualEntries: entries("S2", "S1", "misc"),
       });
       const lines = result.content
         .split("\n")
@@ -105,7 +116,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing,
-        actualEntries: ["S1", "S2"],
+        actualEntries: entries("S1", "S2"),
       });
       expect(result.content).toContain("[[S1]]");
       expect(result.content).toContain("[[S2]]");
@@ -120,7 +131,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing,
-        actualEntries: ["S1"],
+        actualEntries: entries("S1"),
       });
       expect(result.content).toContain("[[S1]]");
       expect(result.content).not.toContain("[[S99]]");
@@ -135,9 +146,48 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing,
-        actualEntries: ["S1"],
+        actualEntries: entries("S1"),
       });
       expect(result.content).toContain("H2 输出");
+    });
+
+    // ─────────────────────────────────────────────
+    // 回归：文件名式引用（2026-09-16 实测事故）
+    // ─────────────────────────────────────────────
+    it("keeps rows that refer to an entry by file name, not just by id", () => {
+      // 真库的写法：文件名 S1-h2-output.md、frontmatter.id 是 S1，
+      // index 里写的是文件名式引用 [[S1-h2-output]]。
+      const existing = parseIndex(
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |",
+      );
+      const result = renderIndex({
+        kind: EntryKindValues.Skill,
+        existing,
+        actualEntries: [{ id: "S1", fileName: "S1-h2-output" }],
+      });
+
+      expect(result.removed).toBe(0);
+      expect(result.added).toBe(0);
+      expect(result.content).toContain("[[S1-h2-output]]");
+      // 人工列全部保留 —— 这正是旧实现会毁掉的东西
+      expect(result.content).toContain("H2 输出");
+      expect(result.content).toContain("meta");
+      expect(result.content).toContain("active");
+    });
+
+    it("still removes a row whose ref matches nothing", () => {
+      const existing = parseIndex(
+        "| ID |\n| :-- |\n| [[S1-h2-output]] | x |\n| [[S99-gone]] | x |",
+      );
+      const result = renderIndex({
+        kind: EntryKindValues.Skill,
+        existing,
+        actualEntries: [{ id: "S1", fileName: "S1-h2-output" }],
+      });
+
+      expect(result.removed).toBe(1);
+      expect(result.content).toContain("[[S1-h2-output]]");
+      expect(result.content).not.toContain("[[S99-gone]]");
     });
 
     it("preserves extra content after the table", () => {
@@ -147,7 +197,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Agreement,
         existing,
-        actualEntries: ["A1"],
+        actualEntries: entries("A1"),
       });
       expect(result.content).toContain("## 变更规则");
       expect(result.content).toContain("承重墙");
@@ -160,7 +210,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing,
-        actualEntries: ["S1"],
+        actualEntries: entries("S1"),
       });
       expect(result.content).toContain("this is broken");
     });
@@ -176,7 +226,7 @@ describe("renderIndex", () => {
       const result = renderIndex({
         kind: EntryKindValues.Skill,
         existing,
-        actualEntries: ["S1"],
+        actualEntries: entries("S1"),
       });
       expect(result.added).toBe(0);
       expect(result.removed).toBe(0);

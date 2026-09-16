@@ -1,7 +1,7 @@
 // src/cli/commands/index.ts
 import fs from "node:fs";
 import path from "node:path";
-import { extractAllIdsByKind } from "@/application/extractAllIdsByKind";
+import { extractAllIndexEntries } from "@/application/extractIndexEntries";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { parseIndex } from "@/cli/lib/parseIndex";
 import { renderIndex } from "@/cli/lib/renderIndex";
@@ -32,12 +32,12 @@ export async function cmdIndex(args: string[]): Promise<void> {
   let totalMissingNames = 0;
   const loader = new FileWorkspaceLoader(collabDir);
   const workspace = loader.load();
-  const allEntryIds = extractAllIdsByKind(workspace);
+  const allEntries = extractAllIndexEntries(workspace);
 
   for (const { kind, dir } of targets) {
     const absDir = path.join(collabDir, dir);
     const indexFilePath = path.join(absDir, "_index.md");
-    const actualEntries = allEntryIds.get(kind) ?? [];
+    const actualEntries = allEntries.get(kind) ?? [];
     const existing = fs.existsSync(indexFilePath)
       ? parseIndex(fs.readFileSync(indexFilePath, "utf8"))
       : null;

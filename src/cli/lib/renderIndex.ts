@@ -1,10 +1,19 @@
 import { type EntryKind, EntryKindValues } from "@/domain/entry/types";
+import { refersToIdentity } from "@/domain/validation/resolvesRef";
+import type { IndexEntry } from "@/application/extractIndexEntries";
 import type { ParsedIndex, ParsedRow } from "@/cli/lib/parseIndex";
 
 export interface RenderInput {
   readonly kind: EntryKind;
   readonly existing: ParsedIndex | null;
-  readonly actualEntries: readonly string[];
+  /**
+   * 目录里实际存在的条目。
+   *
+   * @remarks
+   * 必须带 `fileName` —— 判断"已有行是否悬空"要用
+   * `refersToIdentity`（与 `validate` 同一条规则），而它同时认短 id 与文件名。
+   */
+  readonly actualEntries: readonly IndexEntry[];
 }
 
 export interface RenderOutput {
@@ -25,7 +34,8 @@ interface IndexConfig {
  * @remarks
  * 增量同步（D2=B）：
  * - 保留现有行（含人工列与异常行）。
- * - 删除悬空行。
+ * - 删除悬空行 —— 判据必须与 `validate` 一致（`refersToIdentity`），
+ *   否则会出现"validate 说合法、index 却删掉"的事故。
  * - 追加新行（只填 ID 列，其他留空）。
  *
  * 排序（D3=A）：数字 id 按数值，非数字 id 按字母，异常行排末尾。
@@ -34,38 +44,41 @@ interface IndexConfig {
 export function renderIndex(input: RenderInput): RenderOutput {
   const { kind, existing, actualEntries } = input;
   const config = getIndexConfig(kind);
-  const actualSet = new Set(actualEntries);
 
   let added = 0;
   let removed = 0;
 
   // 1. 保留的行
   const keptRows: ParsedRow[] = [];
-  const existingRefs = new Set<string>();
+  /** 已被保留行引用的条目 id —— 用来决定"还缺哪些行" */
+  const referenced = new Set<string>();
 
   if (existing) {
     for (const row of existing.dataRows) {
       if (row.ref === null) {
         keptRows.push(row);
-      } else {
-        const normalized = normalizeRef(row.ref);
-        if (actualSet.has(normalized)) {
-          keptRows.push(row);
-          existingRefs.add(normalized);
-        } else {
-          removed++;
-        }
+        continue;
       }
+      const ref = row.ref;
+      const matched = actualEntries.find((entry) =>
+        refersToIdentity(ref, entry.id, entry.fileName),
+      );
+      if (matched === undefined) {
+        removed++;
+        continue;
+      }
+      keptRows.push(row);
+      referenced.add(matched.id);
     }
   }
 
   // 2. 新行
   const newRows: ParsedRow[] = [];
-  for (const id of actualEntries) {
-    if (!existingRefs.has(id)) {
+  for (const entry of actualEntries) {
+    if (!referenced.has(entry.id)) {
       newRows.push({
-        raw: renderRow(kind, id, config),
-        ref: renderRef(kind, id),
+        raw: renderRow(kind, entry.id, config),
+        ref: renderRef(kind, entry.id),
       });
       added++;
     }
@@ -100,15 +113,6 @@ export function renderIndex(input: RenderInput): RenderOutput {
 
   const content = lines.join("\n") + "\n";
   return { content, added, removed };
-}
-
-/**
- * 归一化 ref：`patterns/rooted-graph` → `rooted-graph`。
- */
-function normalizeRef(ref: string): string {
-  if (!ref.includes("/")) return ref;
-  const parts = ref.split("/");
-  return parts[parts.length - 1] ?? ref;
 }
 
 function renderRef(kind: EntryKind, id: string): string {

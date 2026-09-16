@@ -32,3 +32,10 @@
 | 2026-09-16 | `apply` 预检拆两段：`validateBundle`（纯）+ `resolvePlan`（纯，吃事实快照） | 冲突规则可用表驱动测试；IO 只在观察与执行两处 | 生效中 |
 | 2026-09-16 | `apply` 的 path 白名单含 `inbox/` 与 `domains/`；不强制 `.md` 后缀 | 沿用 spec §1 的允许目录；`.md` 要求未被提出，不擅自加 | 生效中 |
 | 2026-09-16 | E2E 超时预算 5s → 20s（`vitest.config.ts`） | 每条 E2E 都要 `git init` + 起 node 子进程；并行下 4-7s，超时是预算问题不是正确性问题 | 生效中 |
+
+| 日期 | 决策 | 理由 | 状态 |
+| :--- | :--- | :--- | :--- |
+| 2026-09-16 | **引用匹配规则只留一份**：`refersToIdentity`（domain），`renderIndex` 复用 | 实测：两份规则导致 `collab index` 删掉真库 54 行人工列 | 生效中 |
+| 2026-09-16 | `extractAllIdsByKind` → `extractAllIndexEntries`（带 `fileName`）；`extractIdsForKind` 改为派生 | 判断"已有行是否悬空"需要文件名，只给 id 会重演同一事故 | 生效中 |
+| 2026-09-16 | working-memory 里的**校验结论必须附可复现命令** | "108 entries / 0 issues" 是过期断言，实测 2 errors —— 断言会腐烂，命令不会 | 生效中 |
+| 2026-09-16 | **AI 不擅自替用户拍 spec 的未决问题**；未决项要镜像进 `decisions.md` 标"待拍板" | 上一轮 `apply` 我按建议默认值做了；这次先交规格等拍板，避免"猜方向"的返工 | 待用户确认 |

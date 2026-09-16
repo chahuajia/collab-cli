@@ -39,6 +39,45 @@ export function resolvesRef(ref: string, context: RuleContext): boolean {
 }
 
 /**
+ * 取条目路径的"文件名"（末段去掉 `.md`）。
+ *
+ * @example
+ * - `skills/S1-h2-output.md` → `S1-h2-output`
+ * - `meta/decision-records/ADR-0001.md` → `ADR-0001`
+ *
+ * @remarks
+ * 先统一分隔符 —— Windows 上 `entry.path` 可能是 `skills\S1-h2-output.md`，
+ * 而 `lastSegmentOf` 只按 `/` 切分（与 `typeMatchesDir` / `dirOfPath` 同一约定）。
+ */
+export function fileNameOf(path: string): string {
+  return lastSegmentOf(path.replace(/\\/g, "/")).replace(/\.md$/, "");
+}
+
+/**
+ * 引用是否指向"这个 id / 这个文件名"的条目。
+ *
+ * @remarks
+ * **这是全项目唯一的引用匹配规则。**
+ *
+ * 校验（`refersTo`）与索引渲染（`renderIndex`）都必须走这里 ——
+ * 规则一旦出现两份，就会出现 2026-09-16 实测到的那种事故：
+ * `validate` 认为 `[[S1-h2-output]]` 合法，而 `index` 把它当悬空行删掉，
+ * 顺手丢掉人工维护的名称/领域/状态列（真实库 54 行）。
+ *
+ * @param ref - `_index.md` 或正文里的引用原文
+ * @param id - 条目的 `frontmatter.id`（如 `S1`）
+ * @param fileName - 条目的文件名（如 `S1-h2-output`）
+ */
+export function refersToIdentity(
+  ref: string,
+  id: string,
+  fileName: string,
+): boolean {
+  const last = lastSegmentOf(ref);
+  return last === id || last === fileName;
+}
+
+/**
  * 判断"引用是否指向给定的条目"。
  *
  * @remarks
@@ -51,8 +90,9 @@ export function resolvesRef(ref: string, context: RuleContext): boolean {
  * **两者都认** —— 因为 `_index.md` 里可能写短 id、也可能写文件名。
  */
 export function refersTo(ref: string, entry: Entry): boolean {
-  const last = lastSegmentOf(ref);
-  const entryId = entry.frontmatter.id;
-  const entryFileName = lastSegmentOf(entry.path).replace(/\.md$/, "");
-  return last === entryId || last === entryFileName;
+  return refersToIdentity(
+    ref,
+    entry.frontmatter.id,
+    fileNameOf(entry.path),
+  );
 }

@@ -471,7 +471,44 @@ describe('collab index', () => {
       // 文件字节级不变
       expect(after).toBe(before);
     });
+
+    // ─────────────────────────────────────────────
+    // T5（2026-09-16 真库实测事故的回归）
+    // ─────────────────────────────────────────────
+    it("does NOT wipe the index when rows use the file-name form", async () => {
+      // 真库的写法：index 里是文件名式引用，且带人工维护的列。
+      await writeEntry({
+        relPath: "skills/S1-h2-output.md",
+        id: "S1",
+        kind: "skill",
+        collabDir,
+      });
+      await writeFile(
+        path.join(collabDir, "skills/_index.md"),
+        "# 技能索引\n\n| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |\n",
+        "utf8",
+      );
+
+      const before = await readFile(
+        path.join(collabDir, "skills/_index.md"),
+        "utf8",
+      );
+
+      const result = await toSucceed(
+        ["index", "skills"],
+        testRoot,
+        envOverrides,
+      );
+
+      const after = await readFile(
+        path.join(collabDir, "skills/_index.md"),
+        "utf8",
+      );
+
+      // 旧实现会 "removed 1, added 1"，把人工列全丢掉
+      expect(result.stdout).toContain("no changes");
+      expect(after).toBe(before);
+    });
   });
 });
-
 
