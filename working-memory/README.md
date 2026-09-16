@@ -7,6 +7,8 @@
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
 | **cli-development** | 🔄 进行中 | `tasks/cli-development/progress.md` |
+| **collab-apply** | 📋 规格待 review | `tasks/collab-apply/spec.md` |
+| **collaboration-refactor** | ✅ 校验归零 / 迁移待办 | `tasks/collaboration-refactor/progress.md` |
 
 ## 辅助文件
 

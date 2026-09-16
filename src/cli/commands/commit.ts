@@ -44,7 +44,17 @@ export async function cmdCommit(args: string[]): Promise<void> {
 
   // 2. 定位 COLLABORATION
   const { collabDir, gitRoot } = findCollabRoot(process.cwd());
-  const relCollabDir = path.relative(gitRoot, collabDir);
+  /**
+   * 相对 `gitRoot` 的路径。
+   *
+   * @remarks
+   * - **布局 A**（`repo/COLLABORATION/`）→ `'COLLABORATION'`
+   * - **布局 B**（`repo/` 即知识库根）→ **`''`** → 转为 `'.'`（git 的"当前目录"）
+   *
+   * 空字符串不是有效的 git pathspec —— 所以 `''` 要转 `.`。
+   */
+  const rawRelPath = path.relative(gitRoot, collabDir);
+  const relCollabDir = rawRelPath === "" ? "." : rawRelPath;
 
   // 3. 校验（D4 / D5）
   if (values["no-validate"]) {

@@ -18,3 +18,8 @@
 | 2026-09-14 | 任务 #4：`collectAllEntryIds` 合并到 `extractAllIdsByKind` | 任务 #3 产出让 #4 变了 | 生效中 |
 | 2026-09-14 | `extractAllIdsByKind` 复用 `extractIdsForKind`（不优化为一次遍历） | 数据量小 + 单一真相源 | 生效中 |
 | 2026-09-14 | 测试数据从 path 推断 type（`inferTypeFromPath`） | 减少手工 + 防遗漏 | 生效中 |
+
+| 日期 | 决策 | 理由 | 状态 |
+| :--- | :--- | :--- | :--- |
+| 2026-09-16 | **`collaboration` 保持文档纯洁**：工具脚本与工作产物归 `collab-cli/working-memory` | 避免两个仓库各有一份工具真相源；工作空间收敛到一处 | 生效中 |
+| 2026-09-16 | 先修校验（206 → 0）再谈新功能 | 校验不绿时，任何"新增"都在污染基线 | 已完成 |
