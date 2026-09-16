@@ -40,7 +40,6 @@ export async function cmdFix(args: string[]): Promise<void> {
   const workspace = new FileWorkspaceLoader(collabDir).load();
 
   const planned: string[] = [];
-  const unfixable: string[] = [];
 
   for (const loaded of workspace.entries) {
     if (loaded.entry === null) continue;
@@ -50,10 +49,11 @@ export async function cmdFix(args: string[]): Promise<void> {
     const abs = path.join(collabDir, loaded.path);
     const next = addIdAlias(fs.readFileSync(abs, "utf8"), id);
 
-    if (next === null) {
-      unfixable.push(loaded.path);
-      continue;
-    }
+    // 到这里 next 不可能是 null：能进 entries 就说明 frontmatter 解析成功过，
+    // 而 addIdAlias 只在"没有 frontmatter"时返回 null。
+    // 保留这层判断是为了将来放宽 entries 的来源（如扫描未解析文件）时不会静默出错。
+    if (next === null) throw new Error(`cannot fix ${loaded.path}: frontmatter not found`);
+
     if (!dryRun) fs.writeFileSync(abs, next, "utf8");
     planned.push(loaded.path);
   }
@@ -61,18 +61,13 @@ export async function cmdFix(args: string[]): Promise<void> {
   for (const p of planned) {
     console.log(`${dryRun ? "(dry-run) would add" : "✔ added"} aliases → ${p}`);
   }
-  for (const p of unfixable) {
-    console.log(`✖ cannot fix automatically (frontmatter not found): ${p}`);
-  }
 
   console.log("");
   console.log(
     dryRun
-      ? `(dry-run) ${planned.length} file(s) would change; ${unfixable.length} need manual attention.`
-      : `✔ fixed ${planned.length} file(s); ${unfixable.length} need manual attention.`,
+      ? `(dry-run) ${planned.length} file(s) would change.`
+      : `✔ fixed ${planned.length} file(s).`,
   );
-
-  if (unfixable.length > 0 && !dryRun) process.exit(1);
 }
 
 /**
@@ -84,7 +79,7 @@ export async function cmdFix(args: string[]): Promise<void> {
  * 2. 块状 `aliases:` → 在最后一条别名后追加 `  - <id>`；
  * 3. 行内 `aliases: [a, b]` → 变成 `[a, b, <id>]`。
  *
- * @returns 新内容；找不到 frontmatter 时返回 null（**不猜**）
+ * @returns 新内容；找不到 frontmatter 时返回 null（**不猜** —— 调用方据此报错）
  */
 function addIdAlias(raw: string, id: string): string | null {
   const lines = raw.split("\n");

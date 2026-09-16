@@ -14,7 +14,14 @@ import { cmdPush } from "@/cli/commands/push";
 import { cmdValidate } from "@/cli/commands/validate";
 import { COLLAB_VERSION } from "@/cli/lib/version";
 
-const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
+/**
+ * 命令表 —— CLI 的**唯一**命令清单。
+ *
+ * @remarks
+ * 导出是为了让测试能对照 `--help`：**两处不一致 = 文档承诺了不存在的行为**
+ * （今天已经出现过两次：`bom` 那类误报，以及 README 里"退出码 2"从未出现）。
+ */
+export const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   new: cmdNew,
   apply: cmdApply,
   catalog: cmdCatalog,

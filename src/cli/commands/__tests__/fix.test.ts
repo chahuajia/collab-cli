@@ -107,6 +107,16 @@ describe("collab fix", () => {
     expect(await readFile(abs(REL), "utf8")).toBe(original);
   });
 
+  it("--dry-run exits 0 (so it can be used as a check)", async () => {
+    await writeFile(abs(REL), entryWithoutAliases("S30"), "utf8");
+    const result = await toSucceed(
+      ["fix", "--dry-run"],
+      ctx().root,
+      ctx().envOverrides,
+    );
+    expect(result.stdout).toContain("would change");
+  });
+
   it("leaves a correct entry untouched", async () => {
     const original = entryWithoutAliases("S30", ["aliases:", "  - S30"]);
     await writeFile(abs(REL), original, "utf8");

@@ -1,6 +1,6 @@
 {
   "name": "collab-cli",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "type": "module",
   "bin": {
     "collab": "bin/collab.js"
@@ -13,7 +13,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --fix",
-    "dev": "tsx src/bin/collab.ts",
+    "dev": "tsx src/cli/index.ts",
     "build": "tsc && tsc-alias",
     "pretest": "npm run build",
     "test": "vitest run",
@@ -22,9 +22,9 @@
     "check": "npm run typecheck && npm run lint && npm run test",
     "prepare": "husky",
     "lint": "eslint src",
-    "script:add-author": "tsx scripts/add-author.ts",
-    "script:add-dates": "tsx scripts/add-dates.ts",
-    "script:migrate-write-entry": "tsx scripts/migrate-write-entry.ts",
+    "script:add-author": "node scripts/add-author.mjs",
+    "script:add-dates": "node scripts/add-dates.mjs",
+    "script:migrate-write-entry": "node scripts/migrate-write-entry.mjs",
     "migrate:write-entry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__",
     "migrate:write-entry:dry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__ --dry-run"
   },
