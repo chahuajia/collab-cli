@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **evolutionary 压测** | ✅ 第 4–12 轮完成 | `evolutionary/specs/round-12-report.md` |
+| **evolutionary 压测** | 🔄 第 13 轮完成 | `evolutionary/specs/round-13-report.md` |
 
 ## 已归档
 
