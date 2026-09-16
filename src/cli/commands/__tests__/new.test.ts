@@ -357,6 +357,25 @@ describe("collab new", () => {
   });
 
   // ─────────────────────────────────────────────
+  // --dry-run（2026-09-16：AI 曾在真库上误跑写命令）
+  // ─────────────────────────────────────────────
+  describe("--dry-run", () => {
+    beforeEach(() => setupWorkspace());
+
+    it("prints the plan and writes nothing", async () => {
+      const result = await toSucceed(
+        ["new", "skill", "S30", "--dry-run"],
+        testRoot,
+        envOverrides,
+      );
+
+      expect(result.stdout).toContain("would create");
+      expect(result.stdout).toContain("S30.md");
+      expect(existsSync(path.join(collabDir, "skills/S30.md"))).toBe(false);
+    });
+  });
+
+  // ─────────────────────────────────────────────
   // 产物通过 validate（排除 index 相关规则）
   // ─────────────────────────────────────────────
   describe("产物通过 validate", () => {

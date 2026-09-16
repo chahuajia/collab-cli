@@ -26,4 +26,8 @@ export interface FrontmatterInput {
   readonly focus: readonly string[];
   readonly provenance?: string | undefined;
   readonly aliases?: readonly string[] | undefined;
+  /** 什么时候**该**读这条（路由用）。由人/模型写 —— 工具生成不出来。 */
+  readonly trigger?: string | undefined;
+  /** 什么时候**不用**读这条（反触发，防误用）。 */
+  readonly "anti-trigger"?: string | undefined;
 }

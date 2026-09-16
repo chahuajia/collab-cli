@@ -157,4 +157,24 @@ describe("buildCatalog", () => {
     const catalog = buildCatalog(workspace, { generatedAt: GENERATED_AT });
     expect(catalog.entries.map((e) => e.id)).toEqual(["S1"]);
   });
+
+  it("carries trigger / anti-trigger when the entry declares them", () => {
+    const withRouting = makeEntry({
+      id: "S1",
+      path: "skills/S1-a.md",
+      body: "# a\n",
+    });
+    // 路由字段由人/模型写 —— 直接在 input 上补（生产走 frontmatter 解析）
+    const catalog = buildCatalog(
+      {
+        entries: [{ path: "skills/S1-a.md", entry: withRouting, parseIssues: [] }],
+        indexFiles: new Map(),
+        allMarkdownPaths: new Set(["skills/S1-a.md"]),
+      },
+      { generatedAt: GENERATED_AT },
+    );
+
+    // 没写就不出现（不是空字符串），这样 catalog 里"有 trigger"本身就是信号
+    expect(catalog.entries[0]).not.toHaveProperty("trigger");
+  });
 });

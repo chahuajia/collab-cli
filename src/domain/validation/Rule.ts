@@ -29,6 +29,9 @@ export interface RuleContext {
    * `undefined` = 不检查；`null` = 文件不存在；`string` = 内容（可能过期）。
    */
   readonly catalogJson?: string | null | undefined;
+
+  /** 仓库根 Markdown 的内容（`AGENTS.md` / `ROOT.md` / `README.md`）。 */
+  readonly rootDocs?: ReadonlyMap<string, string> | undefined;
 }
 
 /**

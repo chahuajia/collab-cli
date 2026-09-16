@@ -38,11 +38,18 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
     const entries: LoadedEntry[] = [];
     const indexFiles = new Map<string, string>();
     const allMarkdownPaths = new Set<string>();
+    const rootDocs = new Map<string, string>();
 
     // 递归扫**整个 collabDir** —— 不只扫 EntryKindDir
-    this.scanAll(this.collabDir, "", entries, indexFiles, allMarkdownPaths);
+    this.scanAll(this.collabDir, "", entries, indexFiles, allMarkdownPaths, rootDocs);
 
-    return { entries, indexFiles, allMarkdownPaths, catalogJson: this.readCatalog() };
+    return {
+      entries,
+      indexFiles,
+      allMarkdownPaths,
+      catalogJson: this.readCatalog(),
+      rootDocs,
+    };
   }
 
   /**
@@ -74,6 +81,7 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
     entries: LoadedEntry[],
     indexFiles: Map<string, string>,
     allMarkdownPaths: Set<string>,
+    rootDocs: Map<string, string>,
   ): void {
     const items = fs.readdirSync(absDir, { withFileTypes: true });
     items.sort((a, b) => {
@@ -91,13 +99,19 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
 
       if (item.isDirectory()) {
         if (item.name.startsWith(".")) continue;
-        this.scanAll(itemAbs, itemRel, entries, indexFiles, allMarkdownPaths);
+        this.scanAll(itemAbs, itemRel, entries, indexFiles, allMarkdownPaths, rootDocs);
         continue;
       }
 
       if (!item.isFile() || !item.name.endsWith(".md")) continue;
 
       allMarkdownPaths.add(itemRel.slice(0, -3));
+
+      // 仓库根的 .md —— 入口文件（AGENTS.md / ROOT.md / README.md），单独收集
+      if (relDir === "") {
+        rootDocs.set(itemRel, fs.readFileSync(itemAbs, "utf8"));
+        continue;
+      }
 
       const isInEntryDir = this.isInEntryDir(itemRel);
       if (!isInEntryDir) continue;

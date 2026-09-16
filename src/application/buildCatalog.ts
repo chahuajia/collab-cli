@@ -11,6 +11,10 @@ export interface CatalogEntry {
   readonly path: string;
   readonly domains: readonly string[];
   readonly appliesTo: readonly string[];
+  /** 什么时候该读这条（路由用）—— 由人/模型写，工具不生成 */
+  readonly trigger?: string;
+  /** 什么时候不用读这条 */
+  readonly antiTrigger?: string;
 }
 
 export interface Catalog {
@@ -71,6 +75,8 @@ export function buildCatalog(
       path: loaded.path,
       domains: fm.domains,
       appliesTo: fm.appliesTo,
+      ...(fm.trigger === undefined ? {} : { trigger: fm.trigger }),
+      ...(fm.antiTrigger === undefined ? {} : { antiTrigger: fm.antiTrigger }),
     });
 
     byType[fm.type] = (byType[fm.type] ?? 0) + 1;

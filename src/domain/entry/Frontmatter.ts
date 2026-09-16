@@ -30,6 +30,8 @@ export class Frontmatter {
     private readonly _author: string,
     private readonly _provenance: string | undefined,
     private readonly _aliases: readonly string[],
+    private readonly _trigger: string | undefined,
+    private readonly _antiTrigger: string | undefined,
   ) {}
 
   /**
@@ -73,6 +75,8 @@ export class Frontmatter {
           input.author,
           input.provenance,
           input.aliases ?? [],
+          input.trigger,
+          input["anti-trigger"],
         ),
       );
     }
@@ -130,5 +134,25 @@ export class Frontmatter {
 
   get aliases(): readonly string[] {
     return this._aliases;
+  }
+
+  /**
+   * 什么时候**该**读这条（路由字段）。
+   *
+   * @remarks
+   * 由人/模型写 —— **工具生成不出来**。它回答的是"什么情况下我该被翻到"。
+   */
+  get trigger(): string | undefined {
+    return this._trigger;
+  }
+
+  /**
+   * 什么时候**不用**读这条（反触发）。
+   *
+   * @remarks
+   * 防误用：一条规则被读错场景，比不被读更糟。
+   */
+  get antiTrigger(): string | undefined {
+    return this._antiTrigger;
   }
 }

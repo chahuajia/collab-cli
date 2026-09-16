@@ -52,6 +52,7 @@ export async function cmdNew(args: string[]): Promise<void> {
         args,
         options: {
             author: { type: 'string' },
+            "dry-run": { type: 'boolean', default: false },
         },
         allowPositionals: true,
         strict: false,
@@ -131,11 +132,19 @@ export async function cmdNew(args: string[]): Promise<void> {
     const content = await buildTemplate({ type, id, author });
 
     // 7. 写入（'wx' 保证不覆盖已存在文件——即使检查后被并发创建）
+    const relPath = path.relative(process.cwd(), filePath);
+
+    if (values["dry-run"] === true) {
+        console.log(`(dry-run) would create ${relPath}`);
+        console.log('');
+        console.log('(dry-run) nothing was written.');
+        return;
+    }
+
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content, { encoding: 'utf8', flag: 'wx' });
 
     // 8. 输出
-    const relPath = path.relative(process.cwd(), filePath);
     console.log(`✔ created ${relPath}`);
     console.log('');
     console.log('Next: run `collab index` to update the directory index.');

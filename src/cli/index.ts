@@ -30,6 +30,7 @@ Usage:
 
 Commands:
   new <type> [id]              Create a new entry from template
+                               (--dry-run prints the plan, writes nothing)
   apply <bundle.json>          Apply a bundle: all files or none
   catalog                      Generate catalog.json (the routing table)
   index [dir]                  Update _index.md for a directory (or all)

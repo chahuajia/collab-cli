@@ -30,6 +30,16 @@ export interface Workspace {
    * - `string` → 文件内容（可能过期）
    */
   readonly catalogJson?: string | null | undefined;
+  /**
+   * **仓库根**的 Markdown 内容（`AGENTS.md` / `ROOT.md` / `README.md`）。
+   *
+   * @remarks
+   * 它们不是条目（不在 kind 目录下），但**是最常被读的文件** ——
+   * 入口里的死链是最贵的一种，必须一起检查。
+   *
+   * key 是相对路径（含 `.md`），value 是文件内容。
+   */
+  readonly rootDocs?: ReadonlyMap<string, string> | undefined;
 }
 
 /**

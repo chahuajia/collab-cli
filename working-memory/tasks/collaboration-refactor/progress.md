@@ -271,6 +271,37 @@
 
 验收：**502 tests / 35 files 绿**；知识库 **105 entries / 0 issues**。
 
+## 2026-09-16 第十轮：把"机制"补成闭环
+
+### 新增机制（都是"工具会拦人"的那一类）
+
+| 规则 / 工具 | 拦什么 |
+| :--- | :--- |
+| `ID_NOT_IN_ALIASES` | id 没登记进 aliases → 渲染层解析不了 id 链接 |
+| `CATALOG_STALE` | `catalog.json` 与工作区不一致（生成物过期） |
+| `UNDECLARED_DIR` | 未声明的顶层目录里出现文件（= 悄悄改基座） |
+| `collab fix` | 补齐机械字段（**只补不删**，补不了就报错） |
+| `collab new --dry-run` | 让"验证"不必真的写文件 |
+| 约定层配额 | `new agreement` 在 active ≥10 时**拒绝**（无 `--force`） |
+| `dormant`/`deprecated` | **退出路由索引**（不再进 catalog） |
+| `extractLinks` | 跳过围栏与行内代码（不再误报"讨论链接"的文档） |
+| `trigger`/`anti-trigger` | catalog 从"目录"变成"路由表"（先给 8 条常驻条目补） |
+
+### 收尾
+
+- `meta/base-contract.md`：**冻结基座** + 破坏性变更三件套（ADR + 迁移脚本 + validate 归零）
+- `AGENTS.md`：阅读顺序**第一项改成 `catalog.json`**（此前造了路由表却没指向它）
+- BOM 排查：139 个文件 **0 个带 BOM**，文章 #7 的隐患不存在
+
+### 最终状态
+
+| 项 | 结果 |
+| :--- | :--- |
+| `collab validate` | **105 entries / 0 issues** |
+| `npm run check` | **517 tests / 36 files 绿**，lint 0 error |
+| 约定 | **8 条**（19 → 8）；ADR 0001–0009 |
+| 工具 | `new`(dry-run) `index` `validate` `commit` `push` `apply` `catalog` `fix` |
+
 ## 生态验证的三个项目（待确认）
 
 | 项目 | 回答什么问题 | 性质 | 现状 |

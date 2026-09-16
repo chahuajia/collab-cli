@@ -29,6 +29,9 @@ const Schema = z
     "co-authors": z.array(z.string()).default([]),
     focus: z.array(z.string()).default([]),
     aliases: z.array(z.string()).optional(),
+    // 路由字段：工具生成不出来，只能由人/模型写（见 meta/base-contract.md）
+    trigger: z.string().optional(),
+    "anti-trigger": z.string().optional(),
     author: z
       .string()
       .min(MIN_LENGTH, "author is required and must not be empty"),
