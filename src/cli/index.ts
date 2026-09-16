@@ -3,7 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { cmdIndex } from "@/cli/commands";
 import { cmdApply } from "@/cli/commands/apply";
+import { cmdCatalog } from "@/cli/commands/catalog";
 import { cmdCommit } from "@/cli/commands/commit";
+import { cmdFix } from "@/cli/commands/fix";
 import { cmdNew } from "@/cli/commands/new";
 import { cmdPush } from "@/cli/commands/push";
 import { cmdValidate } from "@/cli/commands/validate";
@@ -11,9 +13,11 @@ import { cmdValidate } from "@/cli/commands/validate";
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   new: cmdNew,
   apply: cmdApply,
+  catalog: cmdCatalog,
   index: cmdIndex,
   validate: cmdValidate,
   commit: cmdCommit,
+  fix: cmdFix,
   push: cmdPush,
 };
 
@@ -27,8 +31,10 @@ Usage:
 Commands:
   new <type> [id]              Create a new entry from template
   apply <bundle.json>          Apply a bundle: all files or none
+  catalog                      Generate catalog.json (the routing table)
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
+  fix [--dry-run]              Fill in mechanical frontmatter fields (add-only)
   commit -m "<message>"        Validate + git add + git commit
   push                         Validate + git push
 

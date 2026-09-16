@@ -10,8 +10,8 @@ export interface RenderInput {
    * 目录里实际存在的条目。
    *
    * @remarks
-   * 必须带 `fileName` —— 判断"已有行是否悬空"要用
-   * `refersToIdentity`（与 `validate` 同一条规则），而它同时认短 id 与文件名。
+   * 必须同时带 `id` 与 `fileName` —— 判断"已有行是否悬空"要用
+   * `refersToIdentity`（与 `validate` 同一条规则），它两种形式都认。
    */
   readonly actualEntries: readonly IndexEntry[];
 }
@@ -36,7 +36,8 @@ interface IndexConfig {
  * - 保留现有行（含人工列与异常行）。
  * - 删除悬空行 —— 判据必须与 `validate` 一致（`refersToIdentity`），
  *   否则会出现"validate 说合法、index 却删掉"的事故。
- * - 追加新行（只填 ID 列，其他留空）。
+ * - 追加新行（只填 ID 列，其他留空）—— **用 `frontmatter.id`**：
+ *   它是不可变快照，改名不失效（ADR-0009）。
  *
  * 排序（D3=A）：数字 id 按数值，非数字 id 按字母，异常行排末尾。
  * 标题与表头：沿用 existing；若 existing 为空则用标准模板。
@@ -50,7 +51,7 @@ export function renderIndex(input: RenderInput): RenderOutput {
 
   // 1. 保留的行
   const keptRows: ParsedRow[] = [];
-  /** 已被保留行引用的条目 id —— 用来决定"还缺哪些行" */
+  /** 已被保留行引用的文件名 —— 用来决定"还缺哪些行" */
   const referenced = new Set<string>();
 
   if (existing) {
@@ -221,6 +222,15 @@ function getIndexConfig(kind: EntryKind): IndexConfig {
           "| :---------- | :------------- | :--------- | :------- |",
         ],
         emptyColumnCount: 3,
+      };
+    case EntryKindValues.Integration:
+      return {
+        title: "集成层索引",
+        headerLines: [
+          "| 环境 | 名称 | 说明 |",
+          "| :- | :- | :- |",
+        ],
+        emptyColumnCount: 2,
       };
   }
 }

@@ -8,25 +8,26 @@ import type { RuleContext } from "@/domain/validation/Rule";
  * 判断"引用是否指向某个已存在的实体"。
  *
  * @remarks
- * 四种匹配（任一命中即合法）：
- * 1. **短 id**：`A1` → `allEntryIds.has('A1')`
- * 2. **完整路径**：`agreements/A1-output-format` → `allMarkdownPaths.has(完整)`
- * 3. **末段短 id**：`patterns/rooted-graph` → `allEntryIds.has('rooted-graph')`
- * 4. **文件名匹配**：`A1-output-format` → 某 `allMarkdownPaths` 的末段为 `A1-output-format`
+ * 三种匹配（任一命中即合法）：
+ * 1. **完整路径**：`agreements/A1-output-format` → `allMarkdownPaths.has(完整)`
+ * 2. **末段 = 文件名**：`A1-output-format`、`patterns/rooted-graph`
+ * 3. **末段 = id**：`A1` —— **前提是 id 已登记进 `aliases`**（由 `idIsAlias` 规则强制）。
+ *    渲染层（Obsidian）靠 alias 解析 id 形式的链接；没有那条规则，
+ *    "忘了写 aliases" 就会静默断链 —— 这正是历史上那批 id 断链的成因。
  *
- * **性能**：第 4 步 O(N) —— 对当前规模可接受。
+ * **推荐 id 形式**：id 是不可变快照（ADR-0009），语义后缀改名时链接存活。
+ * 文件名形式在 Obsidian 里由编辑器自动改写，但在 **git / CLI / 静态站点**里不会。
+ *
+ * **性能**：末段匹配 O(N) —— 对当前规模可接受。
  * 未来规模大时，可给 `RuleContext` 加"末段索引"。
  *
  * @see refersTo —— 用于 `checkIndexForward`（判据是"指向给定 entry"）
  */
 export function resolvesRef(ref: string, context: RuleContext): boolean {
-  // 1. 短 id 直接匹配
-  if (context.allEntryIds.has(ref)) return true;
-
-  // 2. 完整路径直接匹配
+  // 1. 完整路径直接匹配
   if (context.allMarkdownPaths.has(ref)) return true;
 
-  // 3 & 4. 末段匹配
+  // 2. 末段匹配：id 或文件名
   const last = lastSegmentOf(ref);
 
   if (context.allEntryIds.has(last)) return true;
@@ -54,15 +55,14 @@ export function fileNameOf(path: string): string {
 }
 
 /**
- * 引用是否指向"这个 id / 这个文件名"的条目。
+ * 引用是否指向"这个 id 或这个文件名"的条目。
  *
  * @remarks
- * **这是全项目唯一的引用匹配规则。**
+ * **这是全项目唯一的引用匹配规则** —— 校验（`refersTo`）与索引渲染
+ * （`renderIndex`）都必须走这里。规则一旦出现两份，就会出现
+ * "validate 说合法、index 却当悬空行删掉"的事故。
  *
- * 校验（`refersTo`）与索引渲染（`renderIndex`）都必须走这里 ——
- * 规则一旦出现两份，就会出现 2026-09-16 实测到的那种事故：
- * `validate` 认为 `[[S1-h2-output]]` 合法，而 `index` 把它当悬空行删掉，
- * 顺手丢掉人工维护的名称/领域/状态列（真实库 54 行）。
+ * 两种形式都认，但**推荐 id**：它是不可变快照，改名不失效。
  *
  * @param ref - `_index.md` 或正文里的引用原文
  * @param id - 条目的 `frontmatter.id`（如 `S1`）
@@ -83,16 +83,10 @@ export function refersToIdentity(
  * @remarks
  * 用于 `checkIndexForward` —— 它需要"本条目是否被 index 列出"。
  *
- * 两种匹配（任一命中）：
- * 1. **短 id**：`[[A1]]` → `A1` === `entry.frontmatter.id`
- * 2. **文件名**：`[[A1-output-format]]` → `A1-output-format` === entry 的文件名（去 .md）
+ * 两种匹配（任一命中）：**id**（`A1`）或 **文件名**（`A1-output-format`）。
  *
- * **两者都认** —— 因为 `_index.md` 里可能写短 id、也可能写文件名。
+ * 推荐 id：它是不可变快照（ADR-0009），语义后缀改名时链接存活。
  */
 export function refersTo(ref: string, entry: Entry): boolean {
-  return refersToIdentity(
-    ref,
-    entry.frontmatter.id,
-    fileNameOf(entry.path),
-  );
+  return refersToIdentity(ref, entry.frontmatter.id, fileNameOf(entry.path));
 }

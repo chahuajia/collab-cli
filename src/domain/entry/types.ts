@@ -14,6 +14,7 @@ export const EntryKindValues = {
     Skill: 'skill',
     Pattern: 'pattern',
     Adr: 'adr',
+    Integration: 'integration',
 } as const;
 
 /**
@@ -54,6 +55,7 @@ export const EntryPrefix: Record<EntryKind, EntryIdPrefix> = {
     [EntryKindValues.Skill]: 'S',
     [EntryKindValues.Pattern]: '',
     [EntryKindValues.Adr]: 'ADR-',
+    [EntryKindValues.Integration]: '',
 };
 
 /**
@@ -65,7 +67,8 @@ export type EntryIdFor<T extends EntryKind> =
             T extends 'skill' ? `S${number}` :
                 T extends 'adr' ? `ADR-${string}` :
                     T extends 'pattern' ? `${Lowercase<string>}` :
-                        never;
+                        T extends 'integration' ? `${Lowercase<string>}` :
+                            never;
 
 export function isEntryIdFor<T extends EntryKind>(id: string, type: T): id is EntryIdFor<T> {
     // 运行时校验
@@ -90,6 +93,7 @@ export const EntryKindDir: Record<EntryKind, string> = {
     [EntryKindValues.Skill]: 'skills',
     [EntryKindValues.Pattern]: 'patterns',
     [EntryKindValues.Adr]: 'meta/decision-records',
+    [EntryKindValues.Integration]: 'integrations',
 };
 
 function isEntryKind(value: string): value is EntryKind {
@@ -169,5 +173,6 @@ export const DefaultStatusFor: Record<EntryKind, EntryStatus> = {
   [EntryKindValues.Workflow]: EntryStatusValues.Draft,
   [EntryKindValues.Skill]: EntryStatusValues.Draft,
   [EntryKindValues.Pattern]: EntryStatusValues.Draft,
+  [EntryKindValues.Integration]: EntryStatusValues.Draft,
   [EntryKindValues.Adr]: EntryStatusValues.Proposed,  // ← ADR 专属
 };

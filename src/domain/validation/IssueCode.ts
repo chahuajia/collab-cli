@@ -56,6 +56,18 @@ export const IssueCodeValues = {
     /** bundle 的意图与工作区当前状态冲突 */
     BundleConflict: 'BUNDLE_CONFLICT',
 
+    /** id 不是文件名的前缀（链接按文件名解析，两者必须同源） */
+    IdFileNameMismatch: 'ID_FILE_NAME_MISMATCH',
+
+    /** id 没有登记进 aliases（渲染层靠 alias 解析 id 形式的链接） */
+    IdNotInAliases: 'ID_NOT_IN_ALIASES',
+
+    /** catalog.json 与工作区不一致（生成物过期） */
+    CatalogStale: 'CATALOG_STALE',
+
+    /** 顶层目录未在基座契约里声明（等于悄悄改基座） */
+    UndeclaredDir: 'UNDECLARED_DIR',
+
 } as const;
 
 export type IssueCode = ValueOf<typeof IssueCodeValues>;

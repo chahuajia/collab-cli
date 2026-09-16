@@ -80,8 +80,8 @@ describe("extractAllIndexEntries", () => {
       expect(result.get(EntryKindValues.Adr)).toEqual([]);
     });
 
-    it("has entries for all 5 kinds", () => {
-      expect(extractAllIndexEntries(makeWorkspace([])).size).toBe(5);
+    it("has entries for all 6 kinds", () => {
+      expect(extractAllIndexEntries(makeWorkspace([])).size).toBe(6);
     });
   });
 

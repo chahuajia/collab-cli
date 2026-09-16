@@ -42,7 +42,20 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
     // 递归扫**整个 collabDir** —— 不只扫 EntryKindDir
     this.scanAll(this.collabDir, "", entries, indexFiles, allMarkdownPaths);
 
-    return { entries, indexFiles, allMarkdownPaths };
+    return { entries, indexFiles, allMarkdownPaths, catalogJson: this.readCatalog() };
+  }
+
+  /**
+   * 读取 `catalog.json`（生成物）。
+   *
+   * @remarks
+   * 不存在时返回 `null` —— **不等于是错误**：不是每个工作区都需要 catalog，
+   * 由 `catalogIsFresh` 决定"存在但过期"才报错。
+   */
+  private readCatalog(): string | null {
+    const catalogPath = path.join(this.collabDir, "catalog.json");
+    if (!fs.existsSync(catalogPath)) return null;
+    return fs.readFileSync(catalogPath, "utf8");
   }
 
   /**

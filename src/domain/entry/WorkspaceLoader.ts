@@ -21,6 +21,15 @@ export interface Workspace {
   readonly entries: readonly LoadedEntry[];
   readonly indexFiles: ReadonlyMap<string, string>;
   readonly allMarkdownPaths: ReadonlySet<string>;
+  /**
+   * `catalog.json` 的原始内容。
+   *
+   * @remarks
+   * - `undefined` → 该工作区不支持/不检查 catalog
+   * - `null` → 检查了，但文件不存在
+   * - `string` → 文件内容（可能过期）
+   */
+  readonly catalogJson?: string | null | undefined;
 }
 
 /**

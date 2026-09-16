@@ -21,15 +21,31 @@ function ctx(
 
 describe("resolvesRef", () => {
   // ─────────────────────────────────────────────
-  // 匹配 1：短 id
+  // 匹配 1：id（前提是已登记为 alias —— 见 idIsAlias 规则）
   // ─────────────────────────────────────────────
-  describe("短 id 匹配", () => {
-    it("matches exact id [[A1]]", () => {
-      expect(resolvesRef("A1", ctx({ entryIds: ["A1"] }))).toBe(true);
+  describe("按 id 匹配", () => {
+    it("resolves a bare id (renderer does this via aliases)", () => {
+      expect(
+        resolvesRef(
+          "A1",
+          ctx({
+            entryIds: ["A1"],
+            markdownPaths: ["agreements/A1-output-format"],
+          }),
+        ),
+      ).toBe(true);
     });
 
-    it("misses when id not in allEntryIds", () => {
-      expect(resolvesRef("A1", ctx({ entryIds: ["A2"] }))).toBe(false);
+    it("also resolves the same entry by its file name", () => {
+      expect(
+        resolvesRef(
+          "A1-output-format",
+          ctx({
+            entryIds: ["A1"],
+            markdownPaths: ["agreements/A1-output-format"],
+          }),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -50,14 +66,14 @@ describe("resolvesRef", () => {
   });
 
   // ─────────────────────────────────────────────
-  // 匹配 3：末段短 id（带目录前缀）
+  // 匹配 3：带目录前缀（末段 = 文件名）
   // ─────────────────────────────────────────────
-  describe("末段短 id", () => {
-    it("matches [[patterns/rooted-graph]] against id rooted-graph", () => {
+  describe("末段 = 文件名", () => {
+    it("matches [[patterns/rooted-graph]] against path patterns/rooted-graph", () => {
       expect(
         resolvesRef(
           "patterns/rooted-graph",
-          ctx({ entryIds: ["rooted-graph"] }),
+          ctx({ markdownPaths: ["patterns/rooted-graph"] }),
         ),
       ).toBe(true);
     });
@@ -123,7 +139,7 @@ describe("resolvesRef", () => {
 });
 
 describe("refersTo", () => {
-  it("matches short id", () => {
+  it("matches a bare id (id is the stable anchor)", () => {
     const entry = makeEntry({
       id: "A1",
       type: "Agreement",

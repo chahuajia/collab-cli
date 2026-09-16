@@ -25,6 +25,7 @@ const SECTIONS_BY_KIND: Record<EntryKind, readonly string[]> = {
   [EntryKindValues.Workflow]: ["上下文", "问题", "方案", "反面", "关联"],
   [EntryKindValues.Skill]: ["上下文", "问题", "方案", "反面", "关联"],
   [EntryKindValues.Pattern]: ["上下文", "问题", "方案", "反面", "关联"],
+  [EntryKindValues.Integration]: ["上下文", "问题", "方案", "反面", "关联"],
   [EntryKindValues.Adr]: ["背景", "决策", "后果", "替代方案", "关联"],
 };
 

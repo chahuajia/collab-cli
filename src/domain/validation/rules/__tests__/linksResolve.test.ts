@@ -6,7 +6,13 @@ import {linksResolve, MAX_DEAD_LINKS} from "@/domain/validation/rules/linksResol
 import {SeverityValues} from "@/domain/validation/Severity";
 import type {RuleContext} from "@/domain/validation/Rule";
 
-/** 构造 RuleContext 的快捷方式：只需 allEntryIds。 */
+/**
+ * 构造 RuleContext 的快捷方式。
+ *
+ * @remarks
+ * **链接按文件名解析**（2026-09-16 修正），所以这里的 `ids` 同时当作文件名：
+ * 未显式给 `paths` 时，按 `skills/<id>` 派生。
+ */
 function ctx(
   ids: readonly string[],
   paths: readonly string[] = [],
@@ -15,7 +21,9 @@ function ctx(
     allEntries: [],
     allEntryIds: new Set(ids),
     indexFiles: new Map(),
-    allMarkdownPaths: new Set(paths),
+    allMarkdownPaths: new Set(
+      paths.length > 0 ? paths : ids.map((id) => `skills/${id}`),
+    ),
   };
 }
 describe('linksResolve', () => {
@@ -55,7 +63,7 @@ describe('linksResolve', () => {
     // 长引用 vs 短引用（D2=C）
     // ─────────────────────────────────────────────
     describe('引用形式（D2=C）', () => {
-        it('accepts short-form link ([[id]])', () => {
+        it('accepts a bare name when it IS the file name', () => {
             const entry = makeEntry({ body: 'see [[rooted-graph]]' });
             const issues = linksResolve(entry, ctx(['rooted-graph']));
             expect(issues).toHaveLength(0);
@@ -118,6 +126,41 @@ describe('linksResolve', () => {
     });
 
     // ─────────────────────────────────────────────
+    // 代码里的双括号是示例，不是链接（2026-09-16 修复）
+    // ─────────────────────────────────────────────
+    describe('跳过代码（2026-09-16）', () => {
+        it('ignores a link inside a fenced code block', () => {
+            const entry = makeEntry({
+                body: '```md\n[[S99]]\n```\n',
+            });
+            expect(linksResolve(entry, ctx([]))).toHaveLength(0);
+        });
+
+        it('ignores a link inside inline code', () => {
+            const entry = makeEntry({ body: '写作 `[[S99]]` 表示引用' });
+            expect(linksResolve(entry, ctx([]))).toHaveLength(0);
+        });
+
+        it('still reports a real link next to a code span', () => {
+            const entry = makeEntry({
+                body: '示例 `[[S99]]` 与真链接 [[S98]]',
+            });
+            const issues = linksResolve(entry, ctx([]));
+            expect(issues).toHaveLength(1);
+            expect(issues[0]?.message).toContain('S98');
+        });
+
+        it('resumes checking after the fence closes', () => {
+            const entry = makeEntry({
+                body: '```\n[[S99]]\n```\n[[S98]]\n',
+            });
+            const issues = linksResolve(entry, ctx([]));
+            expect(issues).toHaveLength(1);
+            expect(issues[0]?.message).toContain('S98');
+        });
+    });
+
+    // ─────────────────────────────────────────────
     // 空引用 / 不完整（D7=A）
     // ─────────────────────────────────────────────
     describe('边界语法（D7=A）', () => {
@@ -147,17 +190,16 @@ describe('linksResolve', () => {
     });
 
     // ─────────────────────────────────────────────
-    // 代码块（D6=B，已知限制）
+    // 代码块（D6=B）—— 旧"已知限制"已修（2026-09-16）
     // ─────────────────────────────────────────────
-    describe('代码块（D6=B，已知限制）', () => {
-        // 当前按纯文本处理，代码块内的链接也会被检测。
-        // 引入 Markdown 解析器后应改为忽略。
-        // TODO: 实现代码块识别后更新此测试
-        it('detects links inside code blocks (known limitation)', () => {
+    describe('代码块（D6=B）', () => {
+        // 旧行为：按纯文本处理，代码块里的链接也被检测 —— 会让"讨论链接"的
+        // 文档误报死链（写 ADR-0009 时踩了两次）。
+        // 新行为：围栏与行内代码一律跳过。见下方 "跳过代码（2026-09-16）"。
+        it('does NOT detect links inside code blocks anymore', () => {
             const body = '```\nsee [[S99]]\n```';
             const entry = makeEntry({ body });
-            const issues = linksResolve(entry, ctx(['S12']));
-            expect(issues).toHaveLength(1);
+            expect(linksResolve(entry, ctx(['S12']))).toHaveLength(0);
         });
     });
 

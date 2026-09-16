@@ -10,6 +10,7 @@ import {
   toFail,
   toSucceed,
   writeAdr,
+  writeEntry,
   writeSkill,
 } from "@/cli/commands/__tests__/testHelpers";
 import { linksResolve } from "@/domain/validation/rules/linksResolve";
@@ -109,7 +110,10 @@ describe("collab new", () => {
       expect(content).toContain("id: S30");
       expect(content).toContain("type: skill");
       expect(content).toContain("status: draft");
-      expect(content).toContain("author: test@example.com");
+      expect(content).toContain("author: Test");
+      // id 必须自动登记为 alias（渲染层靠它解析 id 形式的链接）
+      expect(content).toContain("aliases:");
+      expect(content).toContain("- S30");
     });
 
     it("created file contains all five sections", async () => {
@@ -267,7 +271,7 @@ describe("collab new", () => {
         testRoot,
         envOverrides,
       );
-      expect(result.stderr).toMatch(/user\.email/i);
+      expect(result.stderr).toMatch(/user\.name/i);
     });
 
     it("errors when COLLABORATION dir does not exist (E11)", async () => {
@@ -306,6 +310,49 @@ describe("collab new", () => {
     it("errors for unknown type (E9)", async () => {
       const result = await toFail(["new", "foo", "X1"], testRoot, envOverrides);
       expect(result.stderr).toMatch(/unknown type/i);
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // 代谢配额（约定层上限）
+  // ─────────────────────────────────────────────
+  describe("代谢配额", () => {
+    beforeEach(() => setupWorkspace());
+
+    it("refuses a new agreement once the limit is reached", async () => {
+      for (let i = 1; i <= 10; i++) {
+        await writeEntry({
+          relPath: `agreements/A${i}.md`,
+          id: `A${i}`,
+          kind: "agreement",
+          collabDir,
+        });
+      }
+
+      const result = await toFail(
+        ["new", "agreement", "A11"],
+        testRoot,
+        envOverrides,
+      );
+
+      expect(result.stderr).toContain("约定已达上限");
+      expect(result.stderr).toContain("10/10");
+      // 没有生成文件
+      expect(existsSync(path.join(collabDir, "agreements/A11.md"))).toBe(false);
+    });
+
+    it("still allows a skill when agreements are full", async () => {
+      for (let i = 1; i <= 10; i++) {
+        await writeEntry({
+          relPath: `agreements/A${i}.md`,
+          id: `A${i}`,
+          kind: "agreement",
+          collabDir,
+        });
+      }
+
+      await toSucceed(["new", "skill", "S99"], testRoot, envOverrides);
+      expect(existsSync(path.join(collabDir, "skills/S99.md"))).toBe(true);
     });
   });
 

@@ -25,7 +25,22 @@ const VALID_TYPES: Record<string, EntryKind> = {
     agreement: EntryKindValues.Agreement,
     pattern: EntryKindValues.Pattern,
     adr: EntryKindValues.Adr,
+    integration: EntryKindValues.Integration,
 };
+
+/**
+ * 约定层的**上限**。
+ *
+ * @remarks
+ * 这是全库唯一的"环境型代谢机制"：**让"加"包含"减"的代价**。
+ *
+ * 为什么只限 `agreement`：协议层是**稀缺**的（每加一条，向未来每一次交互收税），
+ * 而技能/模式/工作流是**手册**，本来就该增长，成本只在检索。
+ *
+ * 为什么没有 `--force`：绕过它的成本必须高于遵守它的成本。
+ * 一个便宜的逃生口会让它退化成仪式 —— 那与"给鼓励"是同一类失效。
+ */
+const AGREEMENT_LIMIT = 10;
 
 /**
  * `collab new <type> [id] [--author <email>]`
@@ -56,6 +71,20 @@ export async function cmdNew(args: string[]): Promise<void> {
 
     // 2. 定位 COLLABORATION
     const { collabDir, gitRoot } = findCollabRoot(process.cwd());
+
+    // 2b. 约定层配额（代谢机制）：加之前必须先减
+    if (type === EntryKindValues.Agreement) {
+        const loader = new FileWorkspaceLoader(collabDir);
+        const active = extractIdsForKind(loader.load(), type).length;
+        if (active >= AGREEMENT_LIMIT) {
+            throw new Error(
+                `约定已达上限（${active}/${AGREEMENT_LIMIT}）。` +
+                    `约定是承重墙 —— 每加一条，都在向未来每一次交互收税。\n` +
+                    `先处理一条：归档（status → dormant）／并入已有条目／删掉。\n` +
+                    `若这一条确实不可谈判，它多半该改写成 工作流 / 模式 / 集成层 的模样。`,
+            );
+        }
+    }
 
     // 3. 解析 id
   const idArg = positionals[1];
@@ -91,10 +120,10 @@ export async function cmdNew(args: string[]): Promise<void> {
     const author =
         typeof authorOpt === 'string' && authorOpt.length
             ? authorOpt
-            : readGitEmail(gitRoot);
+            : readGitAuthor(gitRoot);
     if (!author) {
         throw new Error(
-            'git user.email is not set. Run `git config user.email <your@email>` or pass --author.',
+            'git user.name is not set. Run `git config user.name <your-name>` or pass --author.',
         );
     }
 
@@ -113,13 +142,23 @@ export async function cmdNew(args: string[]): Promise<void> {
 }
 
 /**
- * 从 git 配置读取 user.email。
+ * 从 git 配置读取作者标识。
  *
- * @returns 邮箱，或 undefined（未配置 / 命令失败）
+ * @remarks
+ * 顺序：`user.name` → `user.email`。
+ * `author` 字段的语义是"**人**"（条目里写的是 `heiniao` 这样的名字，不是邮箱），
+ * 所以 `user.name` 优先；邮箱只作兜底。
+ *
+ * @returns 作者标识，或 undefined（都没配 / 命令失败）
  */
-function readGitEmail(cwd: string): string | undefined {
+function readGitAuthor(cwd: string): string | undefined {
+    return readGitConfig(cwd, 'user.name') ?? readGitConfig(cwd, 'user.email');
+}
+
+/** 读取单个 git 配置项；未配置或命令失败返回 undefined。 */
+function readGitConfig(cwd: string, key: string): string | undefined {
     try {
-        const out = execFileSync('git', ['config', 'user.email'], {
+        const out = execFileSync('git', ['config', key], {
             cwd,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'ignore'],

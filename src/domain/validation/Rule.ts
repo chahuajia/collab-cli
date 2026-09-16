@@ -21,6 +21,14 @@ export interface RuleContext {
    */
   readonly indexFiles: ReadonlyMap<string, string>;
   readonly allMarkdownPaths: ReadonlySet<string>;
+
+  /**
+   * `catalog.json` 的原始内容（生成物）。
+   *
+   * @remarks
+   * `undefined` = 不检查；`null` = 文件不存在；`string` = 内容（可能过期）。
+   */
+  readonly catalogJson?: string | null | undefined;
 }
 
 /**

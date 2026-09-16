@@ -345,7 +345,7 @@ describe('collab index', () => {
     // ─────────────────────────────────────────────
     // T1: 用 frontmatter.id，不是文件名
     // ─────────────────────────────────────────────
-    it("uses frontmatter.id, not filename, when filename has name suffix", async () => {
+    it("uses the id when the file name has a slug", async () => {
       // 文件名带 name 后缀，id 是 S1
       await writeEntry({
         relPath: "skills/S1-h2-output.md",
@@ -360,9 +360,8 @@ describe('collab index', () => {
         path.join(collabDir, "skills/_index.md"),
         "utf8",
       );
-      // 应该用 id
+      // 用 id —— 它是不可变快照，改名不失效（ADR-0009）
       expect(content).toContain("[[S1]]");
-      // 不该用文件名
       expect(content).not.toContain("[[S1-h2-output]]");
     });
 
@@ -381,7 +380,7 @@ describe('collab index', () => {
       // 已有 index，有 name
       await writeFile(
         path.join(collabDir, "skills/_index.md"),
-        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1]] | H2 输出 | meta | active |\n",
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |\n",
         "utf8",
       );
 
@@ -401,7 +400,7 @@ describe('collab index', () => {
     // ─────────────────────────────────────────────
     // T3: ADR 长文件名
     // ─────────────────────────────────────────────
-    it("uses frontmatter.id for ADR with long filename", async () => {
+    it("uses the id for an ADR with a long file name", async () => {
       // ADR 文件名：id + 描述
       await writeEntry({
         relPath: "meta/decision-records/ADR-0001-adopt-v3-structure.md",
@@ -434,7 +433,7 @@ describe('collab index', () => {
     // ─────────────────────────────────────────────
     // T4: 无变更（关键回归）
     // ─────────────────────────────────────────────
-    it('reports "no changes" when filename has suffix but id is already in index', async () => {
+    it('reports "no changes" when the file name is already in the index', async () => {
       // 文件名带 name 后缀
       await writeEntry({
         relPath: "skills/S1-h2-output.md",
@@ -446,7 +445,7 @@ describe('collab index', () => {
       // index 里已经用 id
       await writeFile(
         path.join(collabDir, "skills/_index.md"),
-        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1]] | H2 输出 | meta | active |\n",
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |\n",
         "utf8",
       );
 
@@ -511,4 +510,3 @@ describe('collab index', () => {
     });
   });
 });
-

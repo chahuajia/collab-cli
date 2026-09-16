@@ -80,3 +80,12 @@ A19 的 L5（落地）**不是"每轮立刻沉淀"** —— 是"**每轮记录�
 **可能类型**：模式
 **关联**：[[S27]] [[patterns/three-level-dry]] [[patterns/allowlist-over-denylist]]
 **状态**：pending
+
+## [2026-09-16] merge-procedure（条目合并的操作规程）
+
+**来源**：合并 A10/W8/S27/review-marginal-value 时实际跑通
+**核心**：合并 >4 条条目的固定顺序 —— 逐字重复取证 → 数引用面 → 保留被引用最多的 id → 删 → 脚本改引用 → 人工改入口/索引 → 去重 → `validate` 兜底 → ADR + 日志。
+**关键坑**：`aliases` 不被 validator 使用，旧编号不会自动解析；合并必然产生 `[[X]] [[X]]` 重复引用。
+**可能类型**：工作流
+**关联**：[[meta/pruning-policy]] [[S29]] [[S30]] [[A10-review-前置原则]]
+**状态**：pending

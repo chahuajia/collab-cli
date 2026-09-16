@@ -1,7 +1,11 @@
 // src/application/ValidateUseCase.ts
+import {catalogIsFresh} from "@/application/catalogIsFresh";
+import {contractDirs} from "@/application/contractDirs";
 import {checkIndexDangling} from "@/domain/validation/rules/checkIndexDangling";
 import {checkIndexExists} from "@/domain/validation/rules/checkIndexExists";
 import {checkIndexForward} from "@/domain/validation/rules/checkIndexForward";
+import {idIsAlias} from "@/domain/validation/rules/idIsAlias";
+import {idMatchesFileName} from "@/domain/validation/rules/idMatchesFileName";
 import {linksResolve} from "@/domain/validation/rules/linksResolve";
 import {sectionsPresent} from "@/domain/validation/rules/sectionsPresent";
 import {typeMatchesDir} from "@/domain/validation/rules/typeMatchesDir";
@@ -24,6 +28,8 @@ import type {RuleContext, RuleRegistry} from "@/domain/validation/Rule";
  */
 export const contentRules: RuleRegistry = {
     perEntry: [
+        idMatchesFileName,
+        idIsAlias,
         typeMatchesDir,
         sectionsPresent,
         linksResolve,
@@ -41,7 +47,7 @@ export const contentRules: RuleRegistry = {
  */
 export const standardRules: RuleRegistry = {
     perEntry: [...contentRules.perEntry, checkIndexForward],
-    global: [checkIndexExists, checkIndexDangling],
+    global: [checkIndexExists, checkIndexDangling, catalogIsFresh, contractDirs],
 };
 
 /**
@@ -86,6 +92,7 @@ export class ValidateUseCase {
             allEntryIds: new Set(entries.map((e) => e.frontmatter.id)),
             indexFiles: workspace.indexFiles,
             allMarkdownPaths: workspace.allMarkdownPaths,
+            catalogJson: workspace.catalogJson,
         };
 
         // 3. 收集 Issue（先 per-entry，后 global，D3=A）

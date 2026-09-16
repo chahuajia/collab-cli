@@ -202,7 +202,8 @@ export class Issue {
             code: IssueCodeValues.DeadLink,
             message: `dead link [[${ref}]]`,
             path,
-            suggestion: 'create the entry or remove the link',
+            suggestion:
+                'link by file name ([[<file-name>]]) — refs resolve by file name, not by id; or create the entry / remove the link',
         })
     }
 
@@ -251,6 +252,72 @@ export class Issue {
             message: `_index.md lists "[[${ref}]]" but no such entry exists`,
             path: indexPath,
             suggestion: 'create the entry or remove the reference',
+        });
+    }
+
+    /**
+     * id 不是文件名的前缀。
+     *
+     * @remarks
+     * 链接按**文件名**解析（不按 id），所以两者必须同源：
+     * 文件要么叫 `<id>.md`，要么叫 `<id>-<slug>.md`。
+     */
+    static idFileNameMismatch(path: string, id: string, fileName: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.IdFileNameMismatch,
+            message: `id "${id}" is not a prefix of the file name "${fileName}"`,
+            path,
+            suggestion: `rename the file to "${id}.md" or "${id}-<slug>.md", or change id to a prefix of "${fileName}"`,
+        });
+    }
+
+    /**
+     * id 没有登记进 `aliases`。
+     *
+     * @remarks
+     * 渲染层靠 `aliases` 解析 id 形式的链接 —— 缺了它，`[[<id>]]` 会静默断链。
+     */
+    static idNotInAliases(path: string, id: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.IdNotInAliases,
+            message: `id "${id}" is not listed in aliases — id-form links ([[${id}]]) would not resolve in the renderer`,
+            path,
+            suggestion: `add "${id}" to the frontmatter aliases`,
+        });
+    }
+
+    /**
+     * `catalog.json` 与工作区不一致。
+     *
+     * @remarks
+     * catalog 是**生成物** —— 手写或过期都会让它变成"第二份真相源"。
+     */
+    static catalogStale(reason: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.CatalogStale,
+            message: `catalog.json is out of date: ${reason}`,
+            path: "catalog.json",
+            suggestion: "run `collab catalog` to regenerate it",
+        });
+    }
+
+    /**
+     * 顶层目录未在基座契约里声明。
+     *
+     * @remarks
+     * 新目录 = 新 kind = **基座变更** —— 需要 ADR + 迁移脚本，不能悄悄加。
+     */
+    static undeclaredDir(dir: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.UndeclaredDir,
+            message: `"${dir}/" is not declared in the base contract (see meta/base-contract.md)`,
+            path: dir,
+            suggestion:
+                "adding a top-level directory is a BASE change: it needs an ADR + a migration script; or move the file into a declared directory",
         });
     }
 }

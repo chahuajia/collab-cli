@@ -419,6 +419,43 @@ describe("collab apply", () => {
     });
   });
 
+  describe("派生产物", () => {
+    it("refreshes catalog.json after writing (so the next validate passes)", async () => {
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      await toSucceed(["apply", "bundle.json"], ctx().root, ctx().envOverrides);
+
+      // 落盘后 catalog 必须是新的 —— 否则 validate 会报 CATALOG_STALE
+      const catalog = JSON.parse(await read("catalog.json"));
+      expect(catalog.summary.total).toBe(1);
+      expect(catalog.entries[0].id).toBe("S31");
+    });
+
+    it("keeps validate green after apply --index", async () => {
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+      // `--index` 负责刷新 `_index.md`；catalog 由 apply 自己刷新
+      await toSucceed(
+        ["apply", "bundle.json", "--index"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      await toSucceed(["validate"], ctx().root, ctx().envOverrides);
+    });
+
+    it("does not touch catalog.json on --dry-run", async () => {
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      await toSucceed(
+        ["apply", "bundle.json", "--dry-run"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(existsSync(abs("catalog.json"))).toBe(false);
+    });
+  });
+
   describe("--commit", () => {
     it("commits after validate passes", async () => {
       await writeBundle([create("skills/S31.md", skillContent("S31"))]);

@@ -78,6 +78,9 @@ function buildFrontmatter(
         status: 'draft',
         created: today,
         updated: today,
+        // id 必须登记为 alias —— 渲染层靠 alias 解析 id 形式的链接。
+        // 这是**机械事实**，不该由人记；人只需追加额外别名。
+        aliases: [id],
     };
 
     switch (type) {
@@ -111,6 +114,13 @@ function buildFrontmatter(
             return {
                 ...base,
                 supersedes: null,
+                author,
+            };
+        case EntryKindValues.Integration:
+            return {
+                ...base,
+                domains: [],
+                'applies-to': [],
                 author,
             };
     }

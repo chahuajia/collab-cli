@@ -142,6 +142,9 @@ export function minimalEntryContent(opts: EntryContentOptions): string {
     `created: ${created}`,
     `updated: ${updated}`,
     `author: ${author}`,
+    // id 必须登记为 alias —— 渲染层靠 alias 解析 id 形式的链接
+    "aliases:",
+    `  - ${id}`,
     "---",
     "",
     "## 上下文",

@@ -13,7 +13,9 @@ import type { RuleContext } from "@/domain/validation/Rule";
  *
  * **关键设计**：
  * - **所有参数可选** —— 默认空。
- * - **`entryIds` 可派生** —— 从 `entries` 提取（单一真相源）。
+ * - **`entryIds` 与 `markdownPaths` 都可派生** —— 从 `entries` 提取（单一真相源）。
+ *   `markdownPaths` 尤其重要：**链接按文件名解析**（2026-09-16 修正），
+ *   不派生出路径的话，`[[S12]]` 会被误判成死链。
  * - **`indexFiles` 和 `indexDirs` 互斥** —— 前者优先。
  */
 export interface RuleContextInput {
@@ -38,10 +40,17 @@ export function makeRuleContext(input: RuleContextInput = {}): RuleContext {
 
   const markdownPaths = input.markdownPaths ?? [];
 
+  // 未显式给 markdownPaths 时，从 entries 派生（去掉 `.md`，统一分隔符）
+  const derivedPaths =
+    input.markdownPaths ??
+    entries.map((e) => e.path.replace(/\\/g, "/").replace(/\.md$/, ""));
+
   return {
     allEntries: entries,
     allEntryIds: new Set(entryIds),
     indexFiles,
-    allMarkdownPaths: new Set(markdownPaths),
+    allMarkdownPaths: new Set(
+      input.markdownPaths === undefined ? derivedPaths : markdownPaths,
+    ),
   };
 }

@@ -3,6 +3,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { ApplyUseCase } from "@/application/ApplyUseCase";
 import { ValidateUseCase, contentRules } from "@/application/ValidateUseCase";
+import { cmdCatalog } from "@/cli/commands/catalog";
 import { cmdCommit } from "@/cli/commands/commit";
 import { cmdIndex } from "@/cli/commands/index";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
@@ -98,6 +99,10 @@ export async function cmdApply(args: string[]): Promise<void> {
   // ── 4. 落盘 ──
   useCase.execute(plan);
   emit(ApplyStatusValues.Applied, plan, [], asJson);
+
+  // ── 4b. 刷新派生物：谁让生成物过期，谁负责刷新它 ──
+  // 不刷新的话，下一次 `validate` 必然报 CATALOG_STALE，`apply --commit` 也会卡住。
+  if (!asJson) await cmdCatalog([]);
 
   // ── 5. 门禁：复用现有 validate（内容规则，不含索引规则） ──
   const validation = new ValidateUseCase(
