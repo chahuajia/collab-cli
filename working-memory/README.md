@@ -1,60 +1,60 @@
 # Working Memory
 
-**更新**：2026-09-16
+**更新**：2026-09-16 22:35 ｜ **上一版**：`_archive/2026-09-16-readme-before-d-experiment.md`
 
 > 跨对话的工作状态。**AI 主动维护，用户只需纠正**。
+
+## ⚠️ 先跑这个，否则别信下面的"活跃任务"
+
+```powershell
+node check-freshness.mjs
+```
+
+它拿本文件登记的 commit 跟三个仓库的**实际 HEAD** 比对。不一致 = 这份记忆落后了。
+
+**登记（本版）**：
+
+| 仓库 | 登记 HEAD |
+| :--- | :--- |
+| `collab-cli` | `7a51699` |
+| `collaboration` | `9729913` |
+| `evolutionary` | `5e0122b` |
+
+> **为什么必须有这个**：上一版 README 停在 **18:18**，之后 5 小时的工作没进去，
+> 而它写的内容（"D 实验第 2 轮待拍板"）**会把新会话引到已经过去的位置**。
+> **过期的工作记忆比没有工作记忆更坏 —— 它长得像"查过了"。**
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **实战项目压测** | 🔄 第 2 轮：查因已完，**待拍板** | `specs/round-2-diagnosis.md`（在项目仓库里） |
+| **D 实验：读了到底有没有用** | 🔄 **r3 已就位，待跑** | `tasks/d-experiment/progress.md` |
 
-## 下一个会话从这里开始
+## 换会话 / 换 agent 的接手顺序
 
-> **上一个会话的上下文已到 ~80%。** 不要试图回忆 —— 按下面读。
+**不要靠回忆，按顺序读**：
 
-**项目**：`D:\actto\front\project\evolutionary_start\evolutionary`
-（换电站 DDD 演练：Next.js + Spring Boot。**产物是暴露报告，不是产品。**）
-
-| 项 | 内容 |
-| :--- | :--- |
-| **第 1 轮（已完成）** | 后端领域层 `Battery` 状态机 + 11 JUnit 测试（绿）。产物：`specs/round-1-report.md` |
-| **第 1 轮暴露了 7 条** | E1 路由表没被用（**最刺眼**）· E2 分类判据缺失 · E3 A8 三问没跑 · E4 反面没命中 · E5 ✅没滥加条目 · E6 规范绑栈(Java 的 Result) · E7 `maven.compiler.release` 静默失效 |
-| **第 2 轮第一步（已完成）** | "路由表为什么没被用"的查因：`specs/round-2-diagnosis.md`。**最简因**：不是"AI 忘了读"，而是 **108 条里 97 条没有可路由的 `trigger`**（`trigger` 不在 `base-contract` / `naming-conventions` / 任何模板里；`collab new` 不产生它；validate 不管它），**且没有任何机制会发现"没读"**。反事实检验：`trigger` 列对第 1 轮 4 个需求命中 **0/4**，而 KB `AGENTS.md` 那张手写症状表命中 2/4 |
-| **下一步（待你拍板）** | `specs/round-2-diagnosis.md` §七 的四条候选：**A** 入口补症状表 · **B** 给"没读"加强制点 · **C** catalog 降级为目录（与 KB `AGENTS.md` 冲突，需 RFC）· **D** 先把"读了也没用"从推断变成实测。我的建议顺序：**D → A+C → B**（B 单独做最像 E7 那个"看起来生效实则没有"） |
-| **不要碰** | `collaboration` 仓库未 commit 的改动（`agreements/_index.md`、`catalog.json`、新增 `A20-外部输入分流.md`）；`agreements/` 已 **9/10 配额**；`evolutionary/` 的代码未 commit |
-
-**起步顺序**：`AGENTS.md` → `catalog.json`（看 `trigger`）→ 按需读 2–3 条 → 本文件。
+1. 本文件（先跑 `check-freshness.mjs`）
+2. `tasks/d-experiment/progress.md` —— 活跃任务全状态
+3. `tasks/d-experiment/anchors.md` —— **不可协商的约束**（每次新对话必读）
+4. `retro-context.md` —— 这一阶段对"上下文处理"的复盘（含已知失效点）
+5. 三个仓库 `git log --oneline -5`
 
 ## 已结束的阶段
 
-| 阶段 | 结果 | 快照（永不修改） |
+| 阶段 | 结果 | 快照 |
 | :--- | :--- | :--- |
-| **CLI MVP**（2026-09-16） | ✅ 工具侧达成：**600 tests / 44 files**、**107 entries / 0 issues**、11 命令、"AI 产出 → 入库"闭环 | `_archive/2026-09-16-cli-mvp.md` |
+| CLI MVP（09-16） | 600 tests / 44 files、11 命令、"AI 产出 → 入库"闭环 | `_archive/2026-09-16-cli-mvp.md` |
+| **知识库收敛**（09-16） | 约定 **19 → 10**；新增**集成层** `integrations/`；`A20`/`A21`；`meta/base-contract.md` 冻结基座；`ADR-0005..0010`；新增 `meta/known-gaps.md` 缺口账本 | 见 `collaboration` 的 `git log` |
+| 对照实验 D 前两轮 | r1 **有威胁**（基线回声）、r2 **处理未施加**（brief 把处理组关掉了）→ 均不入判据 | `_experiment/round-3-verdict.md`、`round-3-r2.md` |
 
-> 阶段内的子任务（`collab-apply` / `collab-parse` / `mcp-integration` / `cli-audit` /
-> `collaboration-refactor`）**均已收口**，状态在快照里，不在本表。
+## 陷阱（新会话必读）
 
-## 辅助文件
-
-| 文件 | 用途 |
-| :--- | :--- |
-| `parking-lot.md` | 未决项——暂不处理但不遗忘 |
-| `decisions.md` | 决策日志——何时做了什么决定 |
-
-## 维护协议
-
-**W10 工作记忆维护流程**在**独立的知识库仓库**里（本仓库内没有 `COLLABORATION/`）：
-
-- 有工具支持 URL 读取 → 读仓库里的 `workflows/W10-working-memory.md`
-- 否则 → 由用户粘贴
-
-### 归档状态（W10 的规模上限）
-
-| W10 规定 | 现状 |
-| :--- | :--- |
-| 每份进度文档 ≤ 100 行 | ✅ 已归档（2026-09-16）：主文档 **91 行**，第一至七轮冻结进 `_archive/` |
-| 总行数 > 500 → 强制归档 | ⏳ 仍 > 500（第八至十轮已入档；`spec.md` / `parse-spec` / `decisions` 待处理） |
-
-**归档规则**：归档文件**永不修改**；主文档只保留"当前状态"，历史进 `_archive/<日期>-<阶段>.md`。
+- **`_experiment/` 是"派发方工作台"，不是实验坏境**：判据表、基线、驱动器都在那儿，
+  **被试读得到**（同一台机器、同一用户、全盘可读）。r1 就是因此报废。做隔离实验前先读 `retro-context.md`。
+- **两臂必须串行、同一个中性路径** `D:\swap-station`；归档在 `_runs\<轮次>-<臂>`。
+- **别在"被试窗口"里跑任何命令**（一次 `Set-Clipboard` 就让 r1 的臂 B 报废）。
+- `agreements/` 配额 **10/10 已满**，`collab new agreement` 会被拒。
+- **AI 不 commit、不 push**（MCP 里连工具都不存在）；改动留在工作区待人确认。
+- 知识点工具脚本：`collab-cli` 的 `node dist/cli/index.js --dir <知识库> validate|catalog|index`。
+  注意 **`index` 是破坏性的**（会重排并写入空白列），改索引要手工改。
