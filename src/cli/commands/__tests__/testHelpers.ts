@@ -85,9 +85,10 @@ export async function toFail(
   return result;
 }
 
-export interface WriteEntryOptions {
-  /** 相对 COLLABORATION 的路径，如 `skills/S1.md` */
-  readonly relPath: string;
+/**
+ * 构造条目内容所需的信息。
+ */
+export interface EntryContentOptions {
   /** 条目 id（frontmatter.id） */
   readonly id: string;
   /** 条目类型 */
@@ -96,16 +97,21 @@ export interface WriteEntryOptions {
   readonly status?: string;
   /** 覆盖默认 author */
   readonly author?: string;
-  /** COLLABORATION 目录的绝对路径 */
-  readonly collabDir: string;
   /** 覆盖默认 created */
   readonly created?: string;
   /** 覆盖默认 updated */
   readonly updated?: string;
 }
 
+export interface WriteEntryOptions extends EntryContentOptions {
+  /** 相对 COLLABORATION 的路径，如 `skills/S1.md` */
+  readonly relPath: string;
+  /** COLLABORATION 目录的绝对路径 */
+  readonly collabDir: string;
+}
+
 /**
- * 写入一条最小合法条目。
+ * 构造一条最小合法条目的内容（不落盘）。
  *
  * @remarks
  * fixture 必须"通过生产校验"——**默认值按 kind 选择**：
@@ -113,13 +119,14 @@ export interface WriteEntryOptions {
  * - 其他 → `status: draft`
  *
  * 这是"测试 DDD"的落地：**fixture 用生产的"领域规则"，不用"测试捷径"**。
+ *
+ * 与 `writeEntry` 分开的理由：bundle 类测试需要"内容"而不是"文件"
+ * （内容要先算 sha256 再进 bundle）。**内容的构造只此一处**。
  */
-export async function writeEntry(opts: WriteEntryOptions): Promise<void> {
+export function minimalEntryContent(opts: EntryContentOptions): string {
   const {
-    relPath,
     id,
     kind,
-    collabDir,
     author = "test@example.com",
     created = "2026-09-14",
     updated = "2026-09-14",
@@ -127,7 +134,7 @@ export async function writeEntry(opts: WriteEntryOptions): Promise<void> {
 
   const status = opts.status ?? defaultStatusFor(kind);
 
-  const content = [
+  return [
     "---",
     `id: ${id}`,
     `type: ${kind}`,
@@ -148,6 +155,14 @@ export async function writeEntry(opts: WriteEntryOptions): Promise<void> {
     "## 关联",
     "",
   ].join("\n");
+}
+
+/**
+ * 写入一条最小合法条目。
+ */
+export async function writeEntry(opts: WriteEntryOptions): Promise<void> {
+  const { relPath, collabDir } = opts;
+  const content = minimalEntryContent(opts);
 
   const full = path.join(collabDir, relPath);
   await mkdir(path.dirname(full), { recursive: true });

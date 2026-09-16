@@ -12,19 +12,35 @@ import type {Issue} from "@/domain/validation/Issue";
 import type {RuleContext, RuleRegistry} from "@/domain/validation/Rule";
 
 /**
- * 标准规则集。
+ * 内容规则集：**不依赖 `_index.md`** 的规则。
  *
  * @remarks
- * 生产环境默认使用的规则集。
- * 测试时可注入自定义 `RuleRegistry` 覆盖。
+ * 用于"条目刚落盘、索引还没刷新"的场合（`collab apply` 的门禁）。
+ * 索引相关规则（`checkIndexForward` / `checkIndexExists` / `checkIndexDangling`）
+ * 要求"每条目都已登记在册"——对一批**刚刚落盘**的条目来说，
+ * 这个要求只能靠同批次的 `_index.md` 更新满足，否则新建条目必然失败。
+ *
+ * 见 anchors："产物必须通过 `collab validate`（无 index 相关规则）"。
  */
-export const standardRules: RuleRegistry = {
+export const contentRules: RuleRegistry = {
     perEntry: [
         typeMatchesDir,
         sectionsPresent,
         linksResolve,
-        checkIndexForward,
     ],
+    global: [],
+};
+
+/**
+ * 标准规则集：内容规则 + 索引规则。
+ *
+ * @remarks
+ * 生产环境默认使用的规则集（`validate` / `commit` / `push`）。
+ * 以 `contentRules` 为基，避免两份"内容规则"各自漂移。
+ * 测试时可注入自定义 `RuleRegistry` 覆盖。
+ */
+export const standardRules: RuleRegistry = {
+    perEntry: [...contentRules.perEntry, checkIndexForward],
     global: [checkIndexExists, checkIndexDangling],
 };
 

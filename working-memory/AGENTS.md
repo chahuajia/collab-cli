@@ -4,7 +4,9 @@
 >
 ## 依赖的外部知识库
 
-本项目的协作规范**不在本仓库内**——它在独立的 [COLLABORATION 仓库](https://github.com/chahuajia/collaboration)。
+本项目的协作规范**不在本仓库内**——它在独立的项目：
+本地地址：D:\actto\front\project\collaboration_aggregate\collaboration
+[COLLABORATION 仓库](https://github.com/chahuajia/collaboration)。
 
 **AI 进入项目时，需要读取该仓库**。读取方式：
 - 如果有工具支持 URL 读取 → 直接读

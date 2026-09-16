@@ -2,6 +2,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { cmdIndex } from "@/cli/commands";
+import { cmdApply } from "@/cli/commands/apply";
 import { cmdCommit } from "@/cli/commands/commit";
 import { cmdNew } from "@/cli/commands/new";
 import { cmdPush } from "@/cli/commands/push";
@@ -9,6 +10,7 @@ import { cmdValidate } from "@/cli/commands/validate";
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   new: cmdNew,
+  apply: cmdApply,
   index: cmdIndex,
   validate: cmdValidate,
   commit: cmdCommit,
@@ -24,6 +26,7 @@ Usage:
 
 Commands:
   new <type> [id]              Create a new entry from template
+  apply <bundle.json>          Apply a bundle: all files or none
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
   commit -m "<message>"        Validate + git add + git commit
@@ -38,6 +41,9 @@ Command options:
   --no-validate                Skip validation (for commit)
   --json                       Machine-readable output (for validate)
   --author <email>             Override git user.email (for new)
+  --dry-run                    Print the plan, write nothing (for apply)
+  --index                      Refresh affected _index.md files (for apply)
+  --commit                     Commit after validate passes (for apply)
   --dry-run                    Show what would be pushed (for push)
   --remote <name>              Remote name, default "origin" (for push)
   --branch <name>              Branch name, default current (for push)
@@ -48,6 +54,8 @@ Other:
 
 Examples:
   collab validate
+  collab apply bundle.json --dry-run
+  collab apply bundle.json --index --commit
   collab --dir /path/to/collaboration validate
   collab --dir /path/to/collaboration commit -m "feat: add S30"
   COLLAB_DIR=/path/to/collaboration collab push

@@ -34,7 +34,7 @@ export async function cmdPush(args: string[]): Promise<void> {
       branch: { type: "string" },
     },
     strict: false,
-  });
+  })
 
   const { collabDir, gitRoot } = findCollabRoot(process.cwd());
 

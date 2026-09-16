@@ -42,6 +42,20 @@ export const IssueCodeValues = {
     /** index引用不存在条目 */
     DanglingIndexEntry: 'DANGLING_INDEX_ENTRY',
 
+    // ─────────────────────────────────────────────
+    // collab apply —— bundle 落盘通道的问题
+    // ─────────────────────────────────────────────
+    /** bundle 本身不可用（JSON / 形状 / 空的 files） */
+    BundleInvalid: 'BUNDLE_INVALID',
+    /** bundle 中的路径不安全（绝对路径 / `..` / 不在白名单） */
+    BundlePathInvalid: 'BUNDLE_PATH_INVALID',
+    /** bundle 中的内容为空或纯空白 */
+    BundleEmptyContent: 'BUNDLE_EMPTY_CONTENT',
+    /** 声明的 sha256 与内容实际哈希不符 */
+    BundleHashMismatch: 'BUNDLE_HASH_MISMATCH',
+    /** bundle 的意图与工作区当前状态冲突 */
+    BundleConflict: 'BUNDLE_CONFLICT',
+
 } as const;
 
 export type IssueCode = ValueOf<typeof IssueCodeValues>;

@@ -19,14 +19,14 @@
 
 ## 进行中
 
-- 📋 **`collab apply` 规格待 review** —— 见 `tasks/collab-apply/spec.md`
+（空）
 
 ## 下一步（按依赖链）
 
 | # | 增量 | 为什么在这个位置 | 状态 |
 | :--- | :--- | :--- | :--- |
-| 1 | **`collab apply`** | 唯一阻断"AI 产出 → 入库"的缺口；也是本工作流自己的高频需求 | 规格待 review |
-| 2 | **`collab parse`**（A17 文本 → bundle.json） | 让对话式 AI 的输出可直接落盘 | 未开始 |
+| 1 | **`collab apply`** | 唯一阻断"AI 产出 → 入库"的缺口；也是本工作流自己的高频需求 | ✅ 已完成（`tasks/collab-apply/progress.md`） |
+| 2 | **`collab parse`**（A17 文本 → bundle.json） | 让对话式 AI 的输出可直接落盘；`apply` 的另一半 | 未开始 ← **下一步** |
 | 3 | **`collab catalog`**（路由表 + 适应度信号：引用数/拦截数/体积） | 上下文 O(n) → O(log n)，同时装上"收益可测" | 未开始 |
 | 4 | **配额**（`new` 在 active 超阈值时拒绝） | 让"加"包含"减"，唯一的环境型代谢机制 | 未开始 |
 | 5 | **浏览器插件**（可选壳） | 先证明 `parse` 不够用再做，否则会绑定站点、吃掉跨工具中立 | 待 `parse` 结论 |
@@ -55,6 +55,7 @@
 
 ## 最近决策
 
+- 2026-09-16：`collab apply` 落地；落盘门禁用 `contentRules`（不含索引规则）
 - 2026-09-16：`collaboration` 保持文档纯洁，工具与工作产物归 `collab-cli/working-memory`（见 `decisions.md`）
 - 2026-09-16：先修校验（206 → 0）再谈新功能
 

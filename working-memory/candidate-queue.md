@@ -60,3 +60,23 @@ A19 的 L5（落地）**不是"每轮立刻沉淀"** —— 是"**每轮记录�
 
 "派生优于复制" —— 即使代价是"多一次 import"。
 例外：当"派生"违反其他标准时（如"脚本必须独立运行"）—— 才允许硬编码 + 注释。
+
+## [2026-09-16] how-as-injected-function（How 以函数注入）
+
+**来源**：`collab apply` 的哈希校验
+**核心**：领域层只声明"需要一个能力"的类型（`type ContentHasher = (s: string) => string`），
+具体实现由基础设施注入。领域既不 import `node:crypto`，也不被迫把哈希推迟成"两步"。
+**判据**：这个能力是**纯计算**吗？是 → 可注入领域；否（带 IO）→ 只能进端口。
+**可能类型**：模式
+**关联**：[[S12]] [[S13]] [[patterns/dependency-decision]]
+**状态**：pending
+
+## [2026-09-16] rule-set-layering（规则集分层：子集即契约）
+
+**来源**：`collab apply` 的门禁
+**核心**：把规则集声明成"基集 + 扩展"（`contentRules` ⊂ `standardRules`），
+而不是两份并列清单。**谁是谁的子集**本身就是一条设计信息 ——
+"刚落盘的产物还不满足索引不变量"这件事，因此在代码里看得见。
+**可能类型**：模式
+**关联**：[[S27]] [[patterns/three-level-dry]] [[patterns/allowlist-over-denylist]]
+**状态**：pending
