@@ -8,7 +8,24 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **实战项目压测** | 🆕 **下一阶段 —— 待指定项目** | `_archive/2026-09-16-cli-mvp.md` §6 |
+| **实战项目压测** | 🔄 第 2 轮：查因已完，**待拍板** | `specs/round-2-diagnosis.md`（在项目仓库里） |
+
+## 下一个会话从这里开始
+
+> **上一个会话的上下文已到 ~80%。** 不要试图回忆 —— 按下面读。
+
+**项目**：`D:\actto\front\project\evolutionary_start\evolutionary`
+（换电站 DDD 演练：Next.js + Spring Boot。**产物是暴露报告，不是产品。**）
+
+| 项 | 内容 |
+| :--- | :--- |
+| **第 1 轮（已完成）** | 后端领域层 `Battery` 状态机 + 11 JUnit 测试（绿）。产物：`specs/round-1-report.md` |
+| **第 1 轮暴露了 7 条** | E1 路由表没被用（**最刺眼**）· E2 分类判据缺失 · E3 A8 三问没跑 · E4 反面没命中 · E5 ✅没滥加条目 · E6 规范绑栈(Java 的 Result) · E7 `maven.compiler.release` 静默失效 |
+| **第 2 轮第一步（已完成）** | "路由表为什么没被用"的查因：`specs/round-2-diagnosis.md`。**最简因**：不是"AI 忘了读"，而是 **108 条里 97 条没有可路由的 `trigger`**（`trigger` 不在 `base-contract` / `naming-conventions` / 任何模板里；`collab new` 不产生它；validate 不管它），**且没有任何机制会发现"没读"**。反事实检验：`trigger` 列对第 1 轮 4 个需求命中 **0/4**，而 KB `AGENTS.md` 那张手写症状表命中 2/4 |
+| **下一步（待你拍板）** | `specs/round-2-diagnosis.md` §七 的四条候选：**A** 入口补症状表 · **B** 给"没读"加强制点 · **C** catalog 降级为目录（与 KB `AGENTS.md` 冲突，需 RFC）· **D** 先把"读了也没用"从推断变成实测。我的建议顺序：**D → A+C → B**（B 单独做最像 E7 那个"看起来生效实则没有"） |
+| **不要碰** | `collaboration` 仓库未 commit 的改动（`agreements/_index.md`、`catalog.json`、新增 `A20-外部输入分流.md`）；`agreements/` 已 **9/10 配额**；`evolutionary/` 的代码未 commit |
+
+**起步顺序**：`AGENTS.md` → `catalog.json`（看 `trigger`）→ 按需读 2–3 条 → 本文件。
 
 ## 已结束的阶段
 
