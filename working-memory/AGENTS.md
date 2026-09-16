@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **evolutionary 压测** | 🔄 第 7 轮 JPA/H2 完成 | `evolutionary/specs/round-7-report.md` |
+| **evolutionary 压测** | ✅ 第 10 轮 GraphQL 否决完成 | `evolutionary/specs/round-10-report.md` |
 
 ## 已归档
 
