@@ -39,3 +39,10 @@
 | 2026-09-16 | `extractAllIdsByKind` → `extractAllIndexEntries`（带 `fileName`）；`extractIdsForKind` 改为派生 | 判断"已有行是否悬空"需要文件名，只给 id 会重演同一事故 | 生效中 |
 | 2026-09-16 | working-memory 里的**校验结论必须附可复现命令** | "108 entries / 0 issues" 是过期断言，实测 2 errors —— 断言会腐烂，命令不会 | 生效中 |
 | 2026-09-16 | **AI 不擅自替用户拍 spec 的未决问题**；未决项要镜像进 `decisions.md` 标"待拍板" | 上一轮 `apply` 我按建议默认值做了；这次先交规格等拍板，避免"猜方向"的返工 | 待用户确认 |
+
+| 日期 | 决策 | 理由 | 状态 |
+| :--- | :--- | :--- | :--- |
+| 2026-09-16 | **"承诺 vs 现实"成为一等核查项**：文档承诺的命令/文件/字段，必须能在现实里找到 | 实测：S10 把不存在的 `init`/`propose`/`pr`/`sync` 写成使用说明；`CODEOOWNERS` 引用不存在的 `@core-team`。这比死链更毒 —— 它在教 AI 引用不存在的东西 | 生效中 |
+| 2026-09-16 | 删除 `collaboration/.github/workflows/evolution.yml`（`echo TODO` 假绿灯） | 五项校验一项未做，且只在 PR 触发、5 次提交全是直推 → 从未运行。**虚假的绿灯比没有 CI 更糟**。校验规则只有一份（在 `collab validate`），CI 等 collab-cli 可分发后再接 | 生效中 |
+| 2026-09-16 | `.idea/` 退出跟踪（已在 `.gitignore` 中） | 被跟踪的 IDE 配置会持续产生噪音 diff | 生效中 |
+| 2026-09-16 | 五份外部评估（codex / ds / claude / deepseek-harness / 批判）视为**第一次外部选择压力** | 它们独立收敛到同一诊断："变异 107 次，选择 0 次"。这是系统第一次被外部检验 | 待用户确认 |

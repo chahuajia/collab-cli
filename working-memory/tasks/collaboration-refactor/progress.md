@@ -64,6 +64,36 @@
   patterns 是 `added 29`（真库 patterns 索引本就没列全，属正常补齐）。
 - 回归测试：`renderIndex.test.ts` 2 条 + `index.test.ts` T5 1 条。
 
+## 2026-09-16 第二轮：五份外部评估 → 去幻修复
+
+读了 `E:\file\notes\前端\ai\` 下五份评估（codex / ds / claude / deepseek-harness / 批判）。
+它们**独立收敛到同一诊断**：`evolution-log` 107 次新增、**0 次删除/合并**；成本被实时惩罚、收益无人测量 → 只朝"便宜"漂。
+
+### 核查结论：指控分三类（不照单执行）
+
+| 类别 | 内容 |
+| :--- | :--- |
+| ✅ 已修（不用动） | 死链 0、AGENTS.md 已建、bundle 已移出、`.gitignore` 已补、S5/S6 已修、A9/A10 已改名、A17 的 `id` 与文件名空格 |
+| ❌ 指控过期 | `templates/agreement-template.md` 围栏未闭合（实为 0 个围栏）；`evolution-log` 日期 `026-09-11`（实为正确） |
+| 🔴 仍是活的问题 | 见下 |
+
+### 本轮实修（"承诺 vs 现实"类）
+
+- ✅ `S10-collab-cli`：把不存在的 `init` / `propose` / `pr` / `sync` 从"使用说明"降为**设计草案**；
+  写明 `apply` 的**语义变更**（草案：确认 patch 生成 commit → 现实：落盘 bundle）
+- ✅ `profiles/_index` / `pruning-policy` / `S11`：`collab sync` 三处承诺全部标注**尚未实现**
+- ✅ `evolution.yml`：**删除**（五项校验一项未做、从未运行过的假绿灯）
+- ✅ `.idea/` 退出跟踪；`S5` 去掉误连的 `[[S4]]`；`templates/agreement-template.md` 关联补空格
+- ✅ `meta/interceptions.md`：把唯一一行标为**样例**，并显式写出"真实记录当前 0 条"
+- ✅ `AGENTS.md`：补"工作记忆不在本仓库"（A13 说阅读顺序 `working-memory → COLLABORATION`，但本仓库没这个目录）
+
+验证：`collab validate` → **108 entries / 0 issues**；`AGENTS.md` 44 行（A13 要求 ≤100）。
+
+### 未动（需拍板，见 `parking-lot.md`）
+
+拆协议/手册、A10+W8+S27+review-marginal-value 四合一、A18/A19/A14 降层、
+0 人社群治理归档、`domains/` 空壳、语义 id、`assumes` 字段、`dual-expression` 缺家、项目 vs 文章顺序。
+
 ## 生态验证的三个项目（待确认）
 
 | 项目 | 回答什么问题 | 性质 | 现状 |
