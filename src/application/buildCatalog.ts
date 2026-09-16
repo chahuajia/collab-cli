@@ -1,6 +1,21 @@
 import { fileNameOf } from "@/domain/validation/resolvesRef";
 import type { Workspace } from "@/domain/entry/WorkspaceLoader";
 
+/** catalog 落盘时的缩进 —— 只在这里出现一次。 */
+const CATALOG_JSON_INDENT = 2;
+
+/**
+ * 把 catalog 序列化为落盘内容。
+ *
+ * @remarks
+ * **唯一生产者。** CLI（`collab catalog`）与 MCP 都调它 ——
+ * 两个入口写出的 catalog 必须是同一种形状，否则
+ * `CATALOG_STALE` 会在两条路径之间随机报错。
+ */
+export function serializeCatalog(catalog: Catalog): string {
+  return `${JSON.stringify(catalog, null, CATALOG_JSON_INDENT)}\n`;
+}
+
 /** catalog 里的一条条目 —— 供 agent 路由用的最小信息。 */
 export interface CatalogEntry {
   readonly id: string;

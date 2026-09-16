@@ -6,14 +6,21 @@ import { cmdApply } from "@/cli/commands/apply";
 import { cmdCatalog } from "@/cli/commands/catalog";
 import { cmdCommit } from "@/cli/commands/commit";
 import { cmdFix } from "@/cli/commands/fix";
+import { cmdMcp } from "@/cli/commands/mcp";
+import { cmdMemory } from "@/cli/commands/memory";
 import { cmdNew } from "@/cli/commands/new";
+import { cmdParse } from "@/cli/commands/parse";
 import { cmdPush } from "@/cli/commands/push";
 import { cmdValidate } from "@/cli/commands/validate";
+import { COLLAB_VERSION } from "@/cli/lib/version";
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   new: cmdNew,
   apply: cmdApply,
   catalog: cmdCatalog,
+  parse: cmdParse,
+  memory: cmdMemory,
+  mcp: cmdMcp,
   index: cmdIndex,
   validate: cmdValidate,
   commit: cmdCommit,
@@ -32,6 +39,9 @@ Commands:
   new <type> [id]              Create a new entry from template
                                (--dry-run prints the plan, writes nothing)
   apply <bundle.json>          Apply a bundle: all files or none
+  parse <source.txt|->        Parse A17 text into bundle.json
+  mcp                          Run as an MCP server on stdio (for AI clients)
+  memory [--max-age <days>]    Check working-memory freshness
   catalog                      Generate catalog.json (the routing table)
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
@@ -119,7 +129,7 @@ export async function main(rawArgv: string[]): Promise<void> {
     return;
   }
   if (cmd === '--version' || cmd === '-v') {
-    console.log('collab-cli 0.3.0');
+  console.log(`collab-cli ${COLLAB_VERSION}`);
     return;
   }
 

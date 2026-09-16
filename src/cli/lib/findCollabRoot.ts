@@ -33,11 +33,18 @@ const LAYOUT_B_MARKERS = [
  *
  * @throws 当环境变量指向无效路径，或向上找找不到工作区时
  */
-export function findCollabRoot(startDir: string): CollabRoot {
-  // 1. 环境变量优先
-  const explicitDir = process.env.COLLAB_DIR;
-  if (explicitDir && explicitDir.length > 0) {
-    return resolveExplicitDir(explicitDir);
+export function findCollabRoot(
+  startDir: string,
+  explicitDir?: string | undefined,
+): CollabRoot {
+  // 1. 显式传入优先，其次环境变量
+  //
+  // 为什么第二个参数存在：MCP 服务器一次进程要服务**多个请求**，
+  // 每个请求可以带自己的 `dir`。若只能靠环境变量，逐请求的 dir 就会被
+  // 启动时的值覆盖 —— 那是"进程级状态泄漏到请求级"。
+  const explicit = explicitDir ?? process.env.COLLAB_DIR;
+  if (explicit !== undefined && explicit.length > 0) {
+    return resolveExplicitDir(explicit);
   }
 
   // 2. 向上找 .git

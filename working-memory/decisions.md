@@ -101,3 +101,9 @@
 | 2026-09-16 | 新增 frontmatter 字段 `trigger` / `anti-trigger`，进 `catalog.json` | 让 catalog 从"目录"变成"**路由表**" —— 每一条回答"什么时候该读我 / 不用读我"。**由人/模型写，工具生成不出来** | 生效中 |
 | 2026-09-16 | 只给**常驻条目**（8 条约定）补 trigger，其余待有使用数据再补 | 没写就不出现在 catalog 里 —— **"有 trigger"本身就是信号**。没有查询数据支撑的字段，填了就是编的 | 进行中 |
 | 2026-09-16 | 新增全局规则 `linksResolveInRootDocs`：**检查 `AGENTS.md` / `ROOT.md` / `README.md` 里的链接** | 它们不是条目（不在 kind 目录下）→ `linksResolve` 从来看不到它们。但它们是**最常被读**的文件，入口里的死链是最贵的一种 | 已完成 |
+| 2026-09-16 | **功能级复盘不进 `agreements/`**：只写 `meta/interceptions.md` 一行 + 够格才进 `patterns/` | 否则"每个功能都复盘"会变成新的 `A4`（触发太宽 → 每次尾部追加元讨论 → 79KB bundle）。**复盘的价值必须证明自己是"模型不知道的"，才配占一个条目** | 已确认 |
+| 2026-09-16 | **`collab parse` 的 6 个决策全按推荐**（用户拍板）：D1 按工作区现状推断 action / D2 支持 stdin / D3 默认写 `bundle.json` / D4 只留 `--stdout` / D5 标记宽容解析 / D6 落地后删旧脚本 | 让"AI 产出 → 入库"的进料口闭合：`parse`（切分）→ `apply`（落盘），两种失败模式分开 | 已完成 |
+| 2026-09-16 | 真 CI **降级到后面** | 用户裁决："先让 CLI 和 collaboration 最小可用且正确" | 待办 |
+| 2026-09-16 | 新增 `patterns/waiting-is-a-decision-window`；`A10` 的五阶段改成 **mermaid 状态机** | 图把"应不应该"变成"存不存在" —— `规格` 到 `实现` 没有直连的边，跳过评审就是**图里不存在的转移** | 已完成 |
+| 2026-09-16 | 归档 `collaboration-refactor/progress.md`（231 → 91 行） | W10 的 100 行上限被破 2.3 倍，而这条规则从未执行过 | 已完成 |
+| 2026-09-16 | 新增 **`collab memory`**：检查工作记忆里"当前状态类"文件的新鲜度（`progress.md` / `anchors.md` / `README.md` ≤7 天，需带 `更新：` 日期） | working-memory 是全库**唯一**"AI 写、AI 读并相信、没人检查"的地方 —— 于是它最先腐烂。日志类（`decisions` / `parking-lot` / `spec`）与 `_archive/` **不查**：旧不等于错 | 已完成 |

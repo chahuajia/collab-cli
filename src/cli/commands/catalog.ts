@@ -1,15 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { buildCatalog } from "@/application/buildCatalog";
+import { buildCatalog, serializeCatalog } from "@/application/buildCatalog";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
-import type { Catalog } from "@/application/buildCatalog";
 
 /** 默认输出文件名（写在知识库根）。 */
 const DEFAULT_OUT = "catalog.json";
-
-const JSON_INDENT = 2;
 
 /**
  * `collab catalog [--out <path>] [--stdout]`
@@ -39,7 +36,7 @@ export async function cmdCatalog(args: string[]): Promise<void> {
   });
 
   if (values.stdout === true) {
-    process.stdout.write(serialize(catalog));
+    process.stdout.write(serializeCatalog(catalog));
     return;
   }
 
@@ -48,7 +45,7 @@ export async function cmdCatalog(args: string[]): Promise<void> {
     collabDir,
     typeof outArg === "string" && outArg.length > 0 ? outArg : DEFAULT_OUT,
   );
-  fs.writeFileSync(outPath, serialize(catalog), "utf8");
+  fs.writeFileSync(outPath, serializeCatalog(catalog), "utf8");
 
   console.log(
     `✔ catalog: ${catalog.summary.total} entries → ${path.relative(
@@ -56,8 +53,4 @@ export async function cmdCatalog(args: string[]): Promise<void> {
       outPath,
     )}`,
   );
-}
-
-function serialize(catalog: Catalog): string {
-  return JSON.stringify(catalog, null, JSON_INDENT) + "\n";
 }

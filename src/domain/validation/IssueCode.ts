@@ -68,6 +68,16 @@ export const IssueCodeValues = {
     /** 顶层目录未在基座契约里声明（等于悄悄改基座） */
     UndeclaredDir: 'UNDECLARED_DIR',
 
+    // ─────────────────────────────────────────────
+    // collab parse —— A17 文本协议的切分问题
+    // ─────────────────────────────────────────────
+    /** 文本结构不合法（块外有内容 / 未闭合 / 空输入） */
+    ParseInvalid: 'PARSE_INVALID',
+    /** 块内容为空或纯空白 */
+    ParseEmptyBlock: 'PARSE_EMPTY_BLOCK',
+    /** 同一 path 出现两次 */
+    ParseDuplicatePath: 'PARSE_DUPLICATE_PATH',
+
 } as const;
 
 export type IssueCode = ValueOf<typeof IssueCodeValues>;
