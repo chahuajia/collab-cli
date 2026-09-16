@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-16 23:55
+**更新**：2026-09-17 00:12
 
 ## ⚠️ 先跑这个，否则别信下面的"活跃任务"
 
@@ -12,31 +12,30 @@ node check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `84a849b` |
-| `collaboration` | `9729913` |
-| `evolutionary` | `5e0122b` |
+| `collab-cli` | `ea35e84` |
+| `collaboration` | `0225e23` |
+| `evolutionary` | `944c67f` |
 
-> evolutionary / collaboration 工作区脏，HEAD 未变（未 commit）。
+> evolutionary / collaboration / collab-cli WM 工作区脏（第 8–9 轮未 commit）。
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **evolutionary 压测** | 🔄 第 7 轮 JPA/H2 完成 | `evolutionary/specs/round-7-report.md` |
+| **evolutionary 压测** | 🔄 第 9 轮 rewrite/BFF 完成 | `evolutionary/specs/round-9-report.md` |
 
-## 第 4–7 轮
+## 第 4–9 轮
 
 | 轮 | 结果 |
 | :--- | :--- |
-| 4 | 领域 Station/Swap；S13 拦截 |
-| 5 | 应用层；**不**引 Spring；状态机专条不建 |
-| 6 | 三问后**引入** Spring REST；架构测试钉领域纯净；interceptions **3** |
-| 7 | 三问后**引入** JPA+H2；`StationJpaEntity` 映射；domain-purity 再拦；interceptions **4**；35 测绿 |
+| 4–7 | 领域→应用→Spring→JPA；interceptions **4**；已 commit `944c67f` |
+| 8 | Next.js；CORS/GET/种子；拦截 +0；**未 commit** |
+| 9 | rewrite 同域 `/api`；活验 200/409；拦截 +0；**未 commit** |
 
 ## 下一轮候选
 
-前端 Next.js · 或收口 commit（AI 不擅自做）
+第 8–9 轮收口 commit · GraphQL（再跑三问）· 回 CLI（AI 不擅自 push）
 
 ## 陷阱
 
-AI 不 commit/push；agreements 满；不开 A/B
+AI 不 push；agreements 满；不开 A/B

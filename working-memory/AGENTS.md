@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **evolutionary 压测** | 🔄 第 7 轮 JPA/H2 完成 | `evolutionary/specs/round-7-report.md` |
+| **evolutionary 压测** | 🔄 第 9 轮 rewrite/BFF 完成 | `evolutionary/specs/round-9-report.md` |
 
 ## 已归档
 
