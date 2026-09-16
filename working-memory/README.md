@@ -12,7 +12,7 @@ node check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `COMMIT_HASH` |
+| `collab-cli` | `b14f788` |
 | `collaboration` | `4e2e615` |
 | `evolutionary` | `468f5b0` |
 
