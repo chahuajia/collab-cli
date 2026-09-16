@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **cli-development** | 🔄 进行中 | `tasks/cli-development/progress.md` |
+| **evolutionary 压测** | 🔄 第 7 轮 JPA/H2 完成 | `evolutionary/specs/round-7-report.md` |
 
 ## 已归档
 

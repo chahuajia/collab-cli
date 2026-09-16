@@ -18,14 +18,14 @@
 
 | 编号 | 严重度 | 位置 | 证据 | 说明 |
 | :--- | :--- | :--- | :--- | :--- |
-| F1 | ~~major~~ **已修** | `package.json` scripts | `scripts.dev = "tsx src/bin/collab.ts"`；`Test-Path src/bin` → **False** | `npm run dev` 必然失败。`script:add-author` / `script:add-dates` / `script:migrate-write-entry` 同样指向不存在的 `.ts`（只有 `.mjs` 存在）—— **4 个 script 全是死的**。已改为指向真实入口 |
-| F2 | **major** | git 索引 | `git status --porcelain` → 7 条 `AD`：`src/cil/**`×6 + `indexConsistency.test.ts` | 文件在盘上已不存在，但**已暂存"新增"**。一次 commit 会把这些死文件写回仓库 |
-| F3 | minor | `src/cli/commands/fix.ts:75` | `if (unfixable.length > 0 && !dryRun) process.exit(1)` | 同一份输入，`--dry-run` 退 0、真实运行退 1 ⇒ **dry-run 不能当验收**。与 `new --dry-run` 那次教训同源：dry-run 的退出码必须与真实运行一致，否则它只是预览 |
-| F4 | minor | `validate.ts` 文档头 / CLI 入口 | 文档写"退出码 2：参数错误"；实测 `collab nope` → **1**、`collab parse`（缺参数）→ **1** | 且命令普遍用 `parseArgs({strict:false})`，**未知选项被静默忽略**。这个"2"从未出现过 |
-| F5 | minor | `--help` | help 写 ``--json  Machine-readable output (for validate)``；`apply.ts` 也有 `--json` | 适用范围写窄了，且两者 JSON 形状不同（`validate` 是 issues 报告，`apply` 是 status+operations） |
-| F6 | minor | `--help` | `--dry-run` 在 "Command options" 出现两次（一次归 new/apply，一次归 push）；`new`/`fix` 的 `--dry-run` 未列入 | 同一个开关四种语义，读者无法判断"哪些命令支持" |
-| F7 | nit | `--help` | ``parse <source.txt\|->        Parse A17 text``（少一格，与上下行不对齐） | 纯排版 |
-| F8 | minor | `scripts/` | 12 个脚本，其中 `extract-bundle.mjs` / `split-collab.mjs` / `recover.mjs` / `collab-audit{,2}.mjs` / `when.mjs` 是历史遗留 | `extract-bundle.mjs` 正是 `collab parse` 落地后该删的（spec D6，已挂 4 轮）。**每个仍在仓库里的旧通道都是一份会漂移的真相源** |
+| F1 | ~~major~~ **已修** | `package.json` scripts | `scripts.dev = "tsx src/bin/collab.ts"`；`Test-Path src/bin` → **False** | `npm run dev` 必然失败。已改为 `tsx src/cli/index.ts`；三个 `script:*` 指向 `.mjs` |
+| F2 | ~~major~~ **已修** | git 索引 | 曾有 7 条 `AD`：`src/cil/**` | 2026-09-16 23:25 复查：工作区无 `AD` 幽灵条目 |
+| F3 | ~~minor~~ **已观察关闭** | `fix.ts` | 曾：`unfixable && !dryRun` 才退 1 | 当前 `fix` 无「不可修」分支；`--dry-run` 与真实运行同退 0（有测试钉死） |
+| F4 | ~~minor~~ **已修** | validate 文档 / README | 曾承诺退出码 2 | 文档与 `--help` 明确：**只有 0/1** |
+| F5 | ~~minor~~ **已修** | `--help` | `--json` 只写 validate | help 改为 `validate / apply`，并注明形状不同 |
+| F6 | ~~minor~~ **已修** | `--help` | `--dry-run` 出现两次且漏 new/fix | 合并为一行：`new / apply / fix / push` |
+| F7 | ~~nit~~ **已修** | `--help` | `parse` 行少一格 | 已对齐 |
+| F8 | ~~minor~~ **部分已修** | `scripts/` | 一次性脚本第二真相源 | 已删：`split-collab` / `recover` / `collab-audit{,2}` / `when`（`extract-bundle` 此前已不在）。保留迁移类：`add-*` / `migrate-*` / `rename-*` |
 
 ## 详细分析
 
@@ -86,11 +86,10 @@ scripts.script:migrate-write-entry = tsx scripts/migrate-write-entry.ts → 只�
 
 ## 建议下一步
 
-1. **F1 + F2**（约 5 分钟，纯机械）—— 死 script 与幽灵条目都属于"一次 commit 就会出事"
-2. **F3**：让 `--dry-run` 与真实运行同判
-3. **加一条 help 一致性测试**（命令集合 / 选项集合对照 `COMMANDS` 表）—— 把 F4–F7 这类漂移变成机器能抓的
-4. **D6 落地**：删 `extract-bundle.mjs` 等旧脚本
-5. 真 CI：仍按用户裁决放后面
+1. ~~F1 + F2~~ **已修**
+2. ~~F3 / F4–F7 / D6 旧脚本~~ **本轮已做**
+3. 真 CI：仍按用户裁决放后面
+4. `parking-lot` 里需拍板项：链接锚点形式 · 语义 id · 拦截账本真实记账
 
 ## 附：本次子 agent 投递失败
 

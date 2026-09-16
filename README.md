@@ -33,12 +33,8 @@ node bin/collab.js --help
 | `collab push` | validate + `git push` |
 | `collab mcp [--dir <path>]` | 以 **MCP 服务器**运行（stdio），供 AI 客户端调用 |
 
-退出码：`0` 通过、`1` 有阻断性问题**或参数错误**。
-
-> ⚠️ `validate.ts` 的文档头写着"`2` = 参数错误"，但代码里从未产生过 `2`
-> （未知命令与缺参数都由入口统一退 `1`，且命令普遍用 `parseArgs({strict:false})`，
-> 未知选项被静默忽略）。见 `working-memory/tasks/cli-audit/findings.md` F4 ——
-> 要么实现它，要么删掉这个承诺；**不写一个不存在的退出码**。
+退出码：`0` 通过、`1` 有阻断性问题或参数错误。**没有退出码 2**
+（未知命令 / 缺参数 / 校验红 都走 `1`）。
 
 ## MCP 接入
 

@@ -44,37 +44,38 @@ Usage:
 
 Commands:
   new <type> [id]              Create a new entry from template
-                               (--dry-run prints the plan, writes nothing)
   apply <bundle.json>          Apply a bundle: all files or none
-  parse <source.txt|->        Parse A17 text into bundle.json
+  parse <source.txt|->         Parse A17 text into bundle.json
   mcp                          Run as an MCP server on stdio (for AI clients)
   memory [--max-age <days>]    Check working-memory freshness
   catalog                      Generate catalog.json (the routing table)
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
-  fix [--dry-run]              Fill in mechanical frontmatter fields (add-only)
+  fix                          Fill in mechanical frontmatter fields (add-only)
   commit -m "<message>"        Validate + git add + git commit
   push                         Validate + git push
 
 Global options:
-  --dir <path>                 Specify the COLLABORATION workspace directory
-                               (also: COLLAB_DIR=<path> env variable)
+  --dir <path>                 COLLABORATION workspace (also: COLLAB_DIR env)
 
-Command options:
-  -m, --message <message>      Commit message (for commit)
-  --no-validate                Skip validation (for commit)
-  --json                       Machine-readable output (for validate)
-  --author <email>             Override git user.email (for new)
-  --dry-run                    Print the plan, write nothing (for apply)
-  --index                      Refresh affected _index.md files (for apply)
-  --commit                     Commit after validate passes (for apply)
-  --dry-run                    Show what would be pushed (for push)
-  --remote <name>              Remote name, default "origin" (for push)
-  --branch <name>              Branch name, default current (for push)
+Command options (only where listed):
+  --dry-run                    new / apply / fix / push — plan only, write nothing
+  --json                       validate / apply — machine-readable (shapes differ)
+  --index                      apply — refresh affected _index.md files
+  --commit                     apply — commit after validate passes
+  -m, --message <message>      commit — commit message
+  --no-validate                commit — skip validation
+  --author <email>             new — override git user.email
+  --remote <name>              push — remote, default "origin"
+  --branch <name>              push — branch, default current
 
 Other:
   --help, -h                   Show this help
   --version, -v                Show version
+
+Exit codes:
+  0                            ok
+  1                            blocking issue or bad args (there is no exit code 2)
 
 Examples:
   collab validate
