@@ -2,8 +2,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  toFail,
   toSucceed,
   useTestWorkspace,
+  writeIndex,
 } from "@/cli/commands/__tests__/testHelpers";
 
 const ctx = useTestWorkspace();
@@ -144,6 +146,73 @@ describe("collab fix", () => {
     await writeFile(abs(REL), entryWithoutAliases("S30"), "utf8");
     const result = await toSucceed(["fix"], ctx().root, ctx().envOverrides);
     expect(result.stdout).toContain("fixed 1 file(s)");
+  });
+
+  describe("validate 门禁联动（round-5）", () => {
+    async function arrangeIndexedEntry(id: string, rel: string): Promise<void> {
+      await writeIndex(ctx().collabDir, "skills", [id]);
+      await writeFile(abs(rel), entryWithoutAliases(id), "utf8");
+    }
+
+    it("C1: validate → fix → validate clears ID_NOT_IN_ALIASES", async () => {
+      await arrangeIndexedEntry("S30", REL);
+
+      const before = await toFail(["validate"], ctx().root, ctx().envOverrides);
+      expect(before.stdout).toContain("ID_NOT_IN_ALIASES");
+
+      await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+
+      const after = await toSucceed(
+        ["validate"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(after.stdout).toContain("0 issues");
+      expect(after.stdout).not.toContain("ID_NOT_IN_ALIASES");
+    });
+
+    it("C2: --dry-run leaves validate failing", async () => {
+      await arrangeIndexedEntry("S30", REL);
+
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+      await toSucceed(["fix", "--dry-run"], ctx().root, ctx().envOverrides);
+
+      const still = await toFail(["validate"], ctx().root, ctx().envOverrides);
+      expect(still.stdout).toContain("ID_NOT_IN_ALIASES");
+    });
+
+    it("C3: unparseable file stays broken after fix", async () => {
+      const broken = "没有 frontmatter 的文件\n";
+      await writeFile(abs(REL), broken, "utf8");
+
+      const before = await toFail(["validate"], ctx().root, ctx().envOverrides);
+      expect(before.exitCode).toBe(1);
+
+      await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+      expect(await readFile(abs(REL), "utf8")).toBe(broken);
+
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+    });
+
+    it("C4: fixes multiple entries in one pass", async () => {
+      const rel2 = "skills/S31-fix-me-too.md";
+      await writeIndex(ctx().collabDir, "skills", ["S30", "S31"]);
+      await writeFile(abs(REL), entryWithoutAliases("S30"), "utf8");
+      await writeFile(abs(rel2), entryWithoutAliases("S31"), "utf8");
+
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+
+      const fixed = await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+      expect(fixed.stdout).toContain("fixed 2 file(s)");
+
+      const after = await toSucceed(
+        ["validate"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(after.stdout).toContain("2 entries");
+      expect(after.stdout).toContain("0 issues");
+    });
   });
 
 });
