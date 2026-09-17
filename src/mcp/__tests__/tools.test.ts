@@ -1,9 +1,13 @@
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { execa } from "execa";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { minimalEntryContent } from "@/cli/commands/__tests__/testHelpers";
+import {
+  CLI_ENTRY,
+  minimalEntryContent,
+} from "@/cli/commands/__tests__/testHelpers";
 import { EntryKindValues } from "@/domain/entry/types";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { runTool } from "@/mcp/handlers";
@@ -329,6 +333,150 @@ describe("MCP 工具", () => {
         /`bundle` is required/,
       );
     });
+  });
+});
+
+describe("CLI catalog ↔ MCP collab_catalog（round-10）", () => {
+  let gitRoot: string;
+  let collabDir: string;
+  let envOverrides: Record<string, string>;
+  let mcpCtx: ToolContext;
+
+  async function runCli(args: string[]) {
+    return execa("node", [CLI_ENTRY, ...args], {
+      cwd: gitRoot,
+      reject: false,
+      env: { ...process.env, ...envOverrides },
+    });
+  }
+
+  function catalogCore(raw: Record<string, unknown>) {
+    return {
+      summary: raw.summary,
+      entries: raw.entries,
+    };
+  }
+
+  beforeEach(async () => {
+    gitRoot = await mkdtemp(path.join(tmpdir(), "collab-mcp-r10-"));
+    collabDir = path.join(gitRoot, "COLLABORATION");
+
+    const emptyGitConfig = path.join(gitRoot, ".empty-gitconfig");
+    await writeFile(emptyGitConfig, "");
+    envOverrides = {
+      GIT_CONFIG_GLOBAL: emptyGitConfig,
+      GIT_CONFIG_SYSTEM: emptyGitConfig,
+    };
+
+    await execa("git", ["init", "-q"], {
+      cwd: gitRoot,
+      env: { ...process.env, ...envOverrides },
+    });
+    await execa(
+      "git",
+      ["config", "--local", "user.email", "test@example.com"],
+      { cwd: gitRoot, env: { ...process.env, ...envOverrides } },
+    );
+    await execa("git", ["config", "--local", "user.name", "Test"], {
+      cwd: gitRoot,
+      env: { ...process.env, ...envOverrides },
+    });
+
+    for (const sub of ["agreements", "skills"]) {
+      await mkdir(path.join(collabDir, sub), { recursive: true });
+    }
+
+    await writeFile(
+      path.join(collabDir, AGREEMENT_REL),
+      minimalEntryContent({
+        id: AGREEMENT_ID,
+        kind: EntryKindValues.Agreement,
+        status: "active",
+      }),
+      "utf8",
+    );
+
+    mcpCtx = { cwd: gitRoot, dir: collabDir };
+  });
+
+  afterEach(async () => {
+    await rm(gitRoot, { recursive: true, force: true });
+  });
+
+  it("C1: CLI catalog.json matches MCP collab_catalog entries", async () => {
+    expect((await runCli(["catalog"])).exitCode).toBe(0);
+
+    const onDisk = JSON.parse(
+      await readFile(path.join(collabDir, "catalog.json"), "utf8"),
+    );
+    const outcome = runTool("collab_catalog", { dir: collabDir }, mcpCtx);
+    const live = JSON.parse(outcome.text);
+
+    expect(catalogCore(live)).toEqual(catalogCore(onDisk));
+    expect(outcome.isError).toBe(false);
+  });
+
+  it("C2: MCP collab_catalog still writes nothing", async () => {
+    await runCli(["catalog"]);
+    const before = await readFile(
+      path.join(collabDir, "catalog.json"),
+      "utf8",
+    );
+
+    runTool("collab_catalog", { dir: collabDir }, mcpCtx);
+
+    expect(await readFile(path.join(collabDir, "catalog.json"), "utf8")).toBe(
+      before,
+    );
+  });
+
+  it("C3: MCP type filter is a subset of on-disk catalog", async () => {
+    await writeFile(
+      path.join(collabDir, "skills/S1.md"),
+      minimalEntryContent({
+        id: "S1",
+        kind: EntryKindValues.Skill,
+      }),
+      "utf8",
+    );
+    await runCli(["catalog"]);
+
+    const onDisk = JSON.parse(
+      await readFile(path.join(collabDir, "catalog.json"), "utf8"),
+    );
+    const outcome = runTool(
+      "collab_catalog",
+      { dir: collabDir, type: "skill" },
+      mcpCtx,
+    );
+    const filtered = JSON.parse(outcome.text);
+
+    expect(filtered.matched).toBe(1);
+    expect(onDisk.entries.map((e: { id: string }) => e.id)).toContain("S1");
+    expect(filtered.entries).toEqual(
+      onDisk.entries.filter((e: { type: string }) => e.type === "skill"),
+    );
+  });
+
+  it("C4: stale on-disk catalog while MCP stays live", async () => {
+    await runCli(["catalog"]);
+    await writeFile(
+      path.join(collabDir, "skills/S2.md"),
+      minimalEntryContent({
+        id: "S2",
+        kind: EntryKindValues.Skill,
+      }),
+      "utf8",
+    );
+
+    const live = JSON.parse(
+      runTool("collab_catalog", { dir: collabDir }, mcpCtx).text,
+    );
+    expect(live.summary).toMatchObject({ total: 2 });
+
+    const validate = await runCli(["validate"]);
+    expect(validate.exitCode).not.toBe(0);
+    expect(validate.stdout).toContain("CATALOG_STALE");
   });
 });
 

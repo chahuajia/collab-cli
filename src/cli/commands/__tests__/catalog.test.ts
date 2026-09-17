@@ -1,9 +1,11 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { execa } from "execa";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  CLI_ENTRY,
   toFail,
   toSucceed,
   useTestWorkspace,
@@ -96,6 +98,127 @@ describe("collab catalog", () => {
       );
       expect(result.stdout).toContain("validate failed");
       expect(result.stdout).toContain("Aborting commit");
+    });
+  });
+
+  describe("publish chain with catalog (round-11)", () => {
+    let gitRoot: string;
+    let collabDir: string;
+    let remoteDir: string;
+    let envOverrides: Record<string, string>;
+
+    beforeEach(async () => {
+      gitRoot = await mkdtemp(path.join(tmpdir(), "collab-catalog-r11-"));
+      collabDir = path.join(gitRoot, "COLLABORATION");
+      remoteDir = path.join(gitRoot, "remote.git");
+
+      const emptyGitConfig = path.join(gitRoot, ".empty-gitconfig");
+      await writeFile(emptyGitConfig, "");
+      envOverrides = {
+        GIT_CONFIG_GLOBAL: emptyGitConfig,
+        GIT_CONFIG_SYSTEM: emptyGitConfig,
+      };
+
+      await mkdir(remoteDir);
+      await execa("git", ["init", "--bare", "-q", "-b", "main"], {
+        cwd: remoteDir,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa("git", ["init", "-q", "-b", "main"], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa(
+        "git",
+        ["config", "--local", "user.email", "test@example.com"],
+        { cwd: gitRoot, env: { ...process.env, ...envOverrides } },
+      );
+      await execa("git", ["config", "--local", "user.name", "Test"], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa("git", ["remote", "add", "origin", remoteDir], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+
+      for (const sub of ["skills", "agreements", "patterns", "workflows", "meta/decision-records"]) {
+        await mkdir(path.join(collabDir, sub), { recursive: true });
+      }
+
+      await writeFile(path.join(gitRoot, "README.md"), "baseline\n", "utf8");
+      await execa("git", ["add", "."], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa("git", ["commit", "-q", "-m", "initial"], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa("git", ["push", "-u", "origin", "main"], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+      await execa("node", [CLI_ENTRY, "catalog"], {
+        cwd: gitRoot,
+        env: { ...process.env, ...envOverrides },
+      });
+    });
+
+    afterEach(async () => {
+      await rm(gitRoot, { recursive: true, force: true });
+    });
+
+    async function cli(args: string[]) {
+      return execa("node", [CLI_ENTRY, ...args], {
+        cwd: gitRoot,
+        reject: false,
+        env: { ...process.env, ...envOverrides },
+      });
+    }
+
+    it("C1: new + index + commit blocked without catalog refresh", async () => {
+      await writeIndex(collabDir, "skills", []);
+      expect((await cli(["new", "skill", "S30"])).exitCode).toBe(0);
+      expect((await cli(["index", "skills"])).exitCode).toBe(0);
+
+      const commit = await cli(["commit", "-m", "feat: add S30"]);
+      expect(commit.exitCode).not.toBe(0);
+      expect(commit.stdout).toContain("validate failed");
+    });
+
+    it("C2: catalog refresh clears validate", async () => {
+      await writeIndex(collabDir, "skills", []);
+      await cli(["new", "skill", "S30"]);
+      await cli(["index", "skills"]);
+      await cli(["catalog"]);
+
+      const validate = await cli(["validate"]);
+      expect(validate.exitCode).toBe(0);
+      expect(validate.stdout).toContain("0 issues");
+    });
+
+    it("C3: commit succeeds after catalog", async () => {
+      await writeIndex(collabDir, "skills", []);
+      await cli(["new", "skill", "S30"]);
+      await cli(["index", "skills"]);
+      await cli(["catalog"]);
+
+      const commit = await cli(["commit", "-m", "feat: add S30"]);
+      expect(commit.exitCode).toBe(0);
+      expect(commit.stdout).toContain("committed");
+    });
+
+    it("C4: push --dry-run after full chain", async () => {
+      await writeIndex(collabDir, "skills", []);
+      await cli(["new", "skill", "S30"]);
+      await cli(["index", "skills"]);
+      await cli(["catalog"]);
+      await cli(["commit", "-m", "feat: add S30"]);
+
+      const push = await cli(["push", "--dry-run"]);
+      expect(push.exitCode).toBe(0);
+      expect(push.stdout).toContain("feat: add S30");
     });
   });
 });

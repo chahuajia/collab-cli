@@ -22,7 +22,9 @@
 | 7 | new → index → commit 发布链 | ✅ |
 | 8 | new → index → commit → push 全链 | ✅ |
 | 9 | catalog ↔ CATALOG_STALE 门禁 | ✅ |
-| 10+ | 待暴露 | — |
+| 10 | CLI catalog ↔ MCP collab_catalog | ✅ |
+| 11 | 发布链补 catalog 步 | ✅ |
+| 12+ | 待暴露（见 retro） | — |
 
 ## 测量
 
