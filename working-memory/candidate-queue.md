@@ -17,4 +17,11 @@
 
 ## 当前队列
 
-（空）
+| 候选 | 来源 | 摘录 |
+| :--- | :--- | :--- |
+| project-evidence-vs-kb-ledger | evolutionary 0→7 复盘 | `evolution-log`/`interceptions` 主表只留跨项目摘要；项目证据留业务仓 |
+| agent-workspace-boundaries | 同上 | FE/BE 集群：路径约定 + `wm/agents/{fe,be}` + `wip`；不为此拆仓 |
+| pattern-id-alignment | 命名漂移 | pattern 补稳定短 id（P-）/aliases；与 A/W/S 同构演进 |
+
+证据：`evolutionary/.../tasks/_archive/2026-09-17-selective-pressure-retro.md`  
+触发：人确认后 W5；注意代谢配额。
