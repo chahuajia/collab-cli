@@ -22,14 +22,17 @@
 
 见 `tasks/_completed/`。
 
-## 扩展点（记录，不实施）
+## 仓库归属（2026-09-17 决策）
 
-**当前只有一个项目。** 未来若有多项目，用**前缀**或**目录层级**区分：
+| 仓库 | 放什么 | 不放什么 |
+| :--- | :--- | :--- |
+| **collab-cli** | `collab-pressure`、CLI 开发、MCP/validate 工具链压测 | 换电等业务域规格与契约 |
+| **evolutionary** | 前后端实现 + 该产品的 WM/压测 | CLI 工具代码 |
+| **collaboration** | 长期 KB 条目 | 任务进度、业务规格 |
+| **aggregate 根 / shared 仓** | ≥2 消费者才提取的共享协议/脚本 | 单仓私货 |
 
-- **方式 A**：`tasks/collab-cli-<task>/`、`tasks/other-<task>/`
-- **方式 B**：`projects/collab-cli/tasks/...`、`projects/other/tasks/...`
-
-**触发条件**：出现第二个项目时升级。
+业务压测（如 `battery-pressure`）→ **业务仓** `working-memory/tasks/`，不留在 collab-cli。
+详见 `decisions.md` 2026-09-17 三行。
 
 ## 协议
 

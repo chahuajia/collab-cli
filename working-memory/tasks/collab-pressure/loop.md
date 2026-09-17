@@ -1,6 +1,6 @@
 # Collaboration 复杂场景压测 — 长运行
 
-**更新**：2026-09-17 09:58 ｜ **间隔**：1s（**one-shot**，每 tick 结束后再 arm）
+**更新**：2026-09-17 10:51 ｜ **间隔**：800ms（**one-shot**）｜ battery-pressure 已迁出 evolutionary
 
 ## 句柄
 
@@ -26,7 +26,7 @@
 | 1 | ✅ index --dry-run |
 | 2 | ✅ MCP validate + dir 真库 113/0 |
 | 3 | ✅ apply 派生链 + commit 门禁 |
-| 4 | 待：下一复杂场景 |
+| 4 | 待：parse + apply 联动 |
 
 ## 停止
 

@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 10:31
+**更新**：2026-09-17 10:51
 
 ## ⚠️ 先跑这个
 
@@ -12,18 +12,21 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `3de03ad` |
+| `collab-cli` | `b64f6c4` |
 | `collaboration` | `2af8bed` |
-| `evolutionary` | `1cf3bb4` |
+| `evolutionary` | （迁移 commit 后更新） |
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **battery-pressure 长运行 800ms** | ✅ 阶段 0–7 收口 | `tasks/battery-pressure/retro.md` |
-| **collab-pressure 复杂场景压测** | 🔄 第 3 轮完成 | `tasks/collab-pressure/` |
+| **collab-pressure 长运行** | 🔄 待 round 4 | `tasks/collab-pressure/loop.md` |
+| battery-pressure | ↗ 已迁 evolutionary | `tasks/_migrated/battery-pressure.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
-| evolutionary 压测 | ✅ 4–15 轮 | `evolutionary/specs/pressure-test-retro.md` |
+
+## 仓库纯度（2026-09-17）
+
+本仓 WM **只**放压 collab-cli / 工具链的任务。业务域 → evolutionary WM。
 
 ## 测量
 
