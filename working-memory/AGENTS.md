@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure 长运行** | 🔄 round 15 完成 | `tasks/collab-pressure/loop.md` |
+| **collab-pressure 长运行** | 🔄 round 16 完成 | `tasks/collab-pressure/loop.md` |
 | **evolutionary 压测** | ✅ 已收口（入口 harvest v4.7.15） | `evolutionary/specs/pressure-test-retro.md` |
 
 ## 已归档

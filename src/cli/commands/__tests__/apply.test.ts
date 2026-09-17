@@ -589,6 +589,102 @@ describe("collab apply", () => {
     });
   });
 
+  describe("apply --json validate-failed（round-16）", () => {
+    function jsonObjects(stdout: string): unknown[] {
+      const objects: unknown[] = [];
+      let depth = 0;
+      let start = -1;
+      for (let i = 0; i < stdout.length; i++) {
+        const ch = stdout[i];
+        if (ch === "{") {
+          if (depth === 0) start = i;
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0 && start >= 0) {
+            objects.push(JSON.parse(stdout.slice(start, i + 1)));
+            start = -1;
+          }
+        }
+      }
+      return objects;
+    }
+
+    function validateFailedPayload(stdout: string): Record<string, unknown> {
+      const payloads = jsonObjects(stdout)
+        .filter((value): value is Record<string, unknown> => {
+          return typeof value === "object" && value !== null;
+        })
+        .map((value) => Object.fromEntries(Object.entries(value)));
+      const failed = payloads.find((p) => p.status === "validate-failed");
+      if (failed === undefined) {
+        throw new Error("expected validate-failed JSON payload");
+      }
+      return failed;
+    }
+
+    it("C1: emits validate-failed JSON after writing", async () => {
+      await writeBundle([
+        create("skills/S31.md", skillContent("S31", "\n[[S999]]\n")),
+      ]);
+
+      const result = await toFail(
+        ["apply", "bundle.json", "--json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(validateFailedPayload(result.stdout).status).toBe("validate-failed");
+      expect(jsonObjects(result.stdout).length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("C2: JSON issues include DEAD_LINK", async () => {
+      await writeBundle([
+        create("skills/S31.md", skillContent("S31", "\n[[S999]]\n")),
+      ]);
+
+      const result = await toFail(
+        ["apply", "bundle.json", "--json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(JSON.stringify(validateFailedPayload(result.stdout).issues)).toContain(
+        "DEAD_LINK",
+      );
+    });
+
+    it("C3: keeps files on disk (same as E12)", async () => {
+      await writeBundle([
+        create("skills/S31.md", skillContent("S31", "\n[[S999]]\n")),
+      ]);
+
+      await toFail(["apply", "bundle.json", "--json"], ctx().root, ctx().envOverrides);
+      expect(existsSync(abs("skills/S31.md"))).toBe(true);
+    });
+
+    it("C4: follow-up validate --json still reports errors", async () => {
+      await writeBundle([
+        create("skills/S31.md", skillContent("S31", "\n[[S999]]\n")),
+      ]);
+
+      await toFail(["apply", "bundle.json", "--json"], ctx().root, ctx().envOverrides);
+
+      const validate = await toFail(
+        ["validate", "--json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      const parsed: unknown = JSON.parse(validate.stdout);
+      if (typeof parsed !== "object" || parsed === null) {
+        throw new Error("expected validate JSON");
+      }
+      const summary = Object.fromEntries(Object.entries(parsed)).summary;
+      expect(summary).toMatchObject({ errors: expect.any(Number) });
+      expect(JSON.stringify(parsed)).toContain("DEAD_LINK");
+    });
+  });
+
   // ─────────────────────────────────────────────
   // 边界：参数与文件
   // ─────────────────────────────────────────────
