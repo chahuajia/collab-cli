@@ -1,7 +1,7 @@
 # evo-collab-extreme（编排指针）
 
-**更新**：2026-09-17 20:35  
-**真源 loop**：`evolutionary/working-memory/tasks/evo-collab-extreme/loop.md`  
+**更新**：2026-09-17 20:50  
+**真源 loop**：`evolutionary/.../evo-collab-extreme/loop.md`（WM 单真源）  
 **句柄**：`AGENT_LOOP_WAKE_evo-collab-extreme`  
-**wake**：≤300ms · 强制 FE∥BE 集群 · 不 push  
-**HEAD**：evo `984841d` · 切片5✅（FE suggestion + BE mark-overdue）
+**门禁**：extreme **v4** · 单主轴 · 加厚切片 · 目标测 · wake≤300ms · 不 push  
+**锚**：evo 切片5✅ · collab v4.8.12
