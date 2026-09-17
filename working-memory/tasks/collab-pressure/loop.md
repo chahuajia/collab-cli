@@ -1,6 +1,6 @@
 # Collaboration 复杂场景压测 — 长运行
 
-**更新**：2026-09-17 11:13 ｜ **间隔**：800ms（**one-shot**）｜ battery-pressure 已迁出 evolutionary
+**更新**：2026-09-17 11:19 ｜ **间隔**：800ms（**one-shot**）｜ battery-pressure 已迁出 evolutionary
 
 ## 句柄
 
@@ -31,7 +31,8 @@
 | 6 | ✅ new → index → validate 工作流 |
 | 7 | ✅ new → index → commit 发布链 |
 | 8 | ✅ new → index → commit → push 全链 |
-| 9 | 待：下一复杂场景 |
+| 9 | ✅ catalog ↔ CATALOG_STALE 门禁 |
+| 10 | 待：下一复杂场景 |
 
 ## 停止
 

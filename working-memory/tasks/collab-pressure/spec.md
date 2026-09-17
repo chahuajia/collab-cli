@@ -21,7 +21,8 @@
 | 6 | new → index → validate 工作流 | ✅ |
 | 7 | new → index → commit 发布链 | ✅ |
 | 8 | new → index → commit → push 全链 | ✅ |
-| 9+ | 待暴露 | — |
+| 9 | catalog ↔ CATALOG_STALE 门禁 | ✅ |
+| 10+ | 待暴露 | — |
 
 ## 测量
 
