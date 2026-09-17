@@ -1,21 +1,19 @@
 # Collaboration 复杂场景压测 — 长运行
 
-**更新**：2026-09-17 11:27 ｜ **状态**：⏸ 收口（round 11）｜ **间隔**：800ms one-shot
+**更新**：2026-09-17 11:31 ｜ **间隔**：800ms one-shot ｜ **状态**：🔄 运行中
 
 ## 句柄
 
-`AGENT_LOOP_WAKE_collab-pressure`（**已停 arm**）
+`AGENT_LOOP_WAKE_collab-pressure`
 
 ## 进度
 
 | 轮 | 状态 |
 | :-- | :--- |
 | 1–11 | ✅ 见 `retro.md` |
+| 12 | ✅ MCP search → read → validate |
+| 13 | 待 |
 
-## 重启
+## 重启/停止
 
-说「继续 collab-pressure」→ 读 retro → round 12+
-
-## 停止
-
-「停止长运行」→ 不 arm wake（当前已停）
+「停止长运行」→ 不 arm wake

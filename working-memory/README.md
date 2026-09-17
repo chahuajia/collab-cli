@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 11:27
+**更新**：2026-09-17 11:31
 
 ## ⚠️ 先跑这个
 
@@ -20,13 +20,13 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure** | ⏸ round 11 收口 | `tasks/collab-pressure/retro.md` |
+| **collab-pressure 长运行** | 🔄 round 12 完成 | `tasks/collab-pressure/loop.md` |
 | battery-pressure | ↗ 已迁 evolutionary | `tasks/_migrated/battery-pressure.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 
 ## 测量
 
-interceptions **5** · known-gaps **2** 开 · validate **113/0** · tests **646/0**
+interceptions **5** · known-gaps **2** 开 · validate **113/0** · tests **650/0**
 
 ## 陷阱
 

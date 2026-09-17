@@ -140,6 +140,103 @@ describe("MCP 工具", () => {
     });
   });
 
+  describe("MCP discovery chain（round-12）", () => {
+    it("C1: search hit → read by id returns full entry", () => {
+      const { parsed: search, outcome: searchOutcome } = call(
+        "collab_search",
+        { query: AGREEMENT_ID },
+      );
+      expect(searchOutcome.isError).toBe(false);
+      expect(Array.isArray(search.matches)).toBe(true);
+      const matches = search.matches;
+      if (!Array.isArray(matches) || matches.length === 0) {
+        throw new Error("expected search matches");
+      }
+      const first = matches[0];
+      if (typeof first !== "object" || first === null || !("id" in first)) {
+        throw new Error("expected match with id");
+      }
+      const hitId = first.id;
+      if (typeof hitId !== "string") {
+        throw new Error("expected string id");
+      }
+
+      const { parsed: read, outcome: readOutcome } = call("collab_read", {
+        id: hitId,
+      });
+      expect(readOutcome.isError).toBe(false);
+      expect(read.frontmatter).toMatchObject({ id: AGREEMENT_ID });
+      expect(String(read.body)).toContain("## 方案");
+    });
+
+    it("C2: content validate green while standard fails without index", () => {
+      const { parsed: content, outcome: contentOutcome } = call(
+        "collab_validate",
+        { scope: "content" },
+      );
+      expect(contentOutcome.isError).toBe(false);
+      expect(content.summary).toMatchObject({ errors: 0 });
+
+      const { parsed: standard, outcome: standardOutcome } = call(
+        "collab_validate",
+        {},
+      );
+      expect(standardOutcome.isError).toBe(true);
+      expect(JSON.stringify(standard.issues)).toContain("MISSING_INDEX");
+    });
+
+    it("C3: zero search hits still allows scoped validate", () => {
+      const { parsed: search, outcome: searchOutcome } = call(
+        "collab_search",
+        { query: "绝不存在的字符串xyzzy" },
+      );
+      expect(searchOutcome.isError).toBe(false);
+      expect(search.matched).toBe(0);
+
+      const { parsed: validate, outcome: validateOutcome } = call(
+        "collab_validate",
+        { scope: "content" },
+      );
+      expect(validateOutcome.isError).toBe(false);
+      expect(validate.summary).toMatchObject({ errors: 0 });
+    });
+
+    it("C4: broken entry readable but content validate fails", async () => {
+      const broken = [
+        "---",
+        "id: S99",
+        "type: skill",
+        "status: draft",
+        "created: 2026-09-17",
+        "updated: 2026-09-17",
+        "author: test@example.com",
+        "aliases:",
+        "  - S99",
+        "---",
+        "",
+        "# 缺章节",
+        "",
+      ].join("\n");
+      await writeFile(path.join(root, "skills/S99-broken.md"), broken, "utf8");
+
+      const { parsed: read, outcome: readOutcome } = call("collab_read", {
+        id: "S99",
+      });
+      expect(readOutcome.isError).toBe(false);
+      expect(String(read.body)).toContain("缺章节");
+
+      const { parsed: validate, outcome: validateOutcome } = call(
+        "collab_validate",
+        { scope: "content" },
+      );
+      expect(validateOutcome.isError).toBe(true);
+      expect(validate.summary).toMatchObject({
+        errors: expect.any(Number),
+      });
+      expect(JSON.stringify(validate.issues)).toContain("MISSING_SECTION");
+    });
+  });
+
   describe("collab_validate", () => {
     it("content 范围：条目自身合法 → 绿", () => {
       const { parsed, outcome } = call("collab_validate", { scope: "content" });
