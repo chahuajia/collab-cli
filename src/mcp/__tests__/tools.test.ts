@@ -577,6 +577,157 @@ describe("CLI catalog ↔ MCP collab_catalog（round-10）", () => {
   });
 });
 
+describe("MCP parse → CLI apply chain（round-14）", () => {
+  let gitRoot: string;
+  let collabDir: string;
+  let mcpCtx: ToolContext;
+  let envOverrides: Record<string, string>;
+
+  const NEW_SKILL = "skills/S40-agent.md";
+  const PARSE_TEXT = [
+    `===== FILE: ${NEW_SKILL} =====`,
+    minimalEntryContent({
+      id: "S40",
+      kind: EntryKindValues.Skill,
+    }),
+    "===== END FILE =====",
+  ].join("\n");
+
+  async function runCli(args: string[]) {
+    return execa("node", [CLI_ENTRY, ...args], {
+      cwd: gitRoot,
+      reject: false,
+      env: { ...process.env, ...envOverrides },
+    });
+  }
+
+  beforeEach(async () => {
+    gitRoot = await mkdtemp(path.join(tmpdir(), "collab-mcp-r14-"));
+    collabDir = path.join(gitRoot, "COLLABORATION");
+
+    const emptyGitConfig = path.join(gitRoot, ".empty-gitconfig");
+    await writeFile(emptyGitConfig, "");
+    envOverrides = {
+      GIT_CONFIG_GLOBAL: emptyGitConfig,
+      GIT_CONFIG_SYSTEM: emptyGitConfig,
+    };
+
+    await execa("git", ["init", "-q"], {
+      cwd: gitRoot,
+      env: { ...process.env, ...envOverrides },
+    });
+    await execa(
+      "git",
+      ["config", "--local", "user.email", "test@example.com"],
+      { cwd: gitRoot, env: { ...process.env, ...envOverrides } },
+    );
+    await execa("git", ["config", "--local", "user.name", "Test"], {
+      cwd: gitRoot,
+      env: { ...process.env, ...envOverrides },
+    });
+
+    for (const sub of ["skills", "agreements", "patterns", "workflows", "meta/decision-records"]) {
+      await mkdir(path.join(collabDir, sub), { recursive: true });
+    }
+
+    mcpCtx = { cwd: gitRoot, dir: collabDir };
+  });
+
+  afterEach(async () => {
+    await rm(gitRoot, { recursive: true, force: true });
+  });
+
+  function parseBundle(): Record<string, unknown> {
+    const outcome = runTool("collab_parse", { text: PARSE_TEXT }, mcpCtx);
+    expect(outcome.isError).toBe(false);
+    const parsed: unknown = JSON.parse(outcome.text);
+    if (typeof parsed !== "object" || parsed === null || !("bundle" in parsed)) {
+      throw new Error("expected parse bundle");
+    }
+    const bundle = parsed.bundle;
+    if (typeof bundle !== "object" || bundle === null) {
+      throw new Error("expected bundle object");
+    }
+    return bundle;
+  }
+
+  it("C1: MCP parse → apply_plan → CLI apply --index → validate", async () => {
+    const bundle = parseBundle();
+    const plan = runTool("collab_apply_plan", { bundle }, mcpCtx);
+    expect(JSON.parse(plan.text)).toMatchObject({ status: "planned", wrote: 0 });
+
+    await writeFile(
+      path.join(gitRoot, "bundle.json"),
+      JSON.stringify(bundle),
+      "utf8",
+    );
+    expect((await runCli(["apply", "bundle.json", "--index"])).exitCode).toBe(0);
+
+    const validate = await runCli(["validate"]);
+    expect(validate.exitCode).toBe(0);
+    expect(validate.stdout).toContain("0 issues");
+  });
+
+  it("C2: apply_plan writes nothing until CLI apply", async () => {
+    const bundle = parseBundle();
+    runTool("collab_apply_plan", { bundle }, mcpCtx);
+    expect(existsSync(path.join(collabDir, NEW_SKILL))).toBe(false);
+
+    await writeFile(
+      path.join(gitRoot, "bundle.json"),
+      JSON.stringify(bundle),
+      "utf8",
+    );
+    await runCli(["apply", "bundle.json", "--index"]);
+    expect(existsSync(path.join(collabDir, NEW_SKILL))).toBe(true);
+  });
+
+  it("C3: stale base rejected by apply_plan and CLI apply", async () => {
+    await writeFile(path.join(collabDir, NEW_SKILL), "旧内容", "utf8");
+    const bundle = parseBundle();
+    const files = bundle.files;
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new Error("expected bundle files");
+    }
+    const first = files[0];
+    if (typeof first !== "object" || first === null) {
+      throw new Error("expected file entry");
+    }
+
+    const plan = runTool("collab_apply_plan", { bundle }, mcpCtx);
+    expect(JSON.parse(plan.text).status).toBe("planned");
+
+    await writeFile(path.join(collabDir, NEW_SKILL), "外部篡改", "utf8");
+    await writeFile(
+      path.join(gitRoot, "bundle.json"),
+      JSON.stringify(bundle),
+      "utf8",
+    );
+    const apply = await runCli(["apply", "bundle.json"]);
+    expect(apply.exitCode).not.toBe(0);
+    expect(apply.stdout).toContain("modified externally");
+  });
+
+  it("C4: MCP content validate green after CLI apply", async () => {
+    const bundle = parseBundle();
+    await writeFile(
+      path.join(gitRoot, "bundle.json"),
+      JSON.stringify(bundle),
+      "utf8",
+    );
+    await runCli(["apply", "bundle.json", "--index"]);
+
+    const outcome = runTool(
+      "collab_validate",
+      { dir: collabDir, scope: "content" },
+      mcpCtx,
+    );
+    const parsed = JSON.parse(outcome.text);
+    expect(outcome.isError).toBe(false);
+    expect(parsed.summary).toMatchObject({ errors: 0 });
+  });
+});
+
 const REAL_COLLAB_DIR =
   "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
 
