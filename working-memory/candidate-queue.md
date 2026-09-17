@@ -2,6 +2,16 @@
 
 > 达阈值后归并沉淀。触发：队列 ≥ 5 / 任一 ≥ 7 天 / 3 个相关 / 用户要求。
 
+## 本轮已处理（2026-09-17 15:30）
+
+| 候选 | 处置 |
+| :--- | :--- |
+| project-evidence-vs-kb-ledger | → **新建** `patterns/project-evidence-vs-kb-ledger`；改 interceptions / known-gaps / evolution-log-format |
+| agent-workspace-boundaries | → **新建** `S36`；evolutionary `working-memory/agents/{fe,be}/` |
+| pattern-id-alignment | → **改** `meta/naming-conventions`（模式语义 id + 建议 `P-*` alias；不批量重命名） |
+
+代谢：新增 2 条 + 改既有账本范围（等价「处理」淹没风险）；未强制 dormant。
+
 ## 本轮已处理（2026-09-16 23:30）
 
 | 候选 | 处置 |
@@ -17,11 +27,4 @@
 
 ## 当前队列
 
-| 候选 | 来源 | 摘录 |
-| :--- | :--- | :--- |
-| project-evidence-vs-kb-ledger | evolutionary 0→7 复盘 | `evolution-log`/`interceptions` 主表只留跨项目摘要；项目证据留业务仓 |
-| agent-workspace-boundaries | 同上 | FE/BE 集群：路径约定 + `wm/agents/{fe,be}` + `wip`；不为此拆仓 |
-| pattern-id-alignment | 命名漂移 | pattern 补稳定短 id（P-）/aliases；与 A/W/S 同构演进 |
-
-证据：`evolutionary/.../tasks/_archive/2026-09-17-selective-pressure-retro.md`  
-触发：人确认后 W5；注意代谢配额。
+（空）
