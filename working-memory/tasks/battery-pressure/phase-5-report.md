@@ -1,18 +1,18 @@
-# 阶段 5 tick 1 报告
+# 阶段 5 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格
+**日期**：2026-09-17 ｜ **阶段 5 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P5-1 | ✅ Onboarding + MERCHANT capability |
-| P5-2 | ✅ MallOrder 独立 · INV-16 |
-| P5-3 | ✅ 轻量规则引擎裁决 |
-| P5-4 | ✅ issuer scope 隔离 |
-| P5-5 | ✅ CouponRedemption append-only |
-| P5-6 | ✅ Campaign budget |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P5-1 | ✅ | AC-40 |
+| P5-2 | ✅ | AC-41 · MallOrder |
+| P5-3 | ✅ | AC-43/44 · CouponRuleEngine |
+| P5-4 | ✅ | AC-46/47 |
+| P5-5 | ✅ | AC-42 Redemption |
+| P5-6 | ✅ | AC-45 Campaign |
 
 **拦截 0** · **gap 0**
 
 ## 下一 tick
 
-phase-5-acceptance.md + contracts/phase-5.ts
+阶段 6 暴露点：信用 · 先用后付
