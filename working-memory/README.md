@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 09:48
+**更新**：2026-09-17 09:58
 
 ## ⚠️ 先跑这个
 
@@ -12,7 +12,7 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `b6fd043` |
+| `collab-cli` | （round 1 commit 后更新） |
 | `collaboration` | `2af8bed` |
 | `evolutionary` | `1cf3bb4` |
 
@@ -20,23 +20,13 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **CLI A4 长运行** | 🔄 tick 3 patterns 索引整理完成 | `tasks/cli-development/loop.md` |
-| **evolutionary 压测** | ✅ 4–15 轮收口 | `evolutionary/specs/pressure-test-retro.md` |
-
-## 复盘行动项
-
-| # | 状态 |
-| :-- | :--- |
-| A1 REST/N+1 症状行 | ✅ v4.7.15 |
-| A2 S34 症状行 | ✅ v4.7.15 |
-| A3 不批量填 trigger | ✅ 维持 |
-| A4 切 CLI / 真 CI | 🔄 collab-cli CI 已接；collaboration validate 待接 |
-| A5 domain-purity 写硬 | 待人 |
+| **collab-pressure 复杂场景压测** | 🔄 第 1 轮完成 | `tasks/collab-pressure/` |
+| CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
+| evolutionary 压测 | ✅ 4–15 轮 | `evolutionary/specs/pressure-test-retro.md` |
 
 ## 测量
 
-- interceptions **5** · known-gaps **2** 开
-- 真库 validate：**113 / 0**（锚点迁移后）
+interceptions **5** · known-gaps **2** 开 · validate **113/0**
 
 ## 陷阱
 

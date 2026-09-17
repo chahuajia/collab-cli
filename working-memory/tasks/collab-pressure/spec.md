@@ -1,0 +1,23 @@
+# Collaboration 复杂场景选择性压测
+
+**启动**：2026-09-17 ｜ **压力源**：`collab-cli` 复杂功能 ｜ **非 A/B**
+
+## 方法
+
+1. 每轮**先写** `round-N.md` 暴露点（不可事后改）
+2. 按 KB `AGENTS.md` 症状表路由，不靠回忆
+3. 找不到 → `known-gaps`；拦住 → `interceptions`
+4. 复杂 = 多命令/多规则/多仓库联动，非 hello-world
+
+## 轮次规划（初稿）
+
+| 轮 | 复杂场景 | 预期 KB 条目 |
+| :-- | :--- | :--- |
+| 1 | `collab index --dry-run`（写命令的对称只读预览） | A10 · design-decision |
+| 2 | MCP validate + 真库路径 `--dir` | cli-agent-boundaries · S10 |
+| 3 | apply 冲突 + catalog/index 派生链 | base-contract · reproducible-verification |
+| 4+ | 待暴露 | — |
+
+## 测量
+
+同 evolutionary：interceptions 计数 · known-gaps 行 · validate 归零

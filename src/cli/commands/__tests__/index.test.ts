@@ -504,4 +504,57 @@ describe('collab index', () => {
       expect(after).not.toBe(before);
     });
   });
+
+  describe("--dry-run", () => {
+    beforeEach(() => setupWorkspace());
+
+    it("prints the plan and writes nothing", async () => {
+      await writeEntry({
+        relPath: "skills/S1-h2-output.md",
+        id: "S1",
+        kind: "skill",
+        collabDir,
+      });
+
+      const indexPath = path.join(collabDir, "skills/_index.md");
+      expect(existsSync(indexPath)).toBe(false);
+
+      const result = await toSucceed(
+        ["index", "skills", "--dry-run"],
+        testRoot,
+        envOverrides,
+      );
+
+      expect(result.stdout).toContain("(dry-run) would create");
+      expect(result.stdout).toContain("nothing was written");
+      expect(existsSync(indexPath)).toBe(false);
+    });
+
+    it("exits 0 when previewing normalization", async () => {
+      await writeEntry({
+        relPath: "skills/S1-h2-output.md",
+        id: "S1",
+        kind: "skill",
+        collabDir,
+      });
+      const indexFile = path.join(collabDir, "skills/_index.md");
+      await writeFile(
+        indexFile,
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 | meta | active |\n",
+        "utf8",
+      );
+
+      const before = await readFile(indexFile, "utf8");
+      const result = await toSucceed(
+        ["index", "skills", "--dry-run"],
+        testRoot,
+        envOverrides,
+      );
+      const after = await readFile(indexFile, "utf8");
+
+      expect(result.stdout).toContain("normalized 1 to id anchor");
+      expect(after).toBe(before);
+    });
+  });
 });
+

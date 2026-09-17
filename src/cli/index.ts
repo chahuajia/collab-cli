@@ -59,7 +59,7 @@ Global options:
   --dir <path>                 COLLABORATION workspace (also: COLLAB_DIR env)
 
 Command options (only where listed):
-  --dry-run                    new / apply / fix / push — plan only, write nothing
+  --dry-run                    new / apply / fix / index / push — plan only, write nothing
   --json                       validate / apply — machine-readable (shapes differ)
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes

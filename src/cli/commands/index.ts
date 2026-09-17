@@ -1,6 +1,7 @@
 // src/cli/commands/index.ts
 import fs from "node:fs";
 import path from "node:path";
+import { parseArgs } from "node:util";
 import { extractAllIndexEntries } from "@/application/extractIndexEntries";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { parseIndex } from "@/cli/lib/parseIndex";
@@ -18,11 +19,18 @@ interface Target {
 }
 
 /**
- * `collab index [dir]`
+ * `collab index [dir] [--dry-run]`
  *
  * 更新已知目录的 `_index.md`。增量同步，保留人工列与额外内容。
  */
 export async function cmdIndex(args: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args,
+    options: { "dry-run": { type: "boolean", default: false } },
+    strict: false,
+  });
+  const dryRun = values["dry-run"] === true;
+
   const { collabDir } = findCollabRoot(process.cwd());
 
   const requestedDir = args.find((a) => !a.startsWith("-"));
@@ -49,21 +57,28 @@ export async function cmdIndex(args: string[]): Promise<void> {
     });
 
     if (existing === null) {
-      fs.writeFileSync(indexFilePath, content, "utf8");
-      outputLines.push(`✔ ${dir}/_index.md (created, ${added} entries)`);
+      if (!dryRun) fs.writeFileSync(indexFilePath, content, "utf8");
+      const prefix = dryRun ? "(dry-run) would create" : "✔";
+      outputLines.push(`${prefix} ${dir}/_index.md (${added} entries)`);
       totalMissingNames += added;
     } else {
       const oldContent = fs.readFileSync(indexFilePath, "utf8");
       if (oldContent !== content) {
-        fs.writeFileSync(indexFilePath, content, "utf8");
+        if (!dryRun) fs.writeFileSync(indexFilePath, content, "utf8");
         const parts = [`added ${added}`, `removed ${removed}`];
         if (normalized > 0) parts.push(`normalized ${normalized} to id anchor`);
-        outputLines.push(`✔ ${dir}/_index.md (${parts.join(", ")})`);
+        const prefix = dryRun ? "(dry-run) would update" : "✔";
+        outputLines.push(`${prefix} ${dir}/_index.md (${parts.join(", ")})`);
         totalMissingNames += added;
       } else {
         outputLines.push(`✔ ${dir}/_index.md (no changes)`);
       }
     }
+  }
+
+  if (dryRun && outputLines.some((l) => l.startsWith("(dry-run)"))) {
+    outputLines.push("");
+    outputLines.push("(dry-run) nothing was written.");
   }
 
   for (const line of outputLines) {
