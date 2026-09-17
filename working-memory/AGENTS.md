@@ -20,6 +20,7 @@
 | **evolutionary phase-0 实现** | ✅ L2 切片 1–4 收口 | `evolutionary/.../battery-phase-0/retro.md` |
 | **evolutionary phase-1 实现** | ✅ L2 切片 1–3 收口 · 停 wake | `evolutionary/.../battery-phase-1/retro.md` |
 | **evolutionary phase-2 实现** | ✅ L2 切片 1–3 收口 · 停 wake | `evolutionary/.../battery-phase-2/retro.md` |
+| **evolutionary phase-3 实现** | 🔄 L2 运营商 · 切片1 ✅ | `evolutionary/.../battery-phase-3/loop.md` |
 
 ## 约定（2026-09-17）
 
