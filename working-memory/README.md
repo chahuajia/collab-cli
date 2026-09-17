@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 09:35
+**更新**：2026-09-17 09:40
 
 ## ⚠️ 先跑这个
 
@@ -12,7 +12,7 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `e2723ad` |
+| `collab-cli` | `b6fd043` |
 | `collaboration` | `54a37ea` |
 | `evolutionary` | `1cf3bb4` |
 
