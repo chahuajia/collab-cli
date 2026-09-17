@@ -13,14 +13,14 @@ node working-memory/check-freshness.mjs
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
 | `collab-cli` | `e635174` |
-| `collaboration` | `2ed61ba` |
+| `collaboration` | `b8fbad1` |
 | `evolutionary` | （未动） |
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure-extreme** | 🔄 L3 · v4.8.3 | `tasks/collab-pressure-extreme/loop.md` |
+| **collab-pressure-extreme** | 🔄 L3 · v4.8.4 | `tasks/collab-pressure-extreme/loop.md` |
 | **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 
