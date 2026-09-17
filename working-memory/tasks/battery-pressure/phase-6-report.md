@@ -1,18 +1,18 @@
-# 阶段 6 tick 1 报告
+# 阶段 6 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格
+**日期**：2026-09-17 ｜ **阶段 6 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P6-1 | ✅ CreditAccount 独立 |
-| P6-2 | ✅ CreditLedgerDebt · INV-17 |
-| P6-3 | ✅ BillingStatement 自然月 |
-| P6-4 | ✅ FROZEN +  block swap |
-| P6-5 | ✅ limit 校验 |
-| P6-6 | ✅ CreditPolicy 版本 |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P6-1 | ✅ | CreditProfile 独立 |
+| P6-2 | ✅ | AC-48 · INV-17 |
+| P6-3 | ✅ | AC-50/51 |
+| P6-4 | ✅ | AC-52/53 FROZEN |
+| P6-5 | ✅ | AC-49 |
+| P6-6 | ✅ | AC-54 CreditPolicy |
 
 **拦截 0** · **gap 0**
 
 ## 下一 tick
 
-phase-6-acceptance.md + contracts/phase-6.ts
+阶段 7 暴露点：多厂商 IoT + 设备影子
