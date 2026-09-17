@@ -11,7 +11,7 @@
 ### 需拍板（约定 / 结构）
 
 - [ ] **语义 id** 推广到 A/W/S（`patterns/` 已做对）
-- [ ] ⚠️ **链接锚点形式**（与 ADR-0009「id 不可变」对齐的未决段）—— **下一优先**
+- [x] ~~**链接锚点形式**~~ —— **已定 id**（ADR-0009 + `INDEX_REF_PREFER_ID` 警告）；真库 65 行待迁移
 - [ ] **`assumes` / `last-verified` 字段**（pruning 事件驱动）
 - [ ] **`domains/` 空壳 `_index.md`** 删还是留
 - [ ] **归档 0 人社群治理残留**（W6/W7 社区向、`rfcs/`、`profiles/`、CODEOWNERS）

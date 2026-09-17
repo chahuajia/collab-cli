@@ -1,6 +1,6 @@
 # Anchors: CLI Development
 
-**更新**：2026-09-16 23:35
+**更新**：2026-09-17 09:26
 
 ## 不可遗忘的约束
 
@@ -16,6 +16,6 @@
 
 ## 下一个动作
 
-**等人拍板**（见 `parking-lot.md`）：链接锚点形式 · 语义 id · 真 CI · dual-expression 缺家 · 拦截记账（真实发生时）。
+**长运行 A4**（见 `loop.md`）：commit 锚点规则 → 评估 `_index` 迁移 → 真 CI。
 
-不要空转对照实验；不要批量填 trigger。
+链接锚点已定 id；不要空转；不要批量填 trigger；不要 push。
