@@ -25,7 +25,8 @@
 | 10 | CLI catalog ↔ MCP collab_catalog | ✅ |
 | 11 | 发布链补 catalog 步 | ✅ |
 | 12 | MCP search → read → validate | ✅ |
-| 13+ | 待暴露 | — |
+| 13 | collab memory WM 新鲜度 | ✅ |
+| 14+ | 待暴露 | — |
 
 ## 测量
 
