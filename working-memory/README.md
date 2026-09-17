@@ -12,8 +12,8 @@ node check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `6e0b970` |
-| `collaboration` | `pending` |
+| `collab-cli` | `236b29e` |
+| `collaboration` | `4f467aa` |
 | `evolutionary` | `1cf3bb4` |
 
 ## 活跃任务
