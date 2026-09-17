@@ -137,3 +137,4 @@
 | 2026-09-17 | **仓库纯度：collab-cli 只承载「压 collab-cli / 压 COLLABORATION 工具链」**；业务域（换电平台等）规格归业务仓 WM；evolutionary 前后端归 evolutionary 仓 | battery-pressure 51 文件进 collab-cli WM = CLI 被当成万能垃圾场；**领域纯洁性从仓库边界开始**，不是只在 `src/` 里守 | 生效中 |
 | 2026-09-17 | **共享只上提一层**：跨仓复用的方法（压测 tick 协议、A10 三层交付）→ COLLABORATION 条目；跨仓复用的脚本/类型 → 显式新建 shared 仓或 aggregate 根，**不**默认塞进 collab-cli | 根目录/shared 要有明确准入：`≥2` 消费者才提取 | 生效中 |
 | 2026-09-17 | **battery-pressure 已迁出** → `evolutionary/working-memory/tasks/battery-pressure/` | 产物是换电领域规格，不是 CLI 功能 | 已完成 |
+| 2026-09-17 | **collab-pressure 收口**（round 1–17）；主任务切 **evolutionary phase-0** | L1 工具链压测不能替代 L3 KB 演化；见 [[patterns/pressure-routing]] | 生效中 |

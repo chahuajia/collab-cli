@@ -16,8 +16,8 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure 长运行** | 🔄 round 17 完成 | `tasks/collab-pressure/loop.md` |
-| **evolutionary 压测** | ✅ 已收口（入口 harvest v4.7.15） | `evolutionary/specs/pressure-test-retro.md` |
+| **collab-pressure** | ✅ L1 收口（round 1–17） | `tasks/collab-pressure/loop.md` |
+| **evolutionary phase-0 实现** | 🔄 主任务（L2） | `evolutionary/.../tasks/battery-phase-0/loop.md` |
 
 ## 已归档
 
