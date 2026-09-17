@@ -18,7 +18,8 @@
 | 3 | apply 冲突 + catalog/index 派生链 | base-contract · reproducible-verification |
 | 4 | parse → apply 联动 | ✅ |
 | 5 | fix ↔ validate 规则对齐 | ✅ |
-| 6+ | 待暴露 | — |
+| 6 | new → index → validate 工作流 | ✅ |
+| 7+ | 待暴露 | — |
 
 ## 测量
 

@@ -11,6 +11,7 @@ import {
   toSucceed,
   writeAdr,
   writeEntry,
+  writeIndex,
   writeSkill,
 } from "@/cli/commands/__tests__/testHelpers";
 import { linksResolve } from "@/domain/validation/rules/linksResolve";
@@ -372,6 +373,60 @@ describe("collab new", () => {
       expect(result.stdout).toContain("would create");
       expect(result.stdout).toContain("S30.md");
       expect(existsSync(path.join(collabDir, "skills/S30.md"))).toBe(false);
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // new → index → validate 联动（collab-pressure r6）
+  // ─────────────────────────────────────────────
+  describe("new → index → validate 联动（round-6）", () => {
+    beforeEach(() => setupWorkspace());
+
+    it("C1: new → validate fails → index → validate passes", async () => {
+      await writeIndex(collabDir, "skills", []);
+      await toSucceed(["new", "skill", "S30"], testRoot, envOverrides);
+
+      const before = await toFail(["validate"], testRoot, envOverrides);
+      expect(before.stdout).toContain("MISSING_FROM_INDEX");
+
+      await toSucceed(["index", "skills"], testRoot, envOverrides);
+
+      const after = await toSucceed(["validate"], testRoot, envOverrides);
+      expect(after.stdout).toContain("1 entries");
+      expect(after.stdout).toContain("0 issues");
+    });
+
+    it("C2: --dry-run leaves validate unchanged", async () => {
+      await toSucceed(
+        ["new", "skill", "S30", "--dry-run"],
+        testRoot,
+        envOverrides,
+      );
+
+      const result = await toSucceed(["validate"], testRoot, envOverrides);
+      expect(result.stdout).toContain("0 entries");
+      expect(result.stdout).toContain("0 issues");
+    });
+
+    it("C3: auto id + index → validate passes", async () => {
+      await toSucceed(["new", "skill"], testRoot, envOverrides);
+      await toSucceed(["index", "skills"], testRoot, envOverrides);
+
+      const result = await toSucceed(["validate"], testRoot, envOverrides);
+      expect(result.stdout).toContain("1 entries");
+      expect(result.stdout).toContain("0 issues");
+    });
+
+    it("C4: two new entries synced by one index run", async () => {
+      await toSucceed(["new", "skill", "S30"], testRoot, envOverrides);
+      await toSucceed(["new", "skill", "S31"], testRoot, envOverrides);
+
+      await toFail(["validate"], testRoot, envOverrides);
+      await toSucceed(["index", "skills"], testRoot, envOverrides);
+
+      const after = await toSucceed(["validate"], testRoot, envOverrides);
+      expect(after.stdout).toContain("2 entries");
+      expect(after.stdout).toContain("0 issues");
     });
   });
 
