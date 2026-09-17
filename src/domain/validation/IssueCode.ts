@@ -42,6 +42,9 @@ export const IssueCodeValues = {
     /** index引用不存在条目 */
     DanglingIndexEntry: 'DANGLING_INDEX_ENTRY',
 
+    /** _index.md 表格行用了文件名锚，推荐 id 锚（ADR-0009） */
+    IndexRefPreferId: 'INDEX_REF_PREFER_ID',
+
     // ─────────────────────────────────────────────
     // collab apply —— bundle 落盘通道的问题
     // ─────────────────────────────────────────────
@@ -56,7 +59,7 @@ export const IssueCodeValues = {
     /** bundle 的意图与工作区当前状态冲突 */
     BundleConflict: 'BUNDLE_CONFLICT',
 
-    /** id 不是文件名的前缀（链接按文件名解析，两者必须同源） */
+    /** id 不是文件名的前缀（id 与文件名必须同源，两种锚才都能解析） */
     IdFileNameMismatch: 'ID_FILE_NAME_MISMATCH',
 
     /** id 没有登记进 aliases（渲染层靠 alias 解析 id 形式的链接） */

@@ -203,7 +203,7 @@ export class Issue {
             message: `dead link [[${ref}]]`,
             path,
             suggestion:
-                'link by file name ([[<file-name>]]) — refs resolve by file name, not by id; or create the entry / remove the link',
+                'use id anchor [[<id>]] (immutable — ADR-0009); or link by file name; or create the entry / remove the link',
         })
     }
 
@@ -256,10 +256,30 @@ export class Issue {
     }
 
     /**
+     * `_index.md` 表格行用了文件名锚，推荐 id 锚。
+     *
+     * @remarks
+     * 非阻断 —— 文件名形式仍合法；新行由 `collab index` 已写 id 形式。
+     */
+    static indexRefPreferId(
+        indexPath: string,
+        ref: string,
+        id: string,
+    ): Issue {
+        return Issue.of({
+            severity: SeverityValues.Warning,
+            code: IssueCodeValues.IndexRefPreferId,
+            message: `_index.md lists "[[${ref}]]" — prefer id anchor "[[${id}]]"`,
+            path: indexPath,
+            suggestion: `change the table link to [[${id}]] (immutable — ADR-0009)`,
+        });
+    }
+
+    /**
      * id 不是文件名的前缀。
      *
      * @remarks
-     * 链接按**文件名**解析（不按 id），所以两者必须同源：
+     * id 与文件名必须同源，两种锚（id / 文件名）才都能被解析：
      * 文件要么叫 `<id>.md`，要么叫 `<id>-<slug>.md`。
      */
     static idFileNameMismatch(path: string, id: string, fileName: string): Issue {

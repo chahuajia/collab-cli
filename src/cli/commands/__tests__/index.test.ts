@@ -433,8 +433,7 @@ describe('collab index', () => {
     // ─────────────────────────────────────────────
     // T4: 无变更（关键回归）
     // ─────────────────────────────────────────────
-    it('reports "no changes" when the file name is already in the index', async () => {
-      // 文件名带 name 后缀
+    it("normalizes file-name anchor to id when index already lists the entry", async () => {
       await writeEntry({
         relPath: "skills/S1-h2-output.md",
         id: "S1",
@@ -442,15 +441,9 @@ describe('collab index', () => {
         collabDir,
       });
 
-      // index 里已经用 id
       await writeFile(
         path.join(collabDir, "skills/_index.md"),
         "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |\n",
-        "utf8",
-      );
-
-      const before = await readFile(
-        path.join(collabDir, "skills/_index.md"),
         "utf8",
       );
 
@@ -465,10 +458,10 @@ describe('collab index', () => {
         "utf8",
       );
 
-      // 输出应为 "no changes"
-      expect(result.stdout).toContain("no changes");
-      // 文件字节级不变
-      expect(after).toBe(before);
+      expect(result.stdout).toContain("normalized 1 to id anchor");
+      expect(after).toContain("[[S1]]");
+      expect(after).toContain("H2 输出");
+      expect(after).not.toContain("[[S1-h2-output]]");
     });
 
     // ─────────────────────────────────────────────
@@ -505,8 +498,10 @@ describe('collab index', () => {
       );
 
       // 旧实现会 "removed 1, added 1"，把人工列全丢掉
-      expect(result.stdout).toContain("no changes");
-      expect(after).toBe(before);
+      expect(result.stdout).toContain("normalized 1 to id anchor");
+      expect(after).toContain("[[S1]]");
+      expect(after).toContain("H2 输出");
+      expect(after).not.toBe(before);
     });
   });
 });

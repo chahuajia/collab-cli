@@ -150,10 +150,21 @@ describe("collab validate", () => {
     beforeEach(() => setupWorkspace());
 
     it("exits with code 0 when only warnings", async () => {
-      // 暂时没有 warning 规则，跳过。等有 warning 工厂再补。
-      // 用一个无 Issue 的 workspace 保持测试框架
+      await writeEntry({
+        relPath: "skills/S1-h2-output.md",
+        id: "S1",
+        kind: "skill",
+        collabDir,
+      });
+      await writeFile(
+        path.join(collabDir, "skills/_index.md"),
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 | meta | active |\n",
+        "utf8",
+      );
+
       const result = await runCli(["validate"], testRoot);
       expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("INDEX_REF_PREFER_ID");
     });
   });
 

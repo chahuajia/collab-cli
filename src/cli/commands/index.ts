@@ -42,7 +42,7 @@ export async function cmdIndex(args: string[]): Promise<void> {
       ? parseIndex(fs.readFileSync(indexFilePath, "utf8"))
       : null;
 
-    const { content, added, removed } = renderIndex({
+    const { content, added, removed, normalized } = renderIndex({
       kind,
       existing,
       actualEntries,
@@ -56,9 +56,9 @@ export async function cmdIndex(args: string[]): Promise<void> {
       const oldContent = fs.readFileSync(indexFilePath, "utf8");
       if (oldContent !== content) {
         fs.writeFileSync(indexFilePath, content, "utf8");
-        outputLines.push(
-          `✔ ${dir}/_index.md (added ${added}, removed ${removed})`,
-        );
+        const parts = [`added ${added}`, `removed ${removed}`];
+        if (normalized > 0) parts.push(`normalized ${normalized} to id anchor`);
+        outputLines.push(`✔ ${dir}/_index.md (${parts.join(", ")})`);
         totalMissingNames += added;
       } else {
         outputLines.push(`✔ ${dir}/_index.md (no changes)`);

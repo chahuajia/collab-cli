@@ -20,6 +20,8 @@ export interface RenderOutput {
   readonly content: string;
   readonly added: number;
   readonly removed: number;
+  /** 表格行链接从文件名锚改写为 id 锚（ADR-0009） */
+  readonly normalized: number;
 }
 
 interface IndexConfig {
@@ -38,6 +40,7 @@ interface IndexConfig {
  *   否则会出现"validate 说合法、index 却删掉"的事故。
  * - 追加新行（只填 ID 列，其他留空）—— **用 `frontmatter.id`**：
  *   它是不可变快照，改名不失效（ADR-0009）。
+ * - 已有行若用文件名锚 → **改写为 id 锚**，人工列原样保留。
  *
  * 排序（D3=A）：数字 id 按数值，非数字 id 按字母，异常行排末尾。
  * 标题与表头：沿用 existing；若 existing 为空则用标准模板。
@@ -48,6 +51,7 @@ export function renderIndex(input: RenderInput): RenderOutput {
 
   let added = 0;
   let removed = 0;
+  let normalized = 0;
 
   // 1. 保留的行
   const keptRows: ParsedRow[] = [];
@@ -68,7 +72,9 @@ export function renderIndex(input: RenderInput): RenderOutput {
         removed++;
         continue;
       }
-      keptRows.push(row);
+      const kept = normalizeRowAnchor(kind, row, matched);
+      if (kept.raw !== row.raw || kept.ref !== row.ref) normalized++;
+      keptRows.push(kept);
       referenced.add(matched.id);
     }
   }
@@ -113,7 +119,36 @@ export function renderIndex(input: RenderInput): RenderOutput {
   }
 
   const content = lines.join("\n") + "\n";
-  return { content, added, removed };
+  return { content, added, removed, normalized };
+}
+
+/**
+ * 把表格行第一列的双链从文件名锚改为 id 锚。
+ *
+ * @remarks
+ * 只改 `[[...]]`，不动名称/领域等人工列 —— 与 `INDEX_REF_PREFER_ID` 对齐。
+ */
+function normalizeRowAnchor(
+  kind: EntryKind,
+  row: ParsedRow,
+  entry: IndexEntry,
+): ParsedRow {
+  if (row.ref === null) return row;
+  if (entry.fileName === entry.id) return row;
+
+  const refLast = lastSegmentOf(row.ref);
+  if (refLast === entry.id) return row;
+  if (refLast !== entry.fileName) return row;
+
+  const idRef = renderRef(kind, entry.id);
+  const newRaw = row.raw.replace(/\[\[[^\]]+\]\]/, `[[${idRef}]]`);
+  if (newRaw === row.raw) return row;
+  return { raw: newRaw, ref: idRef };
+}
+
+function lastSegmentOf(ref: string): string {
+  const parts = ref.split("/");
+  return parts[parts.length - 1] ?? ref;
 }
 
 function renderRef(kind: EntryKind, id: string): string {

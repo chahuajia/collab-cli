@@ -154,9 +154,7 @@ describe("renderIndex", () => {
     // ─────────────────────────────────────────────
     // 回归：文件名式引用（2026-09-16 实测事故）
     // ─────────────────────────────────────────────
-    it("keeps rows that refer to an entry by file name, not just by id", () => {
-      // 真库的写法：文件名 S1-h2-output.md、frontmatter.id 是 S1，
-      // index 里写的是文件名式引用 [[S1-h2-output]]。
+    it("normalizes file-name anchors to id while preserving manual columns", () => {
       const existing = parseIndex(
         "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[S1-h2-output]] | H2 输出 | meta | active |",
       );
@@ -168,8 +166,9 @@ describe("renderIndex", () => {
 
       expect(result.removed).toBe(0);
       expect(result.added).toBe(0);
-      expect(result.content).toContain("[[S1-h2-output]]");
-      // 人工列全部保留 —— 这正是旧实现会毁掉的东西
+      expect(result.normalized).toBe(1);
+      expect(result.content).toContain("[[S1]]");
+      expect(result.content).not.toContain("[[S1-h2-output]]");
       expect(result.content).toContain("H2 输出");
       expect(result.content).toContain("meta");
       expect(result.content).toContain("active");
@@ -186,7 +185,7 @@ describe("renderIndex", () => {
       });
 
       expect(result.removed).toBe(1);
-      expect(result.content).toContain("[[S1-h2-output]]");
+      expect(result.content).toContain("[[S1]]");
       expect(result.content).not.toContain("[[S99-gone]]");
     });
 

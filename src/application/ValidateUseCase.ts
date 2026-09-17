@@ -4,6 +4,7 @@ import {contractDirs} from "@/application/contractDirs";
 import {checkIndexDangling} from "@/domain/validation/rules/checkIndexDangling";
 import {checkIndexExists} from "@/domain/validation/rules/checkIndexExists";
 import {checkIndexForward} from "@/domain/validation/rules/checkIndexForward";
+import {checkIndexRefPreferId} from "@/domain/validation/rules/checkIndexRefPreferId";
 import {idIsAlias} from "@/domain/validation/rules/idIsAlias";
 import {idMatchesFileName} from "@/domain/validation/rules/idMatchesFileName";
 import {linksResolve} from "@/domain/validation/rules/linksResolve";
@@ -51,6 +52,7 @@ export const standardRules: RuleRegistry = {
     global: [
         checkIndexExists,
         checkIndexDangling,
+        checkIndexRefPreferId,
         catalogIsFresh,
         contractDirs,
         linksResolveInRootDocs,
