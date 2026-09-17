@@ -20,7 +20,7 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure 长运行** | 🔄 待 round 4 | `tasks/collab-pressure/loop.md` |
+| **collab-pressure 长运行** | 🔄 round 4 完成 | `tasks/collab-pressure/loop.md` |
 | battery-pressure | ↗ 已迁 evolutionary | `tasks/_migrated/battery-pressure.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 

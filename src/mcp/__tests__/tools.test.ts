@@ -227,6 +227,21 @@ describe("MCP 工具", () => {
       expect(outcome.isError).toBe(true);
       expect(JSON.stringify(parsed.issues)).toContain("outside any block");
     });
+
+    it("collab_parse 产物 → collab_apply_plan 可预演（C4）", () => {
+      const { parsed: parseOut, outcome: parseOutcome } = call("collab_parse", {
+        text: TEXT,
+      });
+      expect(parseOutcome.isError).toBe(false);
+
+      const { parsed: planOut, outcome: planOutcome } = call(
+        "collab_apply_plan",
+        { bundle: parseOut.bundle },
+      );
+      expect(planOutcome.isError).toBe(false);
+      expect(planOut.status).toBe("planned");
+      expect(planOut.summary).toMatchObject({ create: 1 });
+    });
   });
 
   describe("collab_apply_plan", () => {

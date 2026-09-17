@@ -98,4 +98,60 @@ describe("collab parse", () => {
     const result = await toFail(["parse", "nope.txt"], ctx().root, ctx().envOverrides);
     expect(result.stderr).toContain("not found");
   });
+
+  describe("parse → apply 联动（collab-pressure r4）", () => {
+    it("parse → apply --index → validate 全绿（C1）", async () => {
+      const body = minimalEntryContent({
+        id: "S31",
+        kind: EntryKindValues.Skill,
+      });
+      await writeInput(block("skills/S31-x.md", body));
+
+      await toSucceed(["parse", IN], ctx().root, ctx().envOverrides);
+      await toSucceed(
+        ["apply", "bundle.json", "--index"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      await toSucceed(["validate"], ctx().root, ctx().envOverrides);
+    });
+
+    it("多 FILE 块一次 apply 刷新 catalog（C2）", async () => {
+      const b1 = minimalEntryContent({
+        id: "S31",
+        kind: EntryKindValues.Skill,
+      });
+      const b2 = minimalEntryContent({
+        id: "S32",
+        kind: EntryKindValues.Skill,
+      });
+      await writeInput(
+        `${block("skills/S31-x.md", b1)}\n${block("skills/S32-x.md", b2)}`,
+      );
+
+      await toSucceed(["parse", IN], ctx().root, ctx().envOverrides);
+      await toSucceed(["apply", "bundle.json"], ctx().root, ctx().envOverrides);
+
+      const catalog = JSON.parse(
+        await readFile(path.join(ctx().collabDir, "catalog.json"), "utf8"),
+      );
+      expect(catalog.summary.total).toBe(2);
+    });
+
+    it("parse 后文件被改 → apply 拒绝 stale base（C3）", async () => {
+      const rel = "skills/S31-x.md";
+      await writeFile(path.join(ctx().collabDir, rel), "旧内容", "utf8");
+      await writeInput(block(rel, "新内容"));
+
+      await toSucceed(["parse", IN], ctx().root, ctx().envOverrides);
+      await writeFile(path.join(ctx().collabDir, rel), "外部篡改", "utf8");
+
+      const result = await toFail(
+        ["apply", "bundle.json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(result.stdout).toContain("modified externally");
+    });
+  });
 });

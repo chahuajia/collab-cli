@@ -16,7 +16,8 @@
 | 1 | `collab index --dry-run`（写命令的对称只读预览） | A10 · design-decision |
 | 2 | MCP validate + 真库路径 `--dir` | cli-agent-boundaries · S10 |
 | 3 | apply 冲突 + catalog/index 派生链 | base-contract · reproducible-verification |
-| 4+ | 待暴露 | — |
+| 4 | parse → apply 联动 | ✅ |
+| 5+ | 待暴露 | — |
 
 ## 测量
 
