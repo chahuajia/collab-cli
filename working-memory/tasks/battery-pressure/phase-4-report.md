@@ -1,18 +1,18 @@
-# 阶段 4 tick 1 报告
+# 阶段 4 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格
+**日期**：2026-09-17 ｜ **阶段 4 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P4-1 | ✅ ORDER_COMPLETED 触发 |
-| P4-2 | ✅ Accrual + T+7 Batch |
-| P4-3 | ✅ REVERSED reversal |
-| P4-4 | ✅ percentage ≤ 100 |
-| P4-5 | ✅ ReferralBinding 72h |
-| P4-6 | ✅ INV-14/15 |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P4-1 | ✅ | AC-32 |
+| P4-2 | ✅ | AC-34 T+7 |
+| P4-3 | ✅ | AC-35 reversal |
+| P4-4 | ✅ | AC-33 + ProfitSplitValidator |
+| P4-5 | ✅ | AC-37/38 |
+| P4-6 | ✅ | AC-34 INV-14 |
 
 **拦截 0** · **gap 0**
 
 ## 下一 tick
 
-phase-4-acceptance.md + contracts/phase-4.ts
+阶段 5 暴露点：商城促销（商家入驻 + 优惠券）
