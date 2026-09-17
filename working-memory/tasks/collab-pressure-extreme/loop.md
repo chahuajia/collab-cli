@@ -1,9 +1,8 @@
 # collab-pressure-extreme（L3）
 
-**更新**：2026-09-17 16:50  
+**更新**：2026-09-17 16:55  
 **压力层**：**L3**  
-**期望 HEAD**：`collaboration` ✅ 本 tick 已变（`e361a36` v4.8.1）  
-**调度**：500ms one-shot · 极端集群 ≥2
+**期望 HEAD**：`collaboration`（上 tick `e361a36`/`d8a2833`）· evolutionary FE 已交付 RSC（辅）
 
 ## 句柄
 
@@ -13,17 +12,14 @@
 
 | 步 | 产出 | 状态 |
 | :-- | :--- | :--- |
-| 1 | `extreme-unattended-cluster` | ✅ |
-| 2 | `frontend-ddd-rsc` | ✅ |
-| 3 | `shared-kernel-across-bc` | ✅ |
-| 4 | AGENTS + S36 + pressure-routing + validate 0 | ✅ |
+| 1–4 | 三 pattern + AGENTS/S36 | ✅ collaboration |
+| FE | `/credit` RSC + gateway | ✅ `ba560ab`（无新 KB 条） |
 
 ## 下一 tick
 
-- 验收集群 FE RSC 产物是否撞墙 → 记 interceptions 或收口  
-- 代谢：若再增条，处理 1  
-- 连续无 collaboration diff → 停（本 tick 有 diff，继续 1 轮验收后可停）
+- 无新撞墙则记 **空转 1**；满 3 空转停 wake  
+- 或开下一 L3 压力源（catalog trigger / domains 充实）
 
-## 停止条件
+## 停止
 
-三 tick 无 KB diff → 停；或用户喊停。
+连续 3 tick 无 collaboration diff → 停
