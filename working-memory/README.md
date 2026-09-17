@@ -12,7 +12,7 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `5ca5040` |
+| `collab-cli` | `893d925` |
 | `collaboration` | `2af8bed` |
 | `evolutionary` | `a4e9f4f` |
 
@@ -26,7 +26,7 @@ node working-memory/check-freshness.mjs
 
 ## 测量
 
-interceptions **5** · known-gaps **2** 开 · validate **113/0** · tests **658/0**
+interceptions **5** · known-gaps **2** 开 · validate **113/0** · tests **662/0**
 
 ## 陷阱
 
