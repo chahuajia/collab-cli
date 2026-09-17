@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 09:58
+**更新**：2026-09-17 10:07
 
 ## ⚠️ 先跑这个
 
@@ -12,7 +12,7 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `3c4ebf0` |
+| `collab-cli` | `3de03ad` |
 | `collaboration` | `2af8bed` |
 | `evolutionary` | `1cf3bb4` |
 
@@ -20,7 +20,7 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure 复杂场景压测** | 🔄 第 1 轮完成 | `tasks/collab-pressure/` |
+| **collab-pressure 复杂场景压测** | 🔄 第 3 轮完成 | `tasks/collab-pressure/` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 | evolutionary 压测 | ✅ 4–15 轮 | `evolutionary/specs/pressure-test-retro.md` |
 
