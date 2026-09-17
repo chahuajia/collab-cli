@@ -17,7 +17,7 @@
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
 | **collab-pressure** | ✅ L1 收口（round 1–17） | `tasks/collab-pressure/loop.md` |
-| **evolutionary phase-0 实现** | 🔄 主任务（L2） | `evolutionary/.../tasks/battery-phase-0/loop.md` |
+| **evolutionary phase-0 实现** | ✅ L2 切片 1–4 收口 | `evolutionary/.../battery-phase-0/retro.md` |
 
 ## 已归档
 
