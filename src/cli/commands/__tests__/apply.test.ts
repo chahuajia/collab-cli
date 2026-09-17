@@ -9,6 +9,7 @@ import {
   toFail,
   toSucceed,
   useTestWorkspace,
+  writeIndex,
   writeSkill,
 } from "@/cli/commands/__tests__/testHelpers";
 import { EntryKindValues } from "@/domain/entry/types";
@@ -416,6 +417,59 @@ describe("collab apply", () => {
       );
 
       expect(await read("skills/_index.md")).toContain("[[S31]]");
+    });
+  });
+
+  describe("派生链（base-contract）", () => {
+    it("refreshes catalog but not _index.md without --index", async () => {
+      await writeIndex(ctx().collabDir, "skills", []);
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      await toSucceed(["apply", "bundle.json"], ctx().root, ctx().envOverrides);
+
+      const catalog = JSON.parse(await read("catalog.json"));
+      expect(catalog.entries.some((e: { id: string }) => e.id === "S31")).toBe(
+        true,
+      );
+      expect(await read("skills/_index.md")).not.toContain("[[S31]]");
+    });
+
+    it("passes apply content gate then fails full validate (MISSING_FROM_INDEX)", async () => {
+      await writeIndex(ctx().collabDir, "skills", []);
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      await toSucceed(["apply", "bundle.json"], ctx().root, ctx().envOverrides);
+
+      const result = await toFail(
+        ["validate"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(result.stdout).toContain("MISSING_FROM_INDEX");
+    });
+
+    it("blocks --commit when index is stale (needs --index first)", async () => {
+      await writeIndex(ctx().collabDir, "skills", []);
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      const result = await toFail(
+        ["apply", "bundle.json", "--commit"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(existsSync(abs("skills/S31.md"))).toBe(true);
+      expect(result.stdout).toContain("validate passed (1 entries, 0 issues)");
+      expect(result.stdout).toContain("validate failed");
+      expect(result.stdout).toContain("Aborting commit");
+      await expect(git(["log", "-1"])).rejects.toThrow();
+
+      const detail = await toFail(
+        ["validate"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(detail.stdout).toContain("MISSING_FROM_INDEX");
     });
   });
 

@@ -25,7 +25,8 @@
 | :-- | :--- |
 | 1 | ✅ index --dry-run |
 | 2 | ✅ MCP validate + dir 真库 113/0 |
-| 3 | 待：apply 派生链冲突 |
+| 3 | ✅ apply 派生链 + commit 门禁 |
+| 4 | 待：下一复杂场景 |
 
 ## 停止
 
