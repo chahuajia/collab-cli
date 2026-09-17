@@ -27,7 +27,8 @@
 | 12 | MCP search → read → validate | ✅ |
 | 13 | collab memory WM 新鲜度 | ✅ |
 | 14 | MCP parse → CLI apply 写入链 | ✅ |
-| 15+ | 待暴露 | — |
+| 15 | fix → index → catalog 修复链 | ✅ |
+| 16+ | 待暴露 | — |
 
 ## 测量
 

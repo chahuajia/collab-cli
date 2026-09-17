@@ -215,4 +215,52 @@ describe("collab fix", () => {
     });
   });
 
+  describe("fix → index → catalog 修复链（round-15）", () => {
+    async function seedCompoundFault(): Promise<void> {
+      await toSucceed(["catalog"], ctx().root, ctx().envOverrides);
+      await writeIndex(ctx().collabDir, "skills", []);
+      await writeFile(abs(REL), entryWithoutAliases("S30"), "utf8");
+    }
+
+    it("C1: compound fault surfaces multiple issue codes", async () => {
+      await seedCompoundFault();
+
+      const result = await toFail(["validate"], ctx().root, ctx().envOverrides);
+      expect(result.stdout).toContain("ID_NOT_IN_ALIASES");
+      expect(result.stdout).toContain("MISSING_FROM_INDEX");
+      expect(result.stdout).toContain("CATALOG_STALE");
+    });
+
+    it("C2: fix alone does not clear validate", async () => {
+      await seedCompoundFault();
+      await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+    });
+
+    it("C3: fix → index → catalog → validate passes", async () => {
+      await seedCompoundFault();
+      await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+      await toSucceed(["index", "skills"], ctx().root, ctx().envOverrides);
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+      await toSucceed(["catalog"], ctx().root, ctx().envOverrides);
+
+      const after = await toSucceed(
+        ["validate"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+      expect(after.stdout).toContain("1 entries");
+      expect(after.stdout).toContain("0 issues");
+    });
+
+    it("C4: fix --dry-run leaves compound fault intact", async () => {
+      await seedCompoundFault();
+      const before = await readFile(abs(REL), "utf8");
+
+      await toSucceed(["fix", "--dry-run"], ctx().root, ctx().envOverrides);
+      expect(await readFile(abs(REL), "utf8")).toBe(before);
+      await toFail(["validate"], ctx().root, ctx().envOverrides);
+    });
+  });
+
 });

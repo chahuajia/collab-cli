@@ -648,7 +648,7 @@ describe("MCP parse → CLI apply chain（round-14）", () => {
     if (typeof bundle !== "object" || bundle === null) {
       throw new Error("expected bundle object");
     }
-    return bundle;
+    return Object.fromEntries(Object.entries(bundle));
   }
 
   it("C1: MCP parse → apply_plan → CLI apply --index → validate", async () => {
