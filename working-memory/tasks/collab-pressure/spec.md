@@ -19,7 +19,9 @@
 | 4 | parse → apply 联动 | ✅ |
 | 5 | fix ↔ validate 规则对齐 | ✅ |
 | 6 | new → index → validate 工作流 | ✅ |
-| 7+ | 待暴露 | — |
+| 7 | new → index → commit 发布链 | ✅ |
+| 8 | new → index → commit → push 全链 | ✅ |
+| 9+ | 待暴露 | — |
 
 ## 测量
 

@@ -9,6 +9,7 @@ import {
   createWorkspace,
   type WorkspaceContext,
   writeEntry,
+  writeIndex,
 } from "./testHelpers.js";
 
 let testRoot: string;
@@ -369,6 +370,63 @@ describe("collab push", () => {
       expect(result.stdout).toContain("commit-7");
       // 提示还有更多
       expect(result.stdout.toLowerCase()).toMatch(/more|…|\.\.\./);
+    });
+  });
+
+  describe("发布链（round-8）", () => {
+    beforeEach(() => setupWorkspace());
+
+    async function publishNewSkill(id: string, message: string): Promise<void> {
+      await writeIndex(collabDir, "skills", []);
+      expect((await runCli(["new", "skill", id], localDir)).exitCode).toBe(0);
+      expect((await runCli(["index", "skills"], localDir)).exitCode).toBe(0);
+      expect(
+        (await runCli(["commit", "-m", message], localDir)).exitCode,
+      ).toBe(0);
+    }
+
+    it("C1: new → index → commit → push --dry-run previews without pushing", async () => {
+      await publishNewSkill("S30", "feat: add S30");
+
+      const result = await runCli(["push", "--dry-run"], localDir);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("feat: add S30");
+
+      const remoteLog = await git(["log", "--oneline", "main"], remoteDir);
+      expect(remoteLog.stdout).not.toContain("feat: add S30");
+    });
+
+    it("C2: full chain reaches remote", async () => {
+      await publishNewSkill("S30", "feat: add S30");
+
+      const result = await runCli(["push"], localDir);
+      expect(result.exitCode).toBe(0);
+
+      const remoteLog = await git(["log", "--oneline", "main"], remoteDir);
+      expect(remoteLog.stdout).toContain("feat: add S30");
+    });
+
+    it("C3: bad commit via --no-validate → push blocked", async () => {
+      await writeIndex(collabDir, "skills", []);
+      await runCli(["new", "skill", "S30"], localDir);
+      await runCli(["commit", "-m", "bad", "--no-validate"], localDir);
+
+      const before = await git(["rev-parse", "origin/main"], localDir);
+      const result = await runCli(["push"], localDir);
+      const after = await git(["rev-parse", "origin/main"], localDir);
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stdout).toContain("validate failed");
+      expect(after.stdout).toBe(before.stdout);
+    });
+
+    it("C4: push after publish reports up-to-date on second run", async () => {
+      await publishNewSkill("S30", "feat: add S30");
+      await runCli(["push"], localDir);
+
+      const again = await runCli(["push"], localDir);
+      expect(again.exitCode).toBe(0);
+      expect(again.stdout.toLowerCase()).toMatch(/up-to-date|nothing to push/);
     });
   });
 });
