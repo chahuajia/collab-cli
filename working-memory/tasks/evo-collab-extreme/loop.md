@@ -1,6 +1,6 @@
-# evo-collab-extreme（编排指针）
+﻿# evo-collab-extreme（编排指针）
 
-**更新**：2026-09-17 21:20  
-**真源**：`evolutionary/.../evo-collab-extreme/loop.md`  
-**主轴**：L2 切片6 还款解冻 · FE∥BE 集群中  
-**门禁**：extreme v4 · 加厚 · 目标测 · wake≤300ms · 不 push
+**更新**：2026-09-17 21:40  
+**真源**：evolutionary loop  
+**锚**：切片6✅ · evo `04ddd83`/`5e065aa` · extreme v4  
+**wake**：≤300ms · 不 push
