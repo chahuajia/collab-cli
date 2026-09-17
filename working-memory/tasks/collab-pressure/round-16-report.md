@@ -9,6 +9,6 @@
 | C3 | ✅ | 落盘不回滚 |
 | C4 | ✅ | 后续 validate --json 仍报 DEAD_LINK |
 
-拦截 **0** · gap **1**（候选）
+拦截 **0** · gap **1**（→ round 17 已修）
 
-**发现（gap 候选）**：`--json` 失败时 stdout 先 emit `applied` 再 emit `validate-failed`——脚本应取末段或按 status 过滤。
+**发现**：`--json` 失败时曾双 JSON 输出；round 17 改为 validate 后再 emit 唯一 payload。
