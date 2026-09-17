@@ -1,18 +1,18 @@
-# 阶段 2 tick 1 报告
+# 阶段 2 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格
+**日期**：2026-09-17 ｜ **阶段 2 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P2-1 | ✅ 独立 POINTS Account |
-| P2-2 | ✅ 先积分后余额 |
-| P2-3 | ✅ 退款逆序 |
-| P2-4 | ✅ 双 refType + INV-9..11 |
-| P2-5 | ✅ 积分不足整单拒绝 |
-| P2-6 | ✅ 简化 expiresAt |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P2-1 | ✅ | AccountTypePhase2.POINTS |
+| P2-2 | ✅ | MixedPaymentService 先积分后余额 |
+| P2-3 | ✅ | AC-20 退款逆序 |
+| P2-4 | ✅ | 双 refType + AC-18 |
+| P2-5 | ✅ | AC-19 INSUFFICIENT_POINTS |
+| P2-6 | ✅ | AC-21 POINTS_EXPIRED |
 
 **拦截 0** · **gap 0**
 
 ## 下一 tick
 
-phase-2-acceptance.md + contracts/phase-2.ts
+阶段 3 暴露点：多级运营商（组织树 + 套餐继承）
