@@ -1,48 +1,48 @@
 # Working Memory
 
-> ?????????**AI ???????????**?
+> 跨对话的工作状态。**AI 主动维护，用户只需纠正**。
 
-## ?????
+## 协作库路径
 
-????????COLLABORATION??
-`D:\actto\front\project\collaboration_aggregate\collaboration`
-[COLLABORATION ??](https://github.com/chahuajia/collaboration)
+本机协作知识库（COLLABORATION）：
+D:\\actto\\front\\project\\collaboration_aggregate\\collaboration
+[COLLABORATION 仓库](https://github.com/chahuajia/collaboration)
 
-**AI ??? push**??? commit ?????? `version/v0` ???????
-- ?? URL / ????? git ??
-- ????? ?? merge / push
+**AI 不擅自 push**。本地 commit 可以；合并到 ersion/v0 等须用户确认。
+- 远端 URL / 分支以本机 git 为准
+- 「继续」≠ 自动 merge / push
 
-## ????
+## 活跃任务
 
-| ?? | ?? | ?? |
+| 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure-extreme** | ?? L3 � v4.8.3 trigger ??? | `tasks/collab-pressure-extreme/loop.md` |
-| **collab-pressure** | ? L1 ???round 1�17? | `tasks/collab-pressure/loop.md` |
-| **evolutionary phase-5 ??** | ? ?? `version/v0` � phase ?? | `evolutionary/.../battery-phase-5/retro.md` |
+| **collab-pressure-extreme** | 🔄 L3 · v4.8.4 AGENTS 代谢 | 	asks/collab-pressure-extreme/loop.md |
+| **collab-pressure** | ✅ L1 收口（round 1–17） | 	asks/collab-pressure/loop.md |
+| **evolutionary phase-5 复盘** | ✅ 已合 ersion/v0 · phase 归档 | evolutionary/.../battery-phase-5/retro.md |
 
-## ???2026-09-17?
+## 陷阱（2026-09-17）
 
-- **?? git ????? HEAD ? WM**?????
-- AI ? push
-- phase ?? `version/v0` ????? merge
-- ?????`version` � `phase` ?? commit/WM??????
+- **先改 git 再刷新登记 HEAD 到 WM**，勿空登记
+- AI 不 push
+- phase 合入 ersion/v0 须用户明确 merge
+- 双轴勿混：ersion × phase 分开 commit/WM，勿互相顶替
 
-## ???
+## 已结束
 
-? `tasks/_completed/`?phase-0..5 ????`version/v0` ? evolutionary WM?
+见 	asks/_completed/；phase-0..5 已归档；ersion/v0 见 evolutionary WM。
 
-## ????2026-09-17?
+## 仓职责（2026-09-17）
 
-| ? | ????? | ????? |
+| 仓 | 本会话角色 | 不该塞什么 |
 | :--- | :--- | :--- |
-| **collab-cli** | `collab-pressure*` / CLI ?? / MCP/validate | ?????? |
-| **evolutionary** | ???? + ??? WM/?? | CLI ???? |
-| **collaboration** | ?? KB ?? | ?????? |
-| **aggregate ? / shared ?** | ?????????? | ?????? |
+| **collab-cli** | collab-pressure* / CLI 门禁 / MCP/validate | 业务领域实现 |
+| **evolutionary** | 换电实现 + 项目级 WM/报告 | CLI 协议细节 |
+| **collaboration** | 协作 KB 本体 | 项目轮次日记 |
+| **aggregate 根 / shared 根** | 跨仓指针；非日常写点 | 当第二工作区 |
 
-???? `battery-pressure` ? **??** `working-memory/tasks/`??? collab-cli?
-? `decisions.md` 2026-09-17?
+电池压测 attery-pressure 已 **迁出** working-memory/tasks/，只留 collab-cli。
+见 decisions.md 2026-09-17。
 
-## ??
+## 索引
 
-? [W10](../COLLABORATION/workflows/W10-working-memory.md)?
+见 [W10](../COLLABORATION/workflows/W10-working-memory.md)。
