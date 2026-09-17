@@ -1,6 +1,6 @@
 ﻿# evo-collab-extreme（编排指针）
 
-**更新**：2026-09-17 22:15  
-**真源**：evolutionary loop  
-**主轴**：L2 切片7 计量换电 · FE∥BE 集群中  
-**门禁**：extreme v4 · 加厚 · 目标测 · wake≤300ms · 不 push
+**更新**：2026-09-17 22:35  
+**门禁**：extreme v5 最大规模  
+**并行**：8 IoT FE∥BE + 9 信用购 FE∥BE（4 agent）  
+**切片7**：✅  
