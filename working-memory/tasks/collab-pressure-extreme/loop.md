@@ -1,8 +1,8 @@
-# collab-pressure-extreme（L3）
+﻿# collab-pressure-extreme（L3）
 
-**更新**：2026-09-17 16:55  
+**更新**：2026-09-17 17:05  
 **压力层**：**L3**  
-**期望 HEAD**：`collaboration`（上 tick `e361a36`/`d8a2833`）· evolutionary FE 已交付 RSC（辅）
+**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.2）
 
 ## 句柄
 
@@ -12,13 +12,13 @@
 
 | 步 | 产出 | 状态 |
 | :-- | :--- | :--- |
-| 1–4 | 三 pattern + AGENTS/S36 | ✅ collaboration |
-| FE | `/credit` RSC + gateway | ✅ `ba560ab`（无新 KB 条） |
+| 1–4 + FE | 三 pattern + RSC | ✅ |
+| 5 | domains 充实 + 热门 trigger（~22） | ✅ |
 
 ## 下一 tick
 
-- 无新撞墙则记 **空转 1**；满 3 空转停 wake  
-- 或开下一 L3 压力源（catalog trigger / domains 充实）
+- 验收集群继续补 trigger；或 idle+1  
+- catalog 仍 <80% → 缺口保持开
 
 ## 停止
 
