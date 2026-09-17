@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-17 10:07
+**更新**：2026-09-17 10:31
 
 ## ⚠️ 先跑这个
 
@@ -20,6 +20,7 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
+| **battery-pressure 长运行 800ms** | 🔄 阶段 0 tick 2 完成 | `tasks/battery-pressure/loop.md` |
 | **collab-pressure 复杂场景压测** | 🔄 第 3 轮完成 | `tasks/collab-pressure/` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 | evolutionary 压测 | ✅ 4–15 轮 | `evolutionary/specs/pressure-test-retro.md` |

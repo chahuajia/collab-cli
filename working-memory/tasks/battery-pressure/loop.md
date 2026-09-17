@@ -1,0 +1,33 @@
+# 换电业务压测 — 长运行
+
+**更新**：2026-09-17 10:34 ｜ **间隔**：800ms（**one-shot**，每 tick 结束后再 arm）
+
+## 句柄
+
+`AGENT_LOOP_WAKE_battery-pressure`
+
+## 调度规则
+
+- **禁止** `while ($true)` 空转
+- 每 tick **做完可验证增量** → `Start-Sleep -Milliseconds 800` → 发 wake
+- 无增量 → 写阻塞原因，**拉长**间隔或停
+
+## 每 tick
+
+1. `node working-memory/check-freshness.mjs`
+2. 读 `spec.md` + 本文件 + 最近 `phase-*-report.md`
+3. 推进当前阶段（暴露点 → 规格/契约/报告）
+4. 有可验证增量 → 本地 commit + 刷新 WM（不 push）
+
+## 进度
+
+| 阶段 | tick | 状态 |
+| :-- | :-- | :--- |
+| 0 | 1 | ✅ 规格 + 验收 |
+| 0 | 2 | ✅ 类型契约 + Q1–Q3 裁决 |
+| 0 | 3 | 待：阶段 1 暴露点 |
+| 1+ | — | 待 |
+
+## 停止
+
+「停止长运行」→ 不 arm 下一次 wake
