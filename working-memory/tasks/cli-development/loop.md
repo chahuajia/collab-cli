@@ -1,23 +1,27 @@
 # CLI 长运行循环
 
-**更新**：2026-09-17 09:48 ｜ **tick**：3 完成 ｜ **间隔**：3s
+**更新**：2026-09-17 09:52 ｜ **tick**：4 完成 ｜ **循环**：已停（3s 积压 wake）
 
-## tick 3 摘要
+## tick 4 摘要
 
 | 交付 | 结果 |
 | :--- | :--- |
-| `patterns/_index.md` | 单表 45 行，合并来源/用途，删重复分区 |
-| validate | 113 / 0 |
+| `collaboration/.github/workflows/validate.yml` | checkout 双仓 + `collab validate` |
+| 3s loop `752390` | 已杀（tick 3 后积压 ~30+ wake，无新工作） |
 
-## tick 4 焦点
+## A4 收口
 
-- collaboration validate CI（`.github/workflows`）
-- 或 A4 收口评估
+| 项 | 状态 |
+| :--- | :--- |
+| 链接锚点 + 迁移 | ✅ |
+| collab-cli CI | ✅ |
+| collaboration validate CI | ✅ workflow 已写 |
+| patterns 索引 | ✅ |
 
-## 调度
+## 恢复循环
 
-固定 **3 秒** wake（`752390`）。
+用户指定间隔后再 arm；**不要**无工作空转 3s。
 
 ## 停止
 
-用户说「停止长运行」→ 杀 loop shell。
+「停止长运行」= 不 arm wake（当前已停）。

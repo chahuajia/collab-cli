@@ -13,14 +13,14 @@ node working-memory/check-freshness.mjs
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
 | `collab-cli` | `b6fd043` |
-| `collaboration` | （tick 3 后更新） |
+| `collaboration` | `0c978a7` |
 | `evolutionary` | `1cf3bb4` |
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **CLI A4 长运行** | 🔄 tick 2 真 CI 完成 | `tasks/cli-development/loop.md` |
+| **CLI A4 长运行** | 🔄 tick 3 patterns 索引整理完成 | `tasks/cli-development/loop.md` |
 | **evolutionary 压测** | ✅ 4–15 轮收口 | `evolutionary/specs/pressure-test-retro.md` |
 
 ## 复盘行动项
