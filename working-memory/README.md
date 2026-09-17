@@ -13,7 +13,7 @@ node working-memory/check-freshness.mjs
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
 | `collab-cli` | `e635174` |
-| `collaboration` | `cb8bed5` |
+| `collaboration` | `88025f7` |
 | `evolutionary` | （未动） |
 
 ## 活跃任务
@@ -21,6 +21,7 @@ node working-memory/check-freshness.mjs
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
 | **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | `tasks/collab-pressure-extreme/loop.md` |
+| **evo-collab-extreme** | 🔄 双轴极端 · 集群切片1 | `tasks/evo-collab-extreme/loop.md` |
 | **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 
