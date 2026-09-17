@@ -98,7 +98,9 @@ export async function cmdApply(args: string[]): Promise<void> {
 
   // ── 4. 落盘 ──
   useCase.execute(plan);
-  emit(ApplyStatusValues.Applied, plan, [], asJson);
+  if (!asJson) {
+    emit(ApplyStatusValues.Applied, plan, [], false);
+  }
 
   // ── 4b. 刷新派生物：谁让生成物过期，谁负责刷新它 ──
   // 不刷新的话，下一次 `validate` 必然报 CATALOG_STALE，`apply --commit` 也会卡住。
@@ -126,7 +128,9 @@ export async function cmdApply(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  if (!asJson) {
+  if (asJson) {
+    emitJson(ApplyStatusValues.Applied, plan, []);
+  } else {
     console.log(
       `✔ validate passed (${validation.entries.length} entries, 0 issues)`,
     );

@@ -635,7 +635,8 @@ describe("collab apply", () => {
       );
 
       expect(validateFailedPayload(result.stdout).status).toBe("validate-failed");
-      expect(jsonObjects(result.stdout).length).toBeGreaterThanOrEqual(2);
+      expect(jsonObjects(result.stdout)).toHaveLength(1);
+      expect(() => JSON.parse(result.stdout.trim())).not.toThrow();
     });
 
     it("C2: JSON issues include DEAD_LINK", async () => {
@@ -682,6 +683,56 @@ describe("collab apply", () => {
       const summary = Object.fromEntries(Object.entries(parsed)).summary;
       expect(summary).toMatchObject({ errors: expect.any(Number) });
       expect(JSON.stringify(parsed)).toContain("DEAD_LINK");
+    });
+  });
+
+  describe("apply --json single payload（round-17）", () => {
+    function jsonObjects(stdout: string): unknown[] {
+      const objects: unknown[] = [];
+      let depth = 0;
+      let start = -1;
+      for (let i = 0; i < stdout.length; i++) {
+        const ch = stdout[i];
+        if (ch === "{") {
+          if (depth === 0) start = i;
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0 && start >= 0) {
+            objects.push(JSON.parse(stdout.slice(start, i + 1)));
+            start = -1;
+          }
+        }
+      }
+      return objects;
+    }
+
+    it("C3: human mode still prints applied before validate errors", async () => {
+      await writeBundle([
+        create("skills/S31.md", skillContent("S31", "\n[[S999]]\n")),
+      ]);
+
+      const result = await toFail(
+        ["apply", "bundle.json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(result.stdout).toContain("applied 1 file");
+      expect(result.stdout).toContain("validate failed");
+    });
+
+    it("C4: success path emits single applied JSON", async () => {
+      await writeBundle([create("skills/S31.md", skillContent("S31"))]);
+
+      const result = await toSucceed(
+        ["apply", "bundle.json", "--json"],
+        ctx().root,
+        ctx().envOverrides,
+      );
+
+      expect(jsonObjects(result.stdout)).toHaveLength(1);
+      expect(JSON.parse(result.stdout.trim()).status).toBe("applied");
     });
   });
 

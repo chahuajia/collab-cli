@@ -16,7 +16,8 @@
 | 14 | ✅ MCP parse → CLI apply 写入链 |
 | 15 | ✅ fix → index → catalog 修复链 |
 | 16 | ✅ apply --json validate-failed |
-| 17 | 待 |
+| 17 | ✅ apply --json 单 payload 修复 |
+| 18 | 待 |
 
 ## 重启/停止
 
