@@ -1,18 +1,18 @@
-# 阶段 3 tick 1 报告
+# 阶段 3 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格
+**日期**：2026-09-17 ｜ **阶段 3 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P3-1 | ✅ 组织树 + scope，禁 level 授权 |
-| P3-2 | ✅ PackageTemplate 版本化 |
-| P3-3 | ✅ allowedFields 白名单 |
-| P3-4 | ✅ 后代只能 Override |
-| P3-5 | ✅ productSnapshot on Order |
-| P3-6 | ✅ AuditLog 必记动作 |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P3-1 | ✅ | OrgPermissionService.isAncestor |
+| P3-2 | ✅ | AC-24/25 + TEMPLATE_IMMUTABLE |
+| P3-3 | ✅ | OverridableField 白名单 |
+| P3-4 | ✅ | AC-27/28 |
+| P3-5 | ✅ | OrderProductSnapshot |
+| P3-6 | ✅ | AuditLog + AC-31 |
 
 **拦截 0** · **gap 0**
 
 ## 下一 tick
 
-phase-3-acceptance.md + contracts/phase-3.ts
+阶段 4 暴露点：分润结算（推广补贴 + 下级抽成）
