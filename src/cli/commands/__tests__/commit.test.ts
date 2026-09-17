@@ -330,4 +330,73 @@ describe("collab commit", () => {
       expect(status.stdout.trim().length).toBeGreaterThan(0);
     });
   });
+
+  describe("new → index → commit 联动（round-7）", () => {
+    beforeEach(async () => {
+      await setupWorkspace();
+      await createBaseline();
+    });
+
+    it("C1: new + index → commit succeeds with message in git log", async () => {
+      expect((await runCli(["new", "skill", "S30"], testRoot)).exitCode).toBe(
+        0,
+      );
+      expect(
+        (await runCli(["index", "skills"], testRoot)).exitCode,
+      ).toBe(0);
+
+      const result = await runCli(["commit", "-m", "feat: add S30"], testRoot);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("committed");
+
+      const subjects = await getCommitSubjects();
+      expect(subjects).toContain("feat: add S30");
+    });
+
+    it("C2: new without index → commit blocked by validate", async () => {
+      await writeIndex("skills", []);
+      expect((await runCli(["new", "skill", "S30"], testRoot)).exitCode).toBe(
+        0,
+      );
+
+      const result = await runCli(
+        ["commit", "-m", "should not land"],
+        testRoot,
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stdout).toContain("validate failed");
+      expect(result.stdout).toContain("Aborting commit");
+
+      const detail = await runCli(["validate"], testRoot);
+      expect(detail.stdout).toContain("MISSING_FROM_INDEX");
+
+      const subjects = await getCommitSubjects();
+      expect(subjects).not.toContain("should not land");
+    });
+
+    it("C3: validate stays green after commit", async () => {
+      await runCli(["new", "skill", "S30"], testRoot);
+      await runCli(["index", "skills"], testRoot);
+      await runCli(["commit", "-m", "feat: add S30"], testRoot);
+
+      const after = await runCli(["validate"], testRoot);
+      expect(after.exitCode).toBe(0);
+      expect(after.stdout).toContain("0 issues");
+    });
+
+    it("C4: commit via new chain still scopes to COLLABORATION only", async () => {
+      await runCli(["new", "skill", "S30"], testRoot);
+      await runCli(["index", "skills"], testRoot);
+      await writeFile(path.join(testRoot, "README.md"), "dirty\n", "utf8");
+
+      const result = await runCli(["commit", "-m", "feat: add S30"], testRoot);
+      expect(result.exitCode).toBe(0);
+
+      const status = await git(
+        ["status", "--porcelain", "README.md"],
+        testRoot,
+      );
+      expect(status.stdout.trim().length).toBeGreaterThan(0);
+    });
+  });
 });
