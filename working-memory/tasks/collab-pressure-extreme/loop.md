@@ -1,8 +1,8 @@
 ﻿# collab-pressure-extreme（L3）
 
-**更新**：2026-09-17 17:42  
+**更新**：2026-09-17 17:50  
 **压力层**：**L3**  
-**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.5）  
+**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.6）  
 **idle**：0
 
 ## 句柄
@@ -13,15 +13,13 @@
 
 | 步 | 产出 | 状态 |
 | :-- | :--- | :--- |
-| 1–6 | pattern/domains/trigger 全覆盖 | ✅ |
-| 7 | AGENTS 过时说明代谢 | ✅ v4.8.4 |
-| 8 | 热门 W/S trigger；S12↔parse 暂不合并 | ✅ v4.8.5 |
+| 1–8 | pattern/AGENTS/热门 W·S | ✅ …v4.8.5 |
+| 9 | workflow 全覆盖 + skill×17 | ✅ v4.8.6 |
 
 ## 下一 tick
 
-- 继续非 pattern trigger 批次；或 idle+1  
-- S12↔parse 等人审 W12（不自动合）  
-- 连续 3 idle → 停
+- 剩余 skill（14）/ integration（3）；ADR 可不补（决策记录非路由）  
+- 或 idle+1；连续 3 → 停
 
 ## 停止
 
