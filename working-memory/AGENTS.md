@@ -16,7 +16,7 @@
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **evolutionary 压测** | 🔄 第 14 轮完成 | `evolutionary/specs/round-14-report.md` |
+| **evolutionary 压测** | ✅ 已收口（入口 harvest v4.7.15） | `evolutionary/specs/pressure-test-retro.md` |
 
 ## 已归档
 
