@@ -24,7 +24,7 @@
 | 轮 | 状态 |
 | :-- | :--- |
 | 1 | ✅ index --dry-run |
-| 2 | 待：MCP + `--dir` 真库 validate |
+| 2 | ✅ MCP validate + dir 真库 113/0 |
 | 3 | 待：apply 派生链冲突 |
 
 ## 停止

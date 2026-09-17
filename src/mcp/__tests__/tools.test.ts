@@ -156,6 +156,23 @@ describe("MCP 工具", () => {
         /`scope` must be/,
       );
     });
+
+    it("uses per-call dir when server has no default workspace", () => {
+      const bareCtx: ToolContext = { cwd: root, dir: null };
+      const outcome = runTool(
+        "collab_validate",
+        { dir: root, scope: "content" },
+        bareCtx,
+      );
+      const parsed: unknown = JSON.parse(outcome.text);
+      expect(parsed).toMatchObject({ summary: { errors: 0 } });
+      expect(outcome.isError).toBe(false);
+    });
+
+    it("errors when neither default workspace nor dir is provided", () => {
+      const bareCtx: ToolContext = { cwd: root, dir: null };
+      expect(() => runTool("collab_validate", {}, bareCtx)).toThrow(/pass `dir`/);
+    });
   });
 
   describe("collab_parse", () => {
@@ -299,3 +316,25 @@ describe("MCP 工具", () => {
     });
   });
 });
+
+const REAL_COLLAB_DIR =
+  "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
+
+describe.skipIf(!existsSync(REAL_COLLAB_DIR))(
+  "MCP collab_validate — 真库（collab-pressure）",
+  () => {
+    it("validates 113 entries with 0 errors via dir arg", () => {
+      const outcome = runTool(
+        "collab_validate",
+        { dir: REAL_COLLAB_DIR },
+        { cwd: process.cwd(), dir: null },
+      );
+      const parsed: unknown = JSON.parse(outcome.text);
+      expect(parsed).toMatchObject({
+        entries: 113,
+        summary: { errors: 0, warnings: 0 },
+      });
+      expect(outcome.isError).toBe(false);
+    });
+  },
+);
