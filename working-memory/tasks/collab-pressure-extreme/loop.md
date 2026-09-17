@@ -1,9 +1,9 @@
 # collab-pressure-extreme（L3）
 
-**更新**：2026-09-17 18:05  
+**更新**：2026-09-17 18:15  
 **压力层**：**L3**  
-**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.7）  
-**idle**：0
+**期望 HEAD**：`collaboration`（本 tick 无 diff）  
+**idle**：1 / 3
 
 ## 句柄
 
@@ -13,13 +13,13 @@
 
 | 步 | 产出 | 状态 |
 | :-- | :--- | :--- |
-| 1–9 | pattern/workflow/热门 skill | ✅ …v4.8.6 |
-| 10 | skill+integration trigger 全覆盖 | ✅ v4.8.7 |
+| 1–10 | trigger 路由类全覆盖（除 ADR） | ✅ v4.8.7 |
+| idle-1 | 无条目 diff / 无代谢候选 | ✅ |
 
 ## 下一 tick
 
-- 路由类 trigger 已满（仅 ADR 故意不补）
-- 无明显代谢/新症状 → idle+1；连续 3 → 停
+- 再扫一遍；仍无 collaboration diff → idle+1
+- idle 达 3 → **停 wake**，W4 收口
 
 ## 停止
 
