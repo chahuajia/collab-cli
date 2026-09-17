@@ -26,7 +26,7 @@
 | 1 | ✅ index --dry-run |
 | 2 | ✅ MCP validate + dir 真库 113/0 |
 | 3 | ✅ apply 派生链 + commit 门禁 |
-| 4 | 待：parse + apply 联动 |
+| 4 | 🔄 parse + apply 联动 |
 
 ## 停止
 
