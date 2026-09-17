@@ -1,8 +1,9 @@
 ﻿# collab-pressure-extreme（L3）
 
-**更新**：2026-09-17 17:15  
+**更新**：2026-09-17 17:22  
 **压力层**：**L3**  
-**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.3）
+**期望 HEAD**：`collaboration` ✅ 本 tick（v4.8.4）  
+**idle**：0
 
 ## 句柄
 
@@ -13,14 +14,15 @@
 | 步 | 产出 | 状态 |
 | :-- | :--- | :--- |
 | 1–4 + FE | 三 pattern + RSC | ✅ |
-| 5 | domains 充实 + 热门 trigger（~22） | ✅ |
-| 6 | 剩余 pattern trigger 全覆盖 + gap 关 | ✅ v4.8.3 |
+| 5 | domains 充实 + 热门 trigger | ✅ |
+| 6 | pattern trigger 全覆盖 + gap 关 | ✅ v4.8.3 |
+| 7 | AGENTS 过时 trigger 说明代谢 | ✅ v4.8.4 |
 
 ## 下一 tick
 
-- 代谢配额：扫描 dormant/合并候选；或 AGENTS 症状表补弱链  
-- catalog trigger ≥80% 已达成 → 缺口已关  
-- 无增量则 idle+1（连续 3 → 停）
+- 扫描可合并重叠 / 非 pattern 补 trigger；或 idle+1  
+- dormant 仅 `rfc-process`；候选队列空  
+- 连续 3 idle → 停
 
 ## 停止
 
