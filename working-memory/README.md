@@ -1,6 +1,6 @@
 ﻿# Working Memory
 
-**更新**：2026-09-17 11:46
+**更新**：2026-09-17 17:15
 
 ## ⚠️ 先跑这个
 
@@ -12,22 +12,24 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `5f7f325` |
-| `collaboration` | `2af8bed` |
-| `evolutionary` | `a4e9f4f` |
+| `collab-cli` | （本 commit 后更新） |
+| `collaboration` | `2ed61ba` |
+| `evolutionary` | （未动） |
 
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **collab-pressure 长运行** | 🔄 round 17 完成 | `tasks/collab-pressure/loop.md` |
-| battery-pressure | ↗ 已迁 evolutionary | `tasks/_migrated/battery-pressure.md` |
+| **collab-pressure-extreme** | 🔄 L3 · v4.8.3 | `tasks/collab-pressure-extreme/loop.md` |
+| **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
 | CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
 
 ## 测量
 
-interceptions **6** · known-gaps **2** 开 · validate **113/0** · tests **668/0**
+- collaboration：validate **119/0** · patterns trigger **50/50** · catalog patterns **49/49**
+- known-gaps：**开 1**（WM 新鲜度）· trigger 覆盖缺口已关
+- interceptions：见 KB 主表
 
 ## 陷阱
 
-AI 不 push
+AI 不 push；merge `version/v0` / topic 须确认
