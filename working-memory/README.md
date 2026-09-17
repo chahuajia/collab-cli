@@ -13,7 +13,7 @@ node working-memory/check-freshness.mjs
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
 | `collab-cli` | `b6fd043` |
-| `collaboration` | `0c978a7` |
+| `collaboration` | `2af8bed` |
 | `evolutionary` | `1cf3bb4` |
 
 ## 活跃任务
