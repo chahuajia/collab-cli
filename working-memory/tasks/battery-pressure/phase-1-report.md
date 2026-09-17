@@ -1,14 +1,18 @@
-# 阶段 1 tick 1 报告
+# 阶段 1 报告
 
-**日期**：2026-09-17 ｜ **产物**：暴露点 + 规格（第 1 层）
+**日期**：2026-09-17 ｜ **阶段 1 收口**
 
-| # | 结果 |
-| :-- | :--- |
-| P1-1 | ✅ 规则组合，无 Order 子类 |
-| P1-2 | ✅ remainingSwaps + INV-6/7 |
-| P1-3 | ✅ meterReading + 后付 Ledger |
-| P1-4 | ✅ 默认优先 FINITE，可显式 entitlementId |
-| P1-5 | 待 tick 2：验收场景 |
-| P1-6 | 待 tick 2：契约 diff |
+| # | 结果 | 证据 |
+| :-- | :--- | :--- |
+| P1-1 | ✅ | phase-1-spec 规则组合 |
+| P1-2 | ✅ | AC-10/11 + remainingSwaps |
+| P1-3 | ✅ | meterReading + METERED_CHARGE |
+| P1-4 | ✅ | AC-14/15 + EntitlementSelector |
+| P1-5 | ✅ | phase-1-acceptance.md 7 条 AC |
+| P1-6 | ✅ | phase-1.ts + diff，phase-0 未改 |
 
-拦截 **0** · gap **0**（BMS 争议延后）
+**拦截 0** · **gap 0**
+
+## 下一 tick
+
+阶段 2 暴露点：余额 + 积分混合支付
