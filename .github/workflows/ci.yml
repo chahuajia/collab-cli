@@ -1,6 +1,12 @@
-# .github/workflows/ci.yml
+# collab-cli 真 CI —— typecheck + lint + test（经 npm run check）
 name: CI
-on: [pull_request]
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, collab-new]
+  workflow_dispatch:
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -9,6 +15,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
-      - run: npm run check    # typecheck + lint + test
-      - run: npm run build
+      - run: npm run check

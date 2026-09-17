@@ -16,7 +16,8 @@
 - [ ] **`domains/` 空壳 `_index.md`** 删还是留
 - [ ] **归档 0 人社群治理残留**（W6/W7 社区向、`rfcs/`、`profiles/`、CODEOWNERS）
 - [ ] **`patterns/dual-expression-for-human-and-system` 缺家** —— 评估称原创，但文件不存在
-- [ ] **真 CI** —— 等 collab-cli 可分发
+- [x] ~~**真 CI（collab-cli）**~~ —— `.github/workflows/ci.yml`：PR + push + `npm run check`
+- [ ] **真 CI（collaboration validate）** —— 等 collab-cli 可分发 / 仓库接线
 - [x] ~~**拦截账本真实记账**~~ —— **已有 5 条**（S13 · dependency-decision · domain-purity ×2 · S34）；继续在真实使用中追加，不编
 
 ### 已结清（2026-09-16）
