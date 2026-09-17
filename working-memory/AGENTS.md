@@ -18,8 +18,13 @@
 | :--- | :--- | :--- |
 | **collab-pressure** | ✅ L1 收口（round 1–17） | `tasks/collab-pressure/loop.md` |
 | **evolutionary phase-0 实现** | ✅ L2 切片 1–4 收口 | `evolutionary/.../battery-phase-0/retro.md` |
+| **evolutionary phase-1 实现** | ✅ L2 切片 1–3 收口 · 停 wake | `evolutionary/.../battery-phase-1/retro.md` |
+| **evolutionary phase-2 实现** | 🔄 L2 混合支付 · 切片1 ✅ | `evolutionary/.../battery-phase-2/loop.md` |
 
-## 已归档
+## 约定（2026-09-17）
+
+- **本地 git 提交说明、代码注释、WM**：使用用户语言（中文）
+- AI 不 push
 
 见 `tasks/_completed/`。
 
