@@ -105,7 +105,7 @@ export type DomainErrorCodePhase1 =
 
 export interface SwapCommandPhase1 {
   readonly userId: UserId;
-  readonly cabinetId: import("./phase-0.js").CabinetId;
+  readonly cabinetId: CabinetId;
   readonly entitlementId?: EntitlementId;
 }
 
