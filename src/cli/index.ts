@@ -11,6 +11,7 @@ import { cmdMemory } from "@/cli/commands/memory";
 import { cmdNew } from "@/cli/commands/new";
 import { cmdParse } from "@/cli/commands/parse";
 import { cmdPush } from "@/cli/commands/push";
+import { cmdRetire } from "@/cli/commands/retire";
 import { cmdValidate } from "@/cli/commands/validate";
 import { COLLAB_VERSION } from "@/cli/lib/version";
 
@@ -32,6 +33,7 @@ export const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   validate: cmdValidate,
   commit: cmdCommit,
   fix: cmdFix,
+  retire: cmdRetire,
   push: cmdPush,
 };
 
@@ -52,6 +54,7 @@ Commands:
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
   fix                          Fill in mechanical frontmatter fields (add-only)
+  retire <id>                  Retire an entry from the routing index (not deleted)
   commit -m "<message>"        Validate + git add + git commit
   push                         Validate + git push
 
@@ -59,7 +62,11 @@ Global options:
   --dir <path>                 COLLABORATION workspace (also: COLLAB_DIR env)
 
 Command options (only where listed):
-  --dry-run                    new / apply / fix / index / push — plan only, write nothing
+  --dry-run                    new / apply / fix / index / retire / push — plan only, write nothing
+  --dormant                    retire — 退役路径：被冷落（过时/重复/表达差/未成熟）
+  --enforced <path>            retire — 退役路径：已毕业（内容已被测试/工具固化）
+  --reason "<分类>: <证据>"     retire — 必填；判据见 meta/pruning-policy
+  --confirm                    retire — --enforced 的确认门
   --json                       validate / apply — machine-readable (shapes differ)
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes

@@ -1,3 +1,4 @@
+import { isRouted } from "@/domain/entry/routed";
 import { fileNameOf } from "@/domain/validation/resolvesRef";
 import type { Workspace } from "@/domain/entry/WorkspaceLoader";
 
@@ -48,17 +49,6 @@ export interface BuildCatalogOptions {
 }
 
 /**
- * **不进入路由表**的状态。
- *
- * @remarks
- * `dormant` 的正确语义不是"灰掉但仍占索引位"，而是**从路由索引中除名**
- * （见 `meta/pruning-policy`）。死亡成本归零，抵抗删除才没有理由。
- *
- * 只排除"明确退役"的两种；`draft` 仍然进入 —— 那是"在用但未定稿"，不是退役。
- */
-const RETIRED_STATUSES: ReadonlySet<string> = new Set(["dormant", "deprecated"]);
-
-/**
  * 从工作区生成 `catalog.json`。
  *
  * @remarks
@@ -80,7 +70,9 @@ export function buildCatalog(
   for (const loaded of workspace.entries) {
     if (loaded.entry === null) continue;
     const fm = loaded.entry.frontmatter;
-    if (RETIRED_STATUSES.has(fm.status)) continue;
+    // 退役判据由 domain 层单点定义（status 或 enforced）——
+    // 配额与路由表必须同源，见 `isRouted` 的注释。
+    if (!isRouted(fm)) continue;
 
     entries.push({
       id: fm.id,

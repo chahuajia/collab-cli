@@ -30,4 +30,21 @@ export interface FrontmatterInput {
   readonly trigger?: string | undefined;
   /** 什么时候**不用**读这条（反触发，防误用）。 */
   readonly "anti-trigger"?: string | undefined;
+  /**
+   * 不读它，模型会照着**本地哪个模式**写错？（入库门槛 —— 见 `meta/pruning-policy`）
+   *
+   * @remarks
+   * 必须是反事实，且必须是**模仿类**：不是"模型不知道 X"（称职的模型本来就知道，
+   * 这一点已被 evolutionary 的 D 实验六跑证伪），而是"模型会照着眼前这段坏代码
+   * 继续写下去"。答不出来 → 这条不该入库。
+   */
+  readonly falsifier?: string | undefined;
+  /**
+   * 已把这条内容机械化的测试/工具/规则的路径。非空 = **已毕业**。
+   *
+   * @remarks
+   * 毕业的条目**退出路由索引**（见 `domain/entry/routed.ts`），但文件仍在、
+   * 仍被校验、仍可链接 —— 它不是被删，是内容已经活在测试里，不需要再被读了。
+   */
+  readonly enforced: string | null;
 }

@@ -1,1 +1,7 @@
 npm run typecheck
+
+# 工作记忆新鲜度 —— 过期的记忆比没有更坏，因为它长得像"查过了"。
+# 接在这里而不是 CI：默认路径是各人本机布局（可用 COLLAB_CLI_DIR / COLLAB_KB_DIR /
+# EVOLUTIONARY_DIR 覆盖），且 evolutionary 是本地仓库。假装 CI 覆盖了它，
+# 就是 patterns/policy-without-mechanism 描述的那种政策。
+node working-memory/check-freshness.mjs

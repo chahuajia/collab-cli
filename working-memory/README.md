@@ -1,6 +1,6 @@
 ﻿# Working Memory
 
-**更新**：2026-09-17 17:15
+**更新**：2026-09-18 21:50
 
 ## ⚠️ 先跑这个
 
@@ -12,9 +12,12 @@ node working-memory/check-freshness.mjs
 
 | 仓库 | 登记 HEAD |
 | :--- | :--- |
-| `collab-cli` | `e635174` |
-| `collaboration` | `88025f7` |
-| `evolutionary` | （未动） |
+| `collab-cli` | `cb22d38` |
+| `collaboration` | `d45a3c2` |
+| `evolutionary` | `374d5fd` |
+
+> 已接 `.husky/pre-push`。仓库路径可用 `COLLAB_CLI_DIR` / `COLLAB_KB_DIR` /
+> `EVOLUTIONARY_DIR` 覆盖；**路径不可达是硬失败，不是跳过**。
 
 ## 活跃任务
 

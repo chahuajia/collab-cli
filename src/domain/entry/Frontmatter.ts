@@ -32,6 +32,8 @@ export class Frontmatter {
     private readonly _aliases: readonly string[],
     private readonly _trigger: string | undefined,
     private readonly _antiTrigger: string | undefined,
+    private readonly _falsifier: string | undefined,
+    private readonly _enforced: string | null,
   ) {}
 
   /**
@@ -77,6 +79,8 @@ export class Frontmatter {
           input.aliases ?? [],
           input.trigger,
           input["anti-trigger"],
+          input.falsifier,
+          input.enforced,
         ),
       );
     }
@@ -154,5 +158,27 @@ export class Frontmatter {
    */
   get antiTrigger(): string | undefined {
     return this._antiTrigger;
+  }
+
+  /**
+   * 不读它，模型会照着**本地哪个模式**写错？
+   *
+   * @remarks
+   * 入库门槛字段。必须是模仿类反事实（"会照着眼前这段坏代码继续写"），
+   * 不是无知类（"模型不知道 X"——D 实验已六跑证伪）。
+   */
+  get falsifier(): string | undefined {
+    return this._falsifier;
+  }
+
+  /**
+   * 已把这条内容机械化的测试/工具/规则的路径。非空 = 已毕业。
+   *
+   * @remarks
+   * 毕业 ⇒ 退出路由索引（见 `routed.ts` 的 `isRouted`）。
+   * 这是"条目 → 测试"输送带的终点：内容活在测试里，不必再被人读。
+   */
+  get enforced(): string | null {
+    return this._enforced;
   }
 }

@@ -28,6 +28,7 @@ node bin/collab.js --help
 | `collab validate [--json]` | 全量校验（链接 / 索引 / id / 目录 / 生成物） |
 | `collab catalog [--out] [--stdout]` | 生成 `catalog.json`（agent 的路由表） |
 | `collab fix [--dry-run]` | 补齐机械字段（**只补不删**，补不了就报错） |
+| `collab retire <id> --dormant\|--enforced <path> --reason "<分类>: <证据>" [--dry-run]` | 让条目**退出路由索引**（不是删除）。两条路径：被冷落 / 已毕业 |
 | `collab memory [--max-age <days>]` | 检查工作记忆里"声称当前状态"的文件是否过期 |
 | `collab commit -m <msg>` | validate + `git add` + `git commit` |
 | `collab push` | validate + `git push` |
@@ -72,4 +73,12 @@ src/mcp             MCP 协议与工具（不 import cmd*）
 src/cli             命令与渲染
 ```
 
-`npm run check` = typecheck + lint + 全部测试（当前 595 tests / 43 files）。
+`npm run check` = typecheck + lint + 全部测试。
+
+`npm run test:ci` = 同样的测试，但**跳过会失败**：任何 `skip` 都必须写进
+`.vitest-skip-allowlist.json` 并说明理由 —— 跳过 = 没验，不是验过了。
+（本仓曾有一处写死绝对路径 + `skipIf` 的测试：CI 上静默跳过、本机断言过时而红，
+两种"绿"的含义完全不同。见 `scripts/assert-no-skips.mjs`。）
+
+> 测试条数不写在这里 —— 手写的可计算量必然腐烂（本行曾写"595 tests / 43 files"）。
+> 想要数字就跑 `npm test`。

@@ -26,7 +26,8 @@
     "script:add-dates": "node scripts/add-dates.mjs",
     "script:migrate-write-entry": "node scripts/migrate-write-entry.mjs",
     "migrate:write-entry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__",
-    "migrate:write-entry:dry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__ --dry-run"
+    "migrate:write-entry:dry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__ --dry-run",
+    "test:ci": "node scripts/assert-no-skips.mjs"
   },
   "lint-staged": {
     "src/**/*.ts": [

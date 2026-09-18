@@ -37,6 +37,8 @@ export function makeEntry(
     "co-authors": [],
     focus: [],
     provenance: undefined,
+    falsifier: undefined,
+    enforced: null,
   };
   const fmResult = Frontmatter.create(input);
   if (!fmResult.ok) {

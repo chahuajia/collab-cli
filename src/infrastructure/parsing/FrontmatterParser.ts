@@ -36,6 +36,11 @@ const Schema = z
       .string()
       .min(MIN_LENGTH, "author is required and must not be empty"),
     provenance: z.string().optional(),
+    // 入库门槛：不读它，模型会照着本地哪个模式写错？（见 meta/pruning-policy）
+    falsifier: z.string().optional(),
+    // 毕业标记：非空 = 内容已被测试/工具固化，退出路由索引。
+    // 用 default(null) 而非 required —— 未迁移的条目照常解析，不是大爆炸迁移。
+    enforced: z.string().nullable().default(null),
   })
   .superRefine((data, ctx) => {
     const allowed = allowedStatusesFor(data.type);

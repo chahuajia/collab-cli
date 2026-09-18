@@ -728,23 +728,34 @@ describe("MCP parse → CLI apply chain（round-14）", () => {
   });
 });
 
+/**
+ * 真库路径：优先环境变量，回退到本机默认位置。
+ *
+ * @remarks
+ * 曾经这里写死绝对路径 + 写死 `entries: 113`，而真库已涨到 121 ——
+ * 于是本机必红、CI 上（路径不存在）静默跳过而全绿。**"跳过"与"通过"
+ * 在退出码上不可分**，正是本仓 2026-09-16 删掉的那个"假绿灯"失效模式复发。
+ * 数字会腐烂，不变量不会：条目数的家是 KB 的生成块，这里只断言不变量。
+ */
 const REAL_COLLAB_DIR =
+  process.env["COLLAB_REAL_KB"] ??
   "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
 
 describe.skipIf(!existsSync(REAL_COLLAB_DIR))(
-  "MCP collab_validate — 真库（collab-pressure）",
+  "MCP collab_validate — 真库",
   () => {
-    it("validates 113 entries with 0 errors via dir arg", () => {
+    it("validates the real KB with 0 errors via dir arg", () => {
       const outcome = runTool(
         "collab_validate",
         { dir: REAL_COLLAB_DIR },
         { cwd: process.cwd(), dir: null },
       );
-      const parsed: unknown = JSON.parse(outcome.text);
-      expect(parsed).toMatchObject({
-        entries: 113,
-        summary: { errors: 0, warnings: 0 },
-      });
+      const parsed = JSON.parse(outcome.text);
+      // 断言的是不变量，不是快照：真库必须干净且非空。
+      // 具体条数由 `collab stats` 生成进 KB 文档，那才是有测试的产物。
+      expect(parsed.summary).toMatchObject({ errors: 0, warnings: 0 });
+      expect(typeof parsed.entries).toBe("number");
+      expect(parsed.entries).toBeGreaterThan(0);
       expect(outcome.isError).toBe(false);
     });
   },

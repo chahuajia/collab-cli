@@ -471,9 +471,12 @@ function frontmatterToJson(entry: Entry): Record<string, unknown> {
   if (fm.provenance !== undefined) payload.provenance = fm.provenance;
   if (fm.trigger !== undefined) payload.trigger = fm.trigger;
   if (fm.antiTrigger !== undefined) payload.antiTrigger = fm.antiTrigger;
+  if (fm.falsifier !== undefined) payload.falsifier = fm.falsifier;
   if (fm.supersedes !== null) payload.supersedes = fm.supersedes;
   if (fm.focus.length > 0) payload.focus = fm.focus;
   if (fm.coAuthors.length > 0) payload.coAuthors = fm.coAuthors;
+  // enforced 非空 = 已毕业、已退出路由索引 —— 读条目的人需要知道这件事。
+  if (fm.enforced !== null) payload.enforced = fm.enforced;
   return payload;
 }
 

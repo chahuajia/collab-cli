@@ -18,3 +18,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      # 跳过 ≠ 通过。任何 numSkipped 都要在 .vitest-skip-allowlist.json 里声明。
+      # 这里刻意**不** checkout 真库：拿不到它就显式跳过、并因此可审计，
+      # 而不是让一个静默的 skip 冒充全绿。
+      - run: npm run test:ci

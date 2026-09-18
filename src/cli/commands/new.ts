@@ -8,6 +8,7 @@ import { extractIdsForKind } from "@/application/extractIdsForKind";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { buildTemplate } from "@/cli/lib/templates";
 import { EntryId } from "@/domain/entry/EntryId";
+import { isRouted } from "@/domain/entry/routed";
 import {
   type EntryKind,
   EntryKindDir,
@@ -76,13 +77,25 @@ export async function cmdNew(args: string[]): Promise<void> {
     // 2b. 约定层配额（代谢机制）：加之前必须先减
     if (type === EntryKindValues.Agreement) {
         const loader = new FileWorkspaceLoader(collabDir);
-        const active = extractIdsForKind(loader.load(), type).length;
-        if (active >= AGREEMENT_LIMIT) {
+        // 只数**占路由索引位**的条目 —— 判据与 buildCatalog 同源（isRouted）。
+        // 此前用 extractIdsForKind().length（不带状态过滤）会把已退役的也算进去，
+        // 于是下面那句"归档腾位置"是空头支票：照做也解不开配额。
+        const occupying = loader
+            .load()
+            .entries.filter(
+                (loaded) =>
+                    loaded.entry !== null &&
+                    loaded.entry.frontmatter.type === type &&
+                    isRouted(loaded.entry.frontmatter),
+            ).length;
+        if (occupying >= AGREEMENT_LIMIT) {
             throw new Error(
-                `约定已达上限（${active}/${AGREEMENT_LIMIT}）。` +
+                `约定已达上限（${occupying}/${AGREEMENT_LIMIT}）。` +
                     `约定是承重墙 —— 每加一条，都在向未来每一次交互收税。\n` +
-                    `先处理一条：归档（status → dormant）／并入已有条目／删掉。\n` +
-                    `若这一条确实不可谈判，它多半该改写成 工作流 / 模式 / 集成层 的模样。`,
+                    `先让一条退役（退出路由索引，文件与 git 历史保留）：\n` +
+                    `  collab retire <id> --reason "<过时|重复|表达差|未成熟>: <证据>"\n` +
+                    `也可以并入已有条目。若这一条确实不可谈判，` +
+                    `它多半该改写成 工作流 / 模式 / 集成层 的模样。`,
             );
         }
     }

@@ -189,6 +189,17 @@ describe("collab new", () => {
       ).toBe(true);
     });
 
+    it("ADR gets status: proposed, not draft (D-P0-3)", async () => {
+      // ADR 的合法 status 集合里没有 draft（见 allowedStatusesFor）——
+      // 曾经写死 'draft' 会让 `collab new adr` 生成一个立刻非法的条目。
+      await toSucceed(["new", "adr"], testRoot, envOverrides);
+      const content = await readFile(
+        path.join(collabDir, "meta/decision-records/ADR-0001.md"),
+        "utf8",
+      );
+      expect(content).toContain("status: proposed");
+    });
+
     it("skips nested files when generating next id", async () => {
       await mkdir(path.join(collabDir, "skills/advanced"), { recursive: true });
       await writeSkill("skills/advanced/S12.md", "S12", collabDir);

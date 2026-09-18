@@ -15,10 +15,17 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+
+// 路径可用环境变量覆盖（COLLAB_CLI_DIR / COLLAB_KB_DIR / EVOLUTIONARY_DIR）。
+// 默认值是作者本机的布局 —— 别处跑请显式给环境变量。
 const REPOS = {
-  "collab-cli": "D:\\actto\\front\\project\\collab-cli\\collab-cli",
-  collaboration: "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration",
-  evolutionary: "D:\\actto\\front\\project\\evolutionary_start\\evolutionary",
+  "collab-cli": process.env.COLLAB_CLI_DIR ?? "D:\\actto\\front\\project\\collab-cli\\collab-cli",
+  collaboration:
+    process.env.COLLAB_KB_DIR ??
+    "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration",
+  evolutionary:
+    process.env.EVOLUTIONARY_DIR ??
+    "D:\\actto\\front\\project\\evolutionary_start\\evolutionary",
 };
 const EXCLUDE = { "collab-cli": [":(exclude)working-memory"] };
 
@@ -29,11 +36,33 @@ function git(dir, args) {
   }).trim();
 }
 
+/**
+ * 仓库缺失 = **硬失败**，不是跳过。
+ *
+ * @remarks
+ * 跳过会让"这个仓我根本没检查"与"检查了、它很新鲜"长得一模一样 ——
+ * 与 collab-cli 里刚修掉的那个 `skipIf` 是同一个失效模式
+ * （见 scripts/assert-no-skips.mjs 的注释）。
+ */
+function repoExists(dir) {
+  try {
+    return fs.statSync(dir).isDirectory() && fs.existsSync(path.join(dir, ".git"));
+  } catch {
+    return false;
+  }
+}
+
 const readme = fs.readFileSync(path.join(here, "README.md"), "utf8");
 
 let stale = 0;
 console.log("登记 vs 实际：");
 for (const [name, dir] of Object.entries(REPOS)) {
+  if (!repoExists(dir)) {
+    console.log("  x " + name + ": 仓库路径不可达（" + dir + "）");
+    console.log("      → 用环境变量覆盖，或明确知道自己在跳过什么。");
+    stale += 1;
+    continue;
+  }
   const re = new RegExp("\\|\\s*`" + name.replace(/-/g, "\\-") + "`\\s*\\|\\s*`([0-9a-f]{7,40})`");
   const m = readme.match(re);
   const now = git(dir, ["rev-parse", "--short", "HEAD"]);
