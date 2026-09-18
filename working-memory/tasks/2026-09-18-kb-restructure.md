@@ -20,6 +20,20 @@ node <collab-cli>/working-memory/check-freshness.mjs   # exit 0
 node <collab-cli>/dist/cli/index.js --dir <KB> validate  # 122 entries, 0 issues
 ```
 
+## 追加：check-freshness 判据改为「时间」
+
+**问题**：上一版要求 README 手抄三个仓的 HEAD。那是第二份真相源 ——
+它接上电后拦的第一次 push 就是因为它写的还是旧哈希（三仓各前进一个提交）。
+抄写会漂移，而漂移会骗人 —— 正是本仓 `patterns/derivation-over-copy` 说的模式。
+
+**改动**：判据从「哈希相等」改为「README 的 `**更新**：YYYY-MM-DD HH:MM`
+晚于各仓最后一次**产品代码**提交」。哈希不再写进文档，由脚本算出来打印。
+
+已验证两条性质：
+- **可收敛**：只动 `working-memory/` 的提交不计入（`:(exclude)working-memory`）——
+  在临时仓实测：产品提交时间戳 `23:01:22`，WM-only 提交后仍是 `23:01:22`。
+- **不可欺骗**：过期 README → exit 1；未来 README → exit 0（`/tmp` 副本实测）。
+
 ## 途中发现并修掉的一个真 bug
 
 `collab retire` 的 `setScalarField` 原按 `"\n"` 切分，而知识库在 Windows 上是 **CRLF**
