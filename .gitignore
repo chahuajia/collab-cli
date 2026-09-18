@@ -9,6 +9,9 @@ dist/
 # 测试覆盖率
 coverage/
 
+# 测试中间产物（由 scripts/assert-no-skips.mjs 生成并自删）
+.vitest-report.json
+
 # 缓存
 .eslintcache
 .cache/

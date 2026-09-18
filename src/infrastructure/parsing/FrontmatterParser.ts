@@ -1,29 +1,59 @@
 // src/infrastructure/parsing/FrontmatterParser.ts
+import YAML from "yaml";
+import { z } from "zod";
+import {
+  allowedStatusesFor,
+  EntryKindValues,
+  type EntryStatus,
+} from "@/domain/entry/types";
+import { Issue } from "@/domain/validation/Issue";
+import { enumOf } from "@/infrastructure/parsing/zod-helpers";
+import { Err, Ok } from "@/shared/Result";
+import type { FrontmatterInput } from "@/domain/entry/FrontmatterInput";
+import type { Result } from "@/shared/Result";
 
-import { z } from 'zod';
-import {EntryStatusValues, EntryTypeValues} from "@/domain/entry/types";
-import {Issue} from "@/domain/validation/Issue";
-import {enumOf} from "@/infrastructure/parsing/zod-helpers";
-import {Err, Ok} from "@/shared/Result";
-import type{ FrontmatterInput} from "@/domain/entry/FrontmatterInput";
-import type {Result} from "@/shared/Result";
-
-const MIN_ID_LENGTH = 1;
-const Schema = z.object({
-    id: z.string().min(MIN_ID_LENGTH),
-    type: enumOf(EntryTypeValues),
-    status: enumOf(EntryStatusValues),
+const MIN_LENGTH = 1;
+const Schema = z
+  .object({
+    id: z.string().min(MIN_LENGTH),
+    type: enumOf(EntryKindValues),
+    status: z.custom<EntryStatus>(
+      (val) => typeof val === "string" && val.length,
+      { message: "status must be a non-empty string" },
+    ),
     created: z.string(),
     updated: z.string(),
     domains: z.array(z.string()).default([]),
-    'applies-to': z.array(z.string()).default([]),
+    "applies-to": z.array(z.string()).default([]),
     supersedes: z.string().nullable().default(null),
-    'co-authors': z.array(z.string()).default([]),
+    "co-authors": z.array(z.string()).default([]),
     focus: z.array(z.string()).default([]),
-
-    author: z.string().min(1, 'author is required and must not be empty'),
+    aliases: z.array(z.string()).optional(),
+    // 路由字段：工具生成不出来，只能由人/模型写（见 meta/base-contract.md）
+    trigger: z.string().optional(),
+    "anti-trigger": z.string().optional(),
+    author: z
+      .string()
+      .min(MIN_LENGTH, "author is required and must not be empty"),
     provenance: z.string().optional(),
-});
+    // 入库门槛：不读它，模型会照着本地哪个模式写错？（见 meta/pruning-policy）
+    falsifier: z.string().optional(),
+    // 毕业标记：非空 = 内容已被测试/工具固化，退出路由索引。
+    // 用 default(null) 而非 required —— 未迁移的条目照常解析，不是大爆炸迁移。
+    enforced: z.string().nullable().default(null),
+  })
+  .superRefine((data, ctx) => {
+    const allowed = allowedStatusesFor(data.type);
+    if (!allowed.includes(data.status)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["status"],
+        message: `Invalid enum value. Expected ${allowed
+          .map((s) => `'${s}'`)
+          .join(" | ")}, received '${data.status}'`,
+      });
+    }
+  });
 
 /**
  * 解析原始 frontmatter 为 FrontmatterInput。
@@ -38,16 +68,108 @@ const Schema = z.object({
  * @returns 成功返回 FrontmatterInput，失败返回 Issue 数组
  */
 export function parseFrontmatterInput(
-    raw: unknown,
-    path: string,
+  raw: unknown,
+  path: string,
 ): Result<FrontmatterInput, Issue[]> {
-    const parsed = Schema.safeParse(raw);
-    if (!parsed.success) {
-        return Err(
-            parsed.error.issues.map((i) =>
-                Issue.invalidShape(path, `${i.path.join('.')}: ${i.message}`),
-            ),
-        );
+  const parsed = Schema.safeParse(raw);
+  if (!parsed.success) {
+    return Err(
+      parsed.error.issues.map((i) =>
+        Issue.invalidShape(path, `${i.path.join(".")}: ${i.message}`),
+      ),
+    );
+  }
+  return Ok(parsed.data);
+}
+
+/**
+ * 分离后的 Markdown 文档。
+ */
+export interface ParsedDocument {
+  readonly frontmatterRaw: unknown;
+  readonly body: string;
+}
+
+/**
+ * `parseDocument` 的错误类型。
+ */
+export type DocumentParseError =
+  | { readonly kind: "missing-frontmatter" }
+  | { readonly kind: "unclosed-frontmatter" }
+  | { readonly kind: "invalid-yaml"; readonly reason: string };
+
+const BOM_CODE_POINT = 0xfeff;
+/**
+ * 分离 Markdown 文档的 frontmatter 和 body。
+ *
+ * @remarks
+ * 格式约定：
+ * - 文件必须以 `---` 行开头（允许 BOM 前缀 `\uFEFF`）
+ * - frontmatter 与 body 之间由独占一行的 `---` 分隔
+ * - 兼容 Unix (`\n`) 与 Windows (`\r\n`) 换行
+ * - frontmatter 必须解析为 YAML 映射（对象），不能是字符串/数组/标量
+ *
+ * 不负责：
+ * - frontmatter 的具体字段校验（那是 `parseFrontmatterInput` 的职责）
+ * - 嵌套/多块 frontmatter
+ * - 代码块内的 `---` 识别（当前实现按行首匹配，与 sectionsPresent D7 一致）
+ *
+ * @param raw - 文件的完整内容
+ * @returns 成功时返回 `{ frontmatterRaw, body }`；失败时返回 `DocumentParseError`
+ */
+export function parseDocument(
+  raw: string,
+): Result<ParsedDocument, DocumentParseError> {
+  // 1. 去掉 BOM
+  const text = raw.charCodeAt(0) === BOM_CODE_POINT ? raw.slice(1) : raw;
+
+  // 2. 按行分割（兼容 \n 与 \r\n）
+  const lines = text.split(/\r?\n/);
+
+  // 3. 第一行必须是 `---`
+  if (lines[0] !== "---") {
+    return Err({ kind: "missing-frontmatter" });
+  }
+
+  // 4. 找结束的 `---` 行
+  let endIndex = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === "---") {
+      endIndex = i;
+      break;
     }
-    return Ok(parsed.data);
+  }
+  if (endIndex === -1) {
+    return Err({ kind: "unclosed-frontmatter" });
+  }
+
+  // 5. 分离 YAML 与 body
+  const yamlText = lines.slice(1, endIndex).join("\n");
+  const body = lines.slice(endIndex + 1).join("\n");
+
+  // 6. 解析 YAML
+  let parsed: unknown;
+  try {
+    parsed = YAML.parse(yamlText);
+  } catch (e) {
+    return Err({
+      kind: "invalid-yaml",
+      reason: e instanceof Error ? e.message : String(e),
+    });
+  }
+
+  // 7. 必须是映射（非 null/undefined/数组/标量）
+  if (
+    parsed === null ||
+    parsed === undefined ||
+    typeof parsed !== "object" ||
+    Array.isArray(parsed)
+  ) {
+    return Err({
+      kind: "invalid-yaml",
+      reason: "frontmatter must be a YAML mapping",
+    });
+  }
+
+  return Ok({ frontmatterRaw: parsed, body });
 }

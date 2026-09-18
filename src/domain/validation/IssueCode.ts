@@ -33,6 +33,63 @@ export const IssueCodeValues = {
     DuplicateId: 'DUPLICATE_ID',
     /** 形状无效 */
     InvalidShape: 'INVALID_SHAPE',
+    /** 重复章节 */
+    DuplicateSection: 'DUPLICATE_SECTION',
+    /** 目录有没有 index */
+    MissingIndex:'MISSING_INDEX',
+    /** 条目是不在index 里 */
+    MissingFromIndex: 'MISSING_FROM_INDEX',
+    /** index引用不存在条目 */
+    DanglingIndexEntry: 'DANGLING_INDEX_ENTRY',
+
+    /** _index.md 表格行用了文件名锚，推荐 id 锚（ADR-0009） */
+    IndexRefPreferId: 'INDEX_REF_PREFER_ID',
+
+    // ─────────────────────────────────────────────
+    // collab apply —— bundle 落盘通道的问题
+    // ─────────────────────────────────────────────
+    /** bundle 本身不可用（JSON / 形状 / 空的 files） */
+    BundleInvalid: 'BUNDLE_INVALID',
+    /** bundle 中的路径不安全（绝对路径 / `..` / 不在白名单） */
+    BundlePathInvalid: 'BUNDLE_PATH_INVALID',
+    /** bundle 中的内容为空或纯空白 */
+    BundleEmptyContent: 'BUNDLE_EMPTY_CONTENT',
+    /** 声明的 sha256 与内容实际哈希不符 */
+    BundleHashMismatch: 'BUNDLE_HASH_MISMATCH',
+    /** bundle 的意图与工作区当前状态冲突 */
+    BundleConflict: 'BUNDLE_CONFLICT',
+
+    /** id 不是文件名的前缀（id 与文件名必须同源，两种锚才都能解析） */
+    IdFileNameMismatch: 'ID_FILE_NAME_MISMATCH',
+
+    /** id 没有登记进 aliases（渲染层靠 alias 解析 id 形式的链接） */
+    IdNotInAliases: 'ID_NOT_IN_ALIASES',
+
+    /** catalog.json 与工作区不一致（生成物过期） */
+    CatalogStale: 'CATALOG_STALE',
+
+    /** 顶层目录未在基座契约里声明（等于悄悄改基座） */
+    UndeclaredDir: 'UNDECLARED_DIR',
+
+    /** `enforced` 的值语法不合法（不是 `<repo>:<path>` 形态 / 空串） */
+    EnforcedShapeInvalid: 'ENFORCED_SHAPE_INVALID',
+
+    /** 路由面（症状表 / 域索引）指向一条已毕业的条目，却没有标注 */
+    RoutingToGraduated: 'ROUTING_TO_GRADUATED',
+
+    /** 门槛生效日之后创建的条目缺 `falsifier`（存量条目豁免） */
+    FalsifierRequired: 'FALSIFIER_REQUIRED',
+
+    // ─────────────────────────────────────────────
+    // collab parse —— A17 文本协议的切分问题
+    // ─────────────────────────────────────────────
+    /** 文本结构不合法（块外有内容 / 未闭合 / 空输入） */
+    ParseInvalid: 'PARSE_INVALID',
+    /** 块内容为空或纯空白 */
+    ParseEmptyBlock: 'PARSE_EMPTY_BLOCK',
+    /** 同一 path 出现两次 */
+    ParseDuplicatePath: 'PARSE_DUPLICATE_PATH',
+
 } as const;
 
 export type IssueCode = ValueOf<typeof IssueCodeValues>;

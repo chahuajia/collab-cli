@@ -1,25 +1,33 @@
 {
   "name": "collab-cli",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "type": "module",
   "bin": {
-    "collab": "dist/bin/collab.js"
+    "collab": "bin/collab.js"
   },
   "files": [
-    "dist",
+    "bin/",
+    "dist/",
     "README.md"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --fix",
-    "dev": "tsx src/bin/collab.ts",
+    "dev": "tsx src/cli/index.ts",
     "build": "tsc && tsc-alias",
+    "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "npm run typecheck && npm run lint && npm run test",
     "prepare": "husky",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "script:add-author": "node scripts/add-author.mjs",
+    "script:add-dates": "node scripts/add-dates.mjs",
+    "script:migrate-write-entry": "node scripts/migrate-write-entry.mjs",
+    "migrate:write-entry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__",
+    "migrate:write-entry:dry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__ --dry-run",
+    "test:ci": "node scripts/assert-no-skips.mjs"
   },
   "lint-staged": {
     "src/**/*.ts": [
@@ -41,6 +49,7 @@
     "execa": "^9.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
+    "prettier": "^3.9.6",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.15.0",
     "typescript": "^5.5.0",

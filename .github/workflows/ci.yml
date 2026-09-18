@@ -1,6 +1,12 @@
-# .github/workflows/ci.yml
+# collab-cli 真 CI —— typecheck + lint + test（经 npm run check）
 name: CI
-on: [pull_request]
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, collab-new]
+  workflow_dispatch:
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -9,6 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
-      - run: npm run check    # typecheck + lint + test
-      - run: npm run build
+      - run: npm run check
+      # 跳过 ≠ 通过。任何 numSkipped 都要在 .vitest-skip-allowlist.json 里声明。
+      # 这里刻意**不** checkout 真库：拿不到它就显式跳过、并因此可审计，
+      # 而不是让一个静默的 skip 冒充全绿。
+      - run: npm run test:ci

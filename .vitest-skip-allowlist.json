@@ -1,0 +1,10 @@
+{
+  "$comment": "被允许跳过的测试。跳过 = 没验，不是验过了 —— 每一条都必须写明为什么可以跳过，以及什么条件下应该删掉这一条。机制见 scripts/assert-no-skips.mjs。",
+  "allowed": [
+    {
+      "file": "src/mcp/__tests__/tools.test.ts",
+      "name": "真库",
+      "reason": "依赖真库路径（COLLAB_REAL_KB 或本机默认位置）。在拿不到该仓库的机器/CI 上只能跳过。删除条件：真库能作为 submodule 或 CI checkout 步骤提供。"
+    }
+  ]
+}
