@@ -23,6 +23,8 @@ export function makeEntry(
     path?: string;
     /** 毕业标记：非空 = 已退出路由索引（见 ADR-0011）。 */
     enforced?: string | null;
+    /** 入库门槛：不读它，模型会照着本地哪个模式写错？ */
+    falsifier?: string;
   } = {},
 ): Entry {
   const type = EntryKindValues[overrides.type ?? "Skill"];
@@ -39,7 +41,7 @@ export function makeEntry(
     "co-authors": [],
     focus: [],
     provenance: undefined,
-    falsifier: undefined,
+    falsifier: overrides.falsifier,
     enforced: overrides.enforced ?? null,
   };
   const fmResult = Frontmatter.create(input);

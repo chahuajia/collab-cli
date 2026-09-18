@@ -1,6 +1,7 @@
 // src/application/ValidateUseCase.ts
 import {catalogIsFresh} from "@/application/catalogIsFresh";
 import {contractDirs} from "@/application/contractDirs";
+import {falsifierRequired} from "@/application/falsifierRequired";
 import {checkIndexDangling} from "@/domain/validation/rules/checkIndexDangling";
 import {checkIndexExists} from "@/domain/validation/rules/checkIndexExists";
 import {checkIndexForward} from "@/domain/validation/rules/checkIndexForward";
@@ -40,6 +41,10 @@ export const contentRules: RuleRegistry = {
         // `enforced` 的形态（`<repo>:<path>`）。不依赖索引，故进 contentRules ——
         // 一条刚写下的条目也该被查。存在性检查归 `collab retire`（它有 IO）。
         enforcedShape,
+        // 入库门槛：门槛生效日之后创建的条目必须有 falsifier（存量豁免）。
+        // 没有它，"新条目必须能说出它对抗什么"只是一句散文
+        // —— 正是 patterns/policy-without-mechanism 说的那种失效。
+        falsifierRequired,
     ],
     global: [],
 };

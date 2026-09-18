@@ -376,4 +376,22 @@ export class Issue {
             suggestion: `mark the line as graduated (e.g. "已毕业 → ${enforced}"), or point at the artifact instead of the entry`,
         });
     }
+
+    /**
+     * 门槛生效日之后创建的条目缺 `falsifier`。
+     *
+     * @remarks
+     * 存量条目豁免（它们写在门槛生效前）—— 这就是"日期截止"而非
+     * "全库计数"的理由：后者在任何小于基线的工作区里都是死的。
+     */
+    static falsifierRequired(path: string, id: string, since: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.FalsifierRequired,
+            message: `"${id}" was created on/after ${since} but has no \`falsifier\` — state "不读它，模型会照着本地哪个模式写错？"`,
+            path,
+            suggestion:
+                'add `falsifier: <本地哪个模式会被照着写下去>`; must be an imitation-type counterfactual, not "模型不知道 X" (falsified by the D experiment). Empty is better than fabricated — see meta/interceptions.md: 不要编造',
+        });
+    }
 }

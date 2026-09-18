@@ -77,6 +77,9 @@ export const IssueCodeValues = {
     /** 路由面（症状表 / 域索引）指向一条已毕业的条目，却没有标注 */
     RoutingToGraduated: 'ROUTING_TO_GRADUATED',
 
+    /** 门槛生效日之后创建的条目缺 `falsifier`（存量条目豁免） */
+    FalsifierRequired: 'FALSIFIER_REQUIRED',
+
     // ─────────────────────────────────────────────
     // collab parse —— A17 文本协议的切分问题
     // ─────────────────────────────────────────────
