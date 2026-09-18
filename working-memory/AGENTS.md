@@ -12,12 +12,14 @@ D:\\actto\\front\\project\\collaboration_aggregate\\collaboration
 - 远端 URL / 分支以本机 git 为准
 - 「继续」≠ 自动 merge / push
 
+**新对话先读**：[HANDOVER.md](HANDOVER.md)（给 Agent 的交接；⏸ 未说「继续」勿派集群）。
+
 ## 活跃任务
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
 | **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | 	asks/collab-pressure-extreme/loop.md |
-| **evo-collab-extreme** | ⏸ 暂停 · wave41✅ · HEAD `374d5fd` | `tasks/evo-collab-extreme/loop.md` |
+| **evo-collab-extreme** | ⏸ 暂停 · wave41✅ · HEAD `303dc35` | `tasks/evo-collab-extreme/loop.md` |
 | **collab-pressure** | ✅ L1 收口（round 1–17） | 	asks/collab-pressure/loop.md |
 | **evolutionary phase-5 复盘** | ✅ 已合 ersion/v0 · phase 归档 | evolutionary/.../battery-phase-5/retro.md |
 
