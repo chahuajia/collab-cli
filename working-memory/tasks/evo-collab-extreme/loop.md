@@ -1,6 +1,7 @@
 ﻿# evo-collab-extreme（编排指针）
 
-**更新**：2026-09-17 23:30  
-**门禁**：extreme v6 交付凭证  
-**并行**：切片 8–9 已收口（IoT∥信用购）  
-**切片7–9**：✅  
+**更新**：2026-09-18 09:10  
+**门禁**：extreme **v9**（≤2 写者 · 冷启动缩尺）  
+**波次**：wave16 ✅ · `dispatched=2 recovered=2`  
+**切片**：20a/b 订单退款  
+**真相**：`evolutionary_start/evolutionary/.../evo-collab-extreme/loop.md`  
