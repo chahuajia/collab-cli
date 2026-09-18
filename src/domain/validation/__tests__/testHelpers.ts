@@ -28,6 +28,10 @@ export interface RuleContextInput {
   readonly indexDirs?: readonly string[];
   /** 所有 `.md` 路径（去 `.md` 后缀）。 */
   readonly markdownPaths?: readonly string[];
+  /** 仓库根文档（`AGENTS.md` 等）—— 路由面。 */
+  readonly rootDocs?: ReadonlyMap<string, string>;
+  /** kind 目录之外的 `_index.md` —— 路由面。 */
+  readonly extraDocs?: ReadonlyMap<string, string>;
 }
 
 export function makeRuleContext(input: RuleContextInput = {}): RuleContext {
@@ -52,5 +56,7 @@ export function makeRuleContext(input: RuleContextInput = {}): RuleContext {
     allMarkdownPaths: new Set(
       input.markdownPaths === undefined ? derivedPaths : markdownPaths,
     ),
+    rootDocs: input.rootDocs,
+    extraDocs: input.extraDocs,
   };
 }

@@ -32,6 +32,15 @@ export interface RuleContext {
 
   /** 仓库根 Markdown 的内容（`AGENTS.md` / `ROOT.md` / `README.md`）。 */
   readonly rootDocs?: ReadonlyMap<string, string> | undefined;
+
+  /**
+   * kind 目录之外的 `_index.md`（如 `domains/architecture/_index.md`）。
+   *
+   * @remarks
+   * 它们同样是路由面（那张"症状 → 先读"表），但不属于任何 EntryKind，
+   * 所以不在 `indexFiles` 里。见 `routingToGraduated` 规则。
+   */
+  readonly extraDocs?: ReadonlyMap<string, string> | undefined;
 }
 
 /**

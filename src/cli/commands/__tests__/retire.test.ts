@@ -108,7 +108,9 @@ describe("collab retire", () => {
         "retire",
         "live-entry",
         "--enforced",
-        "src/test/SomeTest.java",
+        // 形态必须是 `<repo>:<path>`。这个仓名本机不认识，
+        // 所以只查形态、跳过存在性 —— 正好覆盖"未知仓名"这条分支。
+        "some-repo:src/test/SomeTest.java",
         "--confirm",
         "--reason",
         "已毕业: 测试固化",
@@ -118,7 +120,7 @@ describe("collab retire", () => {
     );
 
     const content = await readFile(abs("patterns/live-entry.md"), "utf8");
-    expect(content).toContain("enforced: src/test/SomeTest.java");
+    expect(content).toContain("enforced: some-repo:src/test/SomeTest.java");
     // enforced 是独立的轴 —— 毕业不等于过时，status 必须保持不变。
     expect(content).toContain("status: active");
   });
@@ -165,6 +167,49 @@ describe("collab retire", () => {
     // 行尾风格必须保持 —— 整文件换行尾会制造巨大的假 diff。
     expect(after).toContain("\r\n");
     expect(after).not.toMatch(/[^\r]\n/);
+  });
+
+  it("R10: --enforced 指向不存在的产物 → 拒绝（这是实测犯过的错）", async () => {
+    // 2026-09-18 实测：把路径写成裸路径且少了一层目录，validate 报 0 issue，
+    // 于是一个**不存在的产物**被当成了毕业依据 —— 条目静默退出路由索引，
+    // 而它声称的固化根本不存在。这条必须拦住。
+    await seedPattern("live-entry");
+
+    const result = await toFail(
+      [
+        "retire",
+        "live-entry",
+        "--enforced",
+        "evolutionary:backend/src/test/java/com/evolutionary/NOT_A_REAL_FILE.java",
+        "--confirm",
+        "--reason",
+        "已毕业: x",
+      ],
+      ctx().root,
+      ctx().envOverrides,
+    );
+
+    expect(result.stderr + result.stdout).toContain("不存在");
+  });
+
+  it("R11: --enforced 缺 `<repo>:` 前缀 → 拒绝", async () => {
+    await seedPattern("live-entry");
+
+    const result = await toFail(
+      [
+        "retire",
+        "live-entry",
+        "--enforced",
+        "some/bare/path.java",
+        "--confirm",
+        "--reason",
+        "已毕业: x",
+      ],
+      ctx().root,
+      ctx().envOverrides,
+    );
+
+    expect(result.stderr + result.stdout).toContain("<repo>:<path>");
   });
 
   it("R8: 未知 id 报错", async () => {

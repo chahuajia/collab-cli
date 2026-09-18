@@ -21,6 +21,8 @@ export function makeEntry(
     updated?: string;
     body?: string;
     path?: string;
+    /** 毕业标记：非空 = 已退出路由索引（见 ADR-0011）。 */
+    enforced?: string | null;
   } = {},
 ): Entry {
   const type = EntryKindValues[overrides.type ?? "Skill"];
@@ -38,7 +40,7 @@ export function makeEntry(
     focus: [],
     provenance: undefined,
     falsifier: undefined,
-    enforced: null,
+    enforced: overrides.enforced ?? null,
   };
   const fmResult = Frontmatter.create(input);
   if (!fmResult.ok) {

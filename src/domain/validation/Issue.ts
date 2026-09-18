@@ -340,4 +340,40 @@ export class Issue {
                 "adding a top-level directory is a BASE change: it needs an ADR + a migration script; or move the file into a declared directory",
         });
     }
+
+    /**
+     * `enforced` 的值形态不合法。
+     *
+     * @remarks
+     * 只查**语法**（`<repo>:<path>`）—— 文件是否真存在由 `collab retire`
+     * 在写入时查（它才有 IO）。validate 保持密闭。
+     */
+    static enforcedShapeInvalid(path: string, value: string, reason: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.EnforcedShapeInvalid,
+            message: `enforced "${value}" is not a valid "<repo>:<path>" reference: ${reason}`,
+            path,
+            suggestion:
+                'use the form "evolutionary:backend/src/test/java/.../SomeTest.java"',
+        });
+    }
+
+    /**
+     * 路由面指向一条**已毕业**的条目，却没有标注。
+     *
+     * @remarks
+     * 毕业的条目已退出 `catalog.json` —— 它不需要再被读（内容活在测试里）。
+     * 症状表若还写"读它"，就是在收一份**读了没用**的税。
+     * `_index.md` 保留毕业条目是**对的**（索引 ≠ 路由表），所以本规则只管路由面。
+     */
+    static routingToGraduated(path: string, id: string, enforced: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.RoutingToGraduated,
+            message: `routing surface points at "${id}", which has graduated (enforced by ${enforced}) — it is no longer in catalog.json`,
+            path,
+            suggestion: `mark the line as graduated (e.g. "已毕业 → ${enforced}"), or point at the artifact instead of the entry`,
+        });
+    }
 }

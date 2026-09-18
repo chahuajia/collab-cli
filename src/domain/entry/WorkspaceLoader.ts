@@ -40,6 +40,20 @@ export interface Workspace {
    * key 是相对路径（含 `.md`），value 是文件内容。
    */
   readonly rootDocs?: ReadonlyMap<string, string> | undefined;
+  /**
+   * kind 目录之外的 `_index.md`（如 `domains/architecture/_index.md`）。
+   *
+   * @remarks
+   * 它们不是条目，但同样是**路由面** —— domain 索引里那张
+   * "症状 → 先读"表和 `AGENTS.md` 的症状表是一回事。
+   *
+   * 单独一张表而不并进 `indexFiles`：`indexFiles` 的 key 是**目录**、
+   * 且被 `checkIndexDangling` 按 kind 前缀解读 —— 把 `domains/` 塞进去
+   * 会改变那条规则的语义。
+   *
+   * key 是相对路径（含 `.md`），value 是文件内容。
+   */
+  readonly extraDocs?: ReadonlyMap<string, string> | undefined;
 }
 
 /**

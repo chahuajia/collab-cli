@@ -65,10 +65,49 @@ try {
     { cwd: PROJECT_ROOT, encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] },
   );
 } catch {
-  // 测试本身有失败 —— 交给 vitest 的退出码语义，这里不重复报。
-  console.error("✖ 测试未通过（见上方 vitest 输出）。");
+  // 测试本身有失败。**必须点名**：只说"未通过"会让 CI 日志里
+  // "哪条挂了"和"根本没跑"长得一样 —— 与这个脚本要治的病同源。
+  reportFailures(REPORT_PATH);
   cleanup();
   process.exit(1);
+}
+
+/**
+ * 点名失败的测试。
+ *
+ * @remarks
+ * 报告可能压根没写出来（vitest 在写文件前就崩了），所以整段是 best-effort ——
+ * 读不到就退回一句通用提示，**不要**因此掩盖真实退出码。
+ */
+function reportFailures(reportPath) {
+  let report;
+  try {
+    report = JSON.parse(readFileSync(reportPath, "utf8"));
+  } catch {
+    console.error("✖ 测试未通过（未拿到报告 —— 见上方 vitest 输出）。");
+    return;
+  }
+
+  const failed = [];
+  for (const file of report.testResults ?? []) {
+    for (const t of file.assertionResults ?? []) {
+      if (t.status !== "failed") continue;
+      failed.push({
+        file: path.relative(PROJECT_ROOT, file.name).split(path.sep).join("/"),
+        name: t.fullName ?? t.title,
+        msg: (t.failureMessages ?? []).join("\n").split("\n").slice(0, 3).join("\n"),
+      });
+    }
+  }
+
+  console.error("");
+  console.error(`✖ ${failed.length} 个测试失败：`);
+  for (const f of failed) {
+    console.error(`    ${f.file}`);
+    console.error(`      ${f.name}`);
+    for (const line of f.msg.split("\n")) console.error(`      │ ${line}`);
+  }
+  console.error("");
 }
 
 /** 汇总每个被跳过的测试，用于与允许清单比对。 */

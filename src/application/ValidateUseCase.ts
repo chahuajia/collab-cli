@@ -5,10 +5,12 @@ import {checkIndexDangling} from "@/domain/validation/rules/checkIndexDangling";
 import {checkIndexExists} from "@/domain/validation/rules/checkIndexExists";
 import {checkIndexForward} from "@/domain/validation/rules/checkIndexForward";
 import {checkIndexRefPreferId} from "@/domain/validation/rules/checkIndexRefPreferId";
+import {enforcedShape} from "@/domain/validation/rules/enforcedShape";
 import {idIsAlias} from "@/domain/validation/rules/idIsAlias";
 import {idMatchesFileName} from "@/domain/validation/rules/idMatchesFileName";
 import {linksResolve} from "@/domain/validation/rules/linksResolve";
 import {linksResolveInRootDocs} from "@/domain/validation/rules/linksResolveInRootDocs";
+import {routingToGraduated} from "@/domain/validation/rules/routingToGraduated";
 import {sectionsPresent} from "@/domain/validation/rules/sectionsPresent";
 import {typeMatchesDir} from "@/domain/validation/rules/typeMatchesDir";
 import {ValidationReport} from "@/domain/validation/ValidationReport";
@@ -35,6 +37,9 @@ export const contentRules: RuleRegistry = {
         typeMatchesDir,
         sectionsPresent,
         linksResolve,
+        // `enforced` 的形态（`<repo>:<path>`）。不依赖索引，故进 contentRules ——
+        // 一条刚写下的条目也该被查。存在性检查归 `collab retire`（它有 IO）。
+        enforcedShape,
     ],
     global: [],
 };
@@ -56,6 +61,9 @@ export const standardRules: RuleRegistry = {
         catalogIsFresh,
         contractDirs,
         linksResolveInRootDocs,
+        // 路由面（症状表 / domain 索引）不得指向已毕业条目 ——
+        // 否则收一份"读了没用"的税（见 routingToGraduated 的注释）。
+        routingToGraduated,
     ],
 };
 
@@ -103,6 +111,7 @@ export class ValidateUseCase {
             allMarkdownPaths: workspace.allMarkdownPaths,
             catalogJson: workspace.catalogJson,
             rootDocs: workspace.rootDocs,
+            extraDocs: workspace.extraDocs,
         };
 
         // 3. 收集 Issue（先 per-entry，后 global，D3=A）

@@ -1,6 +1,6 @@
 ﻿# Working Memory
 
-**更新**：2026-09-18 23:00
+**更新**：2026-09-18 23:20
 
 ## ⚠️ 先跑这个
 
@@ -24,7 +24,8 @@ node working-memory/check-freshness.mjs
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **KB 生态重构（P0–P2）** | ✅ 四门禁绿 · 已 commit；追加：freshness 判据改时间 | `tasks/2026-09-18-kb-restructure.md` |
+| **KB 生态重构（P0–P2）** | ✅ 四门禁绿 · 已 commit；freshness 判据改时间 | `tasks/2026-09-18-kb-restructure.md` |
+| **`enforced` 机制审计** | ✅ 3/8 够格毕业；暴露 2 个缺陷待修 | `tasks/2026-09-18-enforced-audit.md` |
 | **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
 | **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | `tasks/collab-pressure-extreme/loop.md` |
 | **evo-collab-extreme** | ⏸ 已暂停（用户 19:17） | `tasks/evo-collab-extreme/loop.md` |

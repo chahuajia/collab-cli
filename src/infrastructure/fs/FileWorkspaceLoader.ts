@@ -39,9 +39,20 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
     const indexFiles = new Map<string, string>();
     const allMarkdownPaths = new Set<string>();
     const rootDocs = new Map<string, string>();
+    // `_index.md` 之外的非条目文档（如 `domains/*/`）—— 它们是**路由面**，
+    // 但 `indexFiles` 只覆盖 kind 目录、`rootDocs` 只覆盖仓库根。
+    const extraDocs = new Map<string, string>();
 
     // 递归扫**整个 collabDir** —— 不只扫 EntryKindDir
-    this.scanAll(this.collabDir, "", entries, indexFiles, allMarkdownPaths, rootDocs);
+    this.scanAll(
+      this.collabDir,
+      "",
+      entries,
+      indexFiles,
+      allMarkdownPaths,
+      rootDocs,
+      extraDocs,
+    );
 
     return {
       entries,
@@ -49,6 +60,7 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
       allMarkdownPaths,
       catalogJson: this.readCatalog(),
       rootDocs,
+      extraDocs,
     };
   }
 
@@ -82,6 +94,7 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
     indexFiles: Map<string, string>,
     allMarkdownPaths: Set<string>,
     rootDocs: Map<string, string>,
+    extraDocs: Map<string, string>,
   ): void {
     const items = fs.readdirSync(absDir, { withFileTypes: true });
     items.sort((a, b) => {
@@ -99,7 +112,15 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
 
       if (item.isDirectory()) {
         if (item.name.startsWith(".")) continue;
-        this.scanAll(itemAbs, itemRel, entries, indexFiles, allMarkdownPaths, rootDocs);
+        this.scanAll(
+          itemAbs,
+          itemRel,
+          entries,
+          indexFiles,
+          allMarkdownPaths,
+          rootDocs,
+          extraDocs,
+        );
         continue;
       }
 
@@ -114,13 +135,20 @@ export class FileWorkspaceLoader implements WorkspaceLoader {
       }
 
       const isInEntryDir = this.isInEntryDir(itemRel);
-      if (!isInEntryDir) continue;
 
+      // `_index.md` 无论在哪一层都是**路由面**（`domains/*/_index.md` 不是 kind 目录，
+      // 但它照样是"症状 → 先读"表）。kind 目录的进 `indexFiles`（索引增删用），
+      // 其余进 `extraDocs`（路由面检查用）—— 用途不同的两张表。
       if (item.name === "_index.md") {
         const content = fs.readFileSync(itemAbs, "utf8");
-        indexFiles.set(relDir, content);
+        if (isInEntryDir) indexFiles.set(relDir, content);
+        else extraDocs.set(itemRel, content);
         continue;
       }
+
+      if (!isInEntryDir) continue;
+      if (item.name.startsWith("_")) continue;
+
       if (item.name.startsWith("_")) continue;
 
       const content = fs.readFileSync(itemAbs, "utf8");

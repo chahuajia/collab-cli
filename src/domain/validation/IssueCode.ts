@@ -71,6 +71,12 @@ export const IssueCodeValues = {
     /** 顶层目录未在基座契约里声明（等于悄悄改基座） */
     UndeclaredDir: 'UNDECLARED_DIR',
 
+    /** `enforced` 的值语法不合法（不是 `<repo>:<path>` 形态 / 空串） */
+    EnforcedShapeInvalid: 'ENFORCED_SHAPE_INVALID',
+
+    /** 路由面（症状表 / 域索引）指向一条已毕业的条目，却没有标注 */
+    RoutingToGraduated: 'ROUTING_TO_GRADUATED',
+
     // ─────────────────────────────────────────────
     // collab parse —— A17 文本协议的切分问题
     // ─────────────────────────────────────────────
