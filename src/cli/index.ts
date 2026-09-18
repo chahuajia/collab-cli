@@ -54,7 +54,8 @@ Commands:
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
   fix                          Fill in mechanical frontmatter fields (add-only)
-  retire <id>                  Retire an entry from the routing index (not deleted)
+  retire <id>                  Retire an entry from the routing index (not deleted).
+                               --candidates lists islands (report only, never writes)
   commit -m "<message>"        Validate + git add + git commit
   push                         Validate + git push
 
@@ -67,6 +68,8 @@ Command options (only where listed):
   --enforced <path>            retire — 退役路径：已毕业（内容已被测试/工具固化）
   --reason "<分类>: <证据>"     retire — 必填；判据见 meta/pruning-policy
   --confirm                    retire — --enforced 的确认门
+  --candidates                 retire — 列出孤岛条目（只报告）
+  --grace-days <n>             retire — 孤岛宽限期，默认 30（新条目还没轮到被引用）
   --json                       validate / apply — machine-readable (shapes differ)
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes

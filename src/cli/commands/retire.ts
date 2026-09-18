@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
+import { findUnreachable } from "@/domain/entry/reachability";
 import { isRouted } from "@/domain/entry/routed";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
 import type { LoadedEntry } from "@/domain/entry/WorkspaceLoader";
@@ -37,16 +38,26 @@ export async function cmdRetire(args: string[]): Promise<void> {
       reason: { type: "string" },
       confirm: { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
+      candidates: { type: "boolean", default: false },
+      "grace-days": { type: "string" },
     },
     allowPositionals: true,
     strict: false,
   });
 
+  // `--candidates`：只报告，不写盘。这是 pruning-policy 那条
+  // "标记-清除"的可执行产物（此前从未实现过，见 meta/known-gaps）。
+  if (values.candidates === true) {
+    reportCandidates(values["grace-days"]);
+    return;
+  }
+
   const id = positionals[0];
   if (!id) {
     throw new Error(
       "missing <id> argument. Usage: collab retire <id> --dormant --reason \"...\"\n" +
-        "  或：collab retire <id> --enforced <测试/工具路径> --confirm --reason \"...\"",
+        "  或：collab retire <id> --enforced <测试/工具路径> --confirm --reason \"...\"\n" +
+        "  或：collab retire --candidates（只报告孤岛条目，不写盘）",
     );
   }
 
@@ -152,6 +163,69 @@ export async function cmdRetire(args: string[]): Promise<void> {
   console.log("");
   console.log("下一步：collab catalog（刷新路由表）→ collab validate（应归零）");
 }
+
+/**
+ * `--candidates`：列出**孤岛**条目（不与任何根文档连通）。
+ *
+ * @remarks
+ * **只报告，不写盘，也不下结论。** 孤岛 ≠ 该删 ——
+ * 新写的条目还没轮到被引用，也是孤岛。所以：
+ *
+ * - 默认宽限 30 天（`created` 太新的不算），可用 `--grace-days` 调；
+ * - 输出**理由**（入度/出度）而不是"建议删除"；
+ * - 真正的退役仍要人逐条给 `--reason`（pruning-policy §三）。
+ *
+ * 判据与边界见 `domain/entry/reachability.ts` 的注释。
+ */
+function reportCandidates(graceRaw: string | boolean | undefined): void {
+  const parsed = typeof graceRaw === "string" ? Number(graceRaw) : Number.NaN;
+  const graceDays = Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_GRACE_DAYS;
+
+  const { collabDir } = findCollabRoot(process.cwd());
+  const workspace = new FileWorkspaceLoader(collabDir).load();
+  // **全部**条目都进图 —— 已毕业的也要在（它们是活的引用目标，
+  // 排掉会造成大量假阳性，见 reachability.ts 的注释）。
+  // 候选过滤（`isRouted`）在 `findUnreachable` 内部做。
+  const entries = workspace.entries
+    .filter((l) => l.entry !== null)
+    .map((l) => l.entry)
+    .filter((e) => e !== null);
+
+  const candidates = findUnreachable(entries, workspace.rootDocs ?? new Map(), {
+    now: localToday(),
+    graceDays,
+  });
+
+  if (candidates.length === 0) {
+    console.log(`✔ 没有孤岛条目（宽限 ${graceDays} 天）。`);
+    return;
+  }
+
+  console.log(`孤岛候选 ${candidates.length} 条（宽限 ${graceDays} 天，按孤立程度排序）：`);
+  console.log("");
+  for (const c of candidates) {
+    console.log(`  ${c.id}`);
+    console.log(`    ${c.path}`);
+    console.log(`    入度 ${c.inbound} · 出度 ${c.outbound}`);
+  }
+  console.log("");
+  console.log("⚠ **孤岛 ≠ 该删。** 新条目还没轮到被引用时也是孤岛。");
+  console.log("  逐条判断后，用 `collab retire <id> --dormant --reason \"<分类>: <证据>\"`。");
+}
+
+/** 默认宽限：30 天。见 reportCandidates 的注释。 */
+const DEFAULT_GRACE_DAYS = 30;
+
+/** 本地时区的今日日期（YYYY-MM-DD）。 */
+function localToday(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(DATE_PART_WIDTH, "0");
+  const day = String(d.getDate()).padStart(DATE_PART_WIDTH, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** `YYYY-MM-DD` 各段的补零宽度。 */
+const DATE_PART_WIDTH = 2;
 
 /** `enforced` 的形态：`<repo>:<path>`。 */
 const ENFORCED_SHAPE = /^([a-z][a-z0-9-]*):([^\s].*)$/;
