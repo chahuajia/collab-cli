@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-19 02:08
+**更新**：2026-09-19 02:14
 
 ## ⚠️ 先跑这个
 
@@ -36,6 +36,7 @@ node working-memory/check-freshness.mjs
 | :--- | :--- | :--- |
 | **KB 生态重构（P0–P2）** | ✅ 收口 · 见任务文件的"未做"清单 | `tasks/2026-09-18-kb-restructure.md` |
 | **`enforced` 机制审计** | ✅ 收口 · 3/8 够格毕业，4 个缺陷已修 | `tasks/2026-09-18-enforced-audit.md` |
+| **接手 evolutionary 实测 KB** | ✅ operator 域 JPA 清零 · 集群仍暂停、未派代理 | `../evolutionary_start/evolutionary/working-memory/tasks/operator-jpa/slice-1-report.md` |
 | **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
 | **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | `tasks/collab-pressure-extreme/loop.md` |
 | **evo-collab-extreme** | ⏸ 已暂停（用户 19:17） | `tasks/evo-collab-extreme/loop.md` |
