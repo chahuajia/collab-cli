@@ -21,7 +21,7 @@ D:\\actto\\front\\project\\collaboration_aggregate\\collaboration
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
 | **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | 	asks/collab-pressure-extreme/loop.md |
-| **evo-collab-extreme** | ▶ wave57 ✅ accrual 不变量（前端 35/35）· HEAD `234f860`| `tasks/evo-collab-extreme/loop.md` |
+| **evo-collab-extreme** | ▶ wave58 ✅ settlement 读路径 · 后端 220/0 前端 35/35| `tasks/evo-collab-extreme/loop.md` |
 | **collab-pressure** | ✅ L1 收口（round 1–17） | 	asks/collab-pressure/loop.md |
 | **evolutionary phase-5 复盘** | ✅ 已合 ersion/v0 · phase 归档 | evolutionary/.../battery-phase-5/retro.md |
 
