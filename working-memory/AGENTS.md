@@ -12,7 +12,9 @@ D:\\actto\\front\\project\\collaboration_aggregate\\collaboration
 - 远端 URL / 分支以本机 git 为准
 - 「继续」≠ 自动 merge / push
 
-**新对话先读**：[HANDOVER.md](HANDOVER.md)（给 Agent 的交接；⏸ 未说「继续」勿派集群）。
+**新对话先读**：**真相仓的交接** →
+`..\..\evolutionary_start\evolutionary\working-memory\HANDOVER.md`。
+本仓的 `HANDOVER.md` 已改为**指针**（两份副本必然漂移，见该文件说明）。
 
 ## 活跃任务
 
