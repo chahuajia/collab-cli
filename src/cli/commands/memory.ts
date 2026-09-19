@@ -98,6 +98,15 @@ export async function cmdMemory(args: string[]): Promise<void> {
     }
 
     if (!CURRENT_STATE_FILES.includes(base)) continue;
+
+    // **`README.md` 只查 working-memory 根那一份。**
+    //
+    // 嵌套的 README（`agents/fe/README.md`、`tasks/x/contracts/README.md`）
+    // 是**结构文档**，不声称当前状态 —— 旧不等于错。
+    // 把它们一起查会稳定产出假阳性，而**假阳性会让整个仪器被无视**
+    // （"多报 → 没人看"，见 reachability 的同款教训）。
+    if (base === "README.md" && rel.includes("/")) continue;
+
     checked++;
 
     const content = fs.readFileSync(abs, "utf8");

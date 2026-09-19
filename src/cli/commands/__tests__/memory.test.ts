@@ -119,6 +119,24 @@ describe("collab memory", () => {
     });
   });
 
+  // ── 假阳性收窄 ─────────────────────────────────────────
+  // 嵌套 README 是**结构文档**，不声称当前状态。把它们一起查会稳定产假阳性，
+  // 而假阳性会让整个仪器被无视（"多报 → 没人看"）。
+
+  describe("嵌套 README 不算当前状态", () => {
+    it("E1: agents/*/README.md 没有日期 → 不报", async () => {
+      await writeMemory("agents/fe/README.md", "# FE agent\n\n角色说明，无日期\n");
+      await writeMemory("tasks/t/contracts/README.md", "# 契约\n\n无日期\n");
+      await toSucceed(["memory"], ctx().root, ctx().envOverrides);
+    });
+
+    it("E2: 根 README.md 没有日期 → 仍报（那是真·状态文件）", async () => {
+      await writeMemory("README.md", "# WM\n\n没有更新行\n");
+      const r = await toFail(["memory"], ctx().root, ctx().envOverrides);
+      expect(r.stdout + r.stderr).toContain("README.md");
+    });
+  });
+
   // ── 候选池：有入口没出口的那类文件 ──────────────────────
   // 约定是「记候选 → W4 通过后 harvest」，但后半句没有触发机制。
   // 实测：连加几轮候选却从未跑过 W4。这里给它装一根线。
