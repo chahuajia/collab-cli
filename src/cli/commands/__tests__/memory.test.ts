@@ -118,4 +118,60 @@ describe("collab memory", () => {
       await toSucceed(["validate"], ctx().root, ctx().envOverrides);
     });
   });
+
+  // ── 候选池：有入口没出口的那类文件 ──────────────────────
+  // 约定是「记候选 → W4 通过后 harvest」，但后半句没有触发机制。
+  // 实测：连加几轮候选却从未跑过 W4。这里给它装一根线。
+
+  describe("候选池龄期（W4 触发）", () => {
+    function candidates(rows: readonly string[]): string {
+      return [
+        "# 候选",
+        "",
+        "| 日期 | 条目 | 拦住了什么 | 证据 | 状态 |",
+        "| :--- | :--- | :--- | :--- | :--- |",
+        ...rows,
+        "",
+      ].join("\n");
+    }
+
+    it("D1: 新鲜的待办候选 → 通过", async () => {
+      await writeMemory(
+        "interceptions-candidates.md",
+        candidates([`| ${today()} | [[patterns/a]] | x | abc123 | 待 W4 |`]),
+      );
+      await toSucceed(["memory"], ctx().root, ctx().envOverrides);
+    });
+
+    it("D2: 挂了太久的待办候选 → 失败（这就是 W4 的触发）", async () => {
+      await writeMemory(
+        "interceptions-candidates.md",
+        candidates([`| 2020-01-01 | [[patterns/old]] | x | abc123 | 待 W4 |`]),
+      );
+      const r = await toFail(["memory"], ctx().root, ctx().envOverrides);
+      expect(r.stdout + r.stderr).toContain("未 harvest");
+      expect(r.stdout + r.stderr).toContain("W4");
+    });
+
+    it("D3: 已 harvest 的旧行 → 通过（历史正常，不该报）", async () => {
+      await writeMemory(
+        "interceptions-candidates.md",
+        candidates([`| 2020-01-01 | [[patterns/done]] | x | abc123 | harvested |`]),
+      );
+      await toSucceed(["memory"], ctx().root, ctx().envOverrides);
+    });
+
+    it("D4: 只报过期的那个，不报新鲜的", async () => {
+      await writeMemory(
+        "interceptions-candidates.md",
+        candidates([
+          `| 2020-01-01 | [[patterns/old]] | x | a | 待 W4 |`,
+          `| ${today()} | [[patterns/new]] | y | b | 待 W4 |`,
+        ]),
+      );
+      const r = await toFail(["memory"], ctx().root, ctx().envOverrides);
+      expect(r.stdout + r.stderr).toContain("patterns/old");
+      expect(r.stdout + r.stderr).not.toContain("patterns/new");
+    });
+  });
 });
