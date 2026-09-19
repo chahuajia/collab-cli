@@ -378,6 +378,28 @@ export class Issue {
     }
 
     /**
+     * `enforced` 指向的产物不存在。
+     *
+     * @remarks
+     * **毕业的依据没了。** 条目已因"内容活在某个测试里"而退出路由索引，
+     * 而那个测试被删/改名后 —— 条目**既不在索引里、其固化也没了**：
+     * 知识静默丢失。对照 OKF/Kage 的"来源漂移则保留但撤回（withheld），
+     * 而非静默返回过期内容"。
+     *
+     * 只在 `validate --check-enforced` 下报（要读跨仓文件系统，破坏密闭性）。
+     */
+    static enforcedTargetMissing(path: string, value: string, looked: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.EnforcedTargetMissing,
+            message: `enforced target does not exist: "${value}" (looked at ${looked}) — the entry graduated on the strength of an artifact that is gone`,
+            path,
+            suggestion:
+                'either re-point `enforced` at the real artifact, or un-graduate (set `enforced: null`) so the entry returns to the routing index — its knowledge is currently unreachable AND unenforced',
+        });
+    }
+
+    /**
      * 门槛生效日之后创建的条目缺 `falsifier`。
      *
      * @remarks

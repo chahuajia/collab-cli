@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { resolveEnforced } from "@/cli/lib/enforcedTargets";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { findUnreachable } from "@/domain/entry/reachability";
 import { isRouted } from "@/domain/entry/routed";
@@ -227,75 +228,37 @@ function localToday(): string {
 /** `YYYY-MM-DD` 各段的补零宽度。 */
 const DATE_PART_WIDTH = 2;
 
-/** `enforced` 的形态：`<repo>:<path>`。 */
-const ENFORCED_SHAPE = /^([a-z][a-z0-9-]*):([^\s].*)$/;
-
 /**
  * 校验 `--enforced` 的目标**真实存在**。
  *
  * @remarks
- * 两条检查，缺一不可：
- * 1. **形态** `<repo>:<path>` —— 与 validate 的 `enforcedShape` 同一判据。
- * 2. **存在性** —— 按仓名解析根目录（当前支持本机已知的仓；未知仓名跳过存在性
- *    检查但**明确告知**，因为不这样做就得维护一张跨机通用的仓名表，
- *    而那是"为未来的规模设计"）。
- *
- * 仓名 → 路径的映射刻意只用**环境变量 + 本机默认**，与 `check-freshness.mjs` 同源。
+ * 仓根解析与三态判定都在 `cli/lib/enforcedTargets.ts` —— **与
+ * `collab validate --check-enforced` 共用同一份**。
+ * 写两份的后果是"写入时查的是 A、复查时查的是 B"，而那种漂移最难发现。
  */
 function assertEnforcedTargetExists(value: string): void {
-  const m = ENFORCED_SHAPE.exec(value);
-  if (m === null) {
-    throw new Error(
-      `--enforced 必须是 "<repo>:<path>" 形态，收到：${value}\n` +
-        `  例：--enforced "evolutionary:backend/src/test/java/.../SomeTest.java"`,
-    );
-  }
-  const [, repo, relPath] = m;
-  if (repo === undefined || relPath === undefined) return;
-
-  const root = REPO_ROOTS[repo];
-  if (root === undefined) {
-    console.log(
-      `⚠ 不认识仓名 "${repo}" —— 跳过存在性检查（validate 仍会查形态）。\n` +
-        `  本机已知：${Object.keys(REPO_ROOTS).join(" / ")}`,
-    );
+  const r = resolveEnforced(value);
+  if (r.kind === "unresolvable") {
+    if (r.reason.includes("形态")) {
+      throw new Error(
+        `--enforced 必须是 "<repo>:<path>" 形态，收到：${value}\n` +
+          `  例：--enforced "evolutionary:backend/src/test/java/.../SomeTest.java"`,
+      );
+    }
+    console.log(`⚠ ${r.reason} —— 跳过存在性检查（validate 仍会查形态）。`);
     return;
   }
-  if (!fs.existsSync(root)) {
-    console.log(`⚠ 仓 "${repo}" 的本机路径不可达（${root}）—— 跳过存在性检查。`);
-    return;
-  }
+  if (r.exists) return;
 
-  const abs = path.join(root, relPath);
-  if (!fs.existsSync(abs)) {
-    throw new Error(
-      `--enforced 指向的产物不存在：\n` +
-        `  ${repo}:${relPath}\n` +
-        `  （实际查找：${abs}）\n` +
-        `\n` +
-        `  这一条必须拦住：enforced 填错的后果是条目**静默地**退出路由索引，\n` +
-        `  而它声称的固化根本不存在 —— 那条知识就真丢了。`,
-    );
-  }
+  throw new Error(
+    `--enforced 指向的产物不存在：\n` +
+      `  ${value}\n` +
+      `  （实际查找：${r.abs}）\n` +
+      `\n` +
+      `  这一条必须拦住：enforced 填错的后果是条目**静默地**退出路由索引，\n` +
+      `  而它声称的固化根本不存在 —— 那条知识就真丢了。`,
+  );
 }
-
-/**
- * 本机已知的仓名 → 路径。
- *
- * @remarks
- * 与 `working-memory/check-freshness.mjs` 的 `REPOS` 同源（环境变量可覆盖）。
- * 刻意**不**做"扫描 workspace 找仓"的通用逻辑 —— 那是为未知规模设计。
- */
-const REPO_ROOTS: Record<string, string> = {
-  "collab-cli":
-    process.env.COLLAB_CLI_DIR ?? "D:\\actto\\front\\project\\collab-cli\\collab-cli",
-  collaboration:
-    process.env.COLLAB_KB_DIR ??
-    "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration",
-  evolutionary:
-    process.env.EVOLUTIONARY_DIR ??
-    "D:\\actto\\front\\project\\evolutionary_start\\evolutionary",
-};
 
 /** 按 id 找条目（id 是不变快照，见 ADR-0009）。 */
 function findById(entries: readonly LoadedEntry[], id: string): LoadedEntry | null {

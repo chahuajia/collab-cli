@@ -74,6 +74,9 @@ export const IssueCodeValues = {
     /** `enforced` 的值语法不合法（不是 `<repo>:<path>` 形态 / 空串） */
     EnforcedShapeInvalid: 'ENFORCED_SHAPE_INVALID',
 
+    /** `enforced` 指向的产物**不存在** —— 毕业的依据没了（只在 `--check-enforced` 下报） */
+    EnforcedTargetMissing: 'ENFORCED_TARGET_MISSING',
+
     /** 路由面（症状表 / 域索引）指向一条已毕业的条目，却没有标注 */
     RoutingToGraduated: 'ROUTING_TO_GRADUATED',
 
