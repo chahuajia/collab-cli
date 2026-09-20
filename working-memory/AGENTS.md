@@ -1,53 +1,53 @@
-# Working Memory
+﻿# Working Memory
 
-> 跨对话的工作状态。**AI 主动维护，用户只需纠正**。
+> 璺ㄥ璇濈殑宸ヤ綔鐘舵€併€?*AI 涓诲姩缁存姢锛岀敤鎴峰彧闇€绾犳**銆?
 
-## 协作库路径
+## 鍗忎綔搴撹矾寰?
 
-本机协作知识库（COLLABORATION）：
+鏈満鍗忎綔鐭ヨ瘑搴擄紙COLLABORATION锛夛細
 D:\\actto\\front\\project\\collaboration_aggregate\\collaboration
-[COLLABORATION 仓库](https://github.com/chahuajia/collaboration)
+[COLLABORATION 浠撳簱](https://github.com/chahuajia/collaboration)
 
-**AI 不擅自 push**。本地 commit 可以；合并到 ersion/v0 等须用户确认。
-- 远端 URL / 分支以本机 git 为准
-- 「继续」≠ 自动 merge / push
+**AI 涓嶆搮鑷?push**銆傛湰鍦?commit 鍙互锛涘悎骞跺埌 ersion/v0 绛夐』鐢ㄦ埛纭銆?
+- 杩滅 URL / 鍒嗘敮浠ユ湰鏈?git 涓哄噯
+- 銆岀户缁€嶁墵 鑷姩 merge / push
 
-**新对话先读**：**真相仓的交接** →
-`..\..\evolutionary_start\evolutionary\working-memory\HANDOVER.md`。
-本仓的 `HANDOVER.md` 已改为**指针**（两份副本必然漂移，见该文件说明）。
+**鏂板璇濆厛璇?*锛?*鐪熺浉浠撶殑浜ゆ帴** 鈫?
+`..\..\evolutionary_start\evolutionary\working-memory\HANDOVER.md`銆?
+鏈粨鐨?`HANDOVER.md` 宸叉敼涓?*鎸囬拡**锛堜袱浠藉壇鏈繀鐒舵紓绉伙紝瑙佽鏂囦欢璇存槑锛夈€?
 
-## 活跃任务
+## 娲昏穬浠诲姟
 
-| 任务 | 状态 | 文件 |
+| 浠诲姟 | 鐘舵€?| 鏂囦欢 |
 | :--- | :--- | :--- |
-| **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | 	asks/collab-pressure-extreme/loop.md |
-| **evo-collab-extreme** | ▶ 主树父写 · HEAD `121c7f1` · 前端 153/153 | `tasks/evo-collab-extreme/loop.md` |
-| **collab-pressure** | ✅ L1 收口（round 1–17） | 	asks/collab-pressure/loop.md |
-| **evolutionary phase-5 复盘** | ✅ 已合 ersion/v0 · phase 归档 | evolutionary/.../battery-phase-5/retro.md |
+| **collab-pressure-extreme** | 鉁?宸插仠锛坕dle 3 路 v4.8.7锛?| 	asks/collab-pressure-extreme/loop.md |
+| **evo-collab-extreme** | 鈻?涓绘爲鐖跺啓 路 HEAD `121c7f1` 路 鍓嶇 153/153 | `tasks/evo-collab-extreme/loop.md` |
+| **collab-pressure** | 鉁?L1 鏀跺彛锛坮ound 1鈥?7锛?| 	asks/collab-pressure/loop.md |
+| **evolutionary phase-5 澶嶇洏** | 鉁?宸插悎 ersion/v0 路 phase 褰掓。 | evolutionary/.../battery-phase-5/retro.md |
 
-## 陷阱（2026-09-17）
+## 闄烽槺锛?026-09-17锛?
 
-- **先改 git 再刷新登记 HEAD 到 WM**，勿空登记
-- AI 不 push
-- phase 合入 ersion/v0 须用户明确 merge
-- 双轴勿混：ersion × phase 分开 commit/WM，勿互相顶替
+- **鍏堟敼 git 鍐嶅埛鏂扮櫥璁?HEAD 鍒?WM**锛屽嬁绌虹櫥璁?
+- AI 涓?push
+- phase 鍚堝叆 ersion/v0 椤荤敤鎴锋槑纭?merge
+- 鍙岃酱鍕挎贩锛?ersion 脳 phase 鍒嗗紑 commit/WM锛屽嬁浜掔浉椤舵浛
 
-## 已结束
+## 宸茬粨鏉?
 
-见 	asks/_completed/；phase-0..5 已归档；ersion/v0 见 evolutionary WM。
+瑙?	asks/_completed/锛沺hase-0..5 宸插綊妗ｏ紱ersion/v0 瑙?evolutionary WM銆?
 
-## 仓职责（2026-09-17）
+## 浠撹亴璐ｏ紙2026-09-17锛?
 
-| 仓 | 本会话角色 | 不该塞什么 |
+| 浠?| 鏈細璇濊鑹?| 涓嶈濉炰粈涔?|
 | :--- | :--- | :--- |
-| **collab-cli** | collab-pressure* / CLI 门禁 / MCP/validate | 业务领域实现 |
-| **evolutionary** | 换电实现 + 项目级 WM/报告 | CLI 协议细节 |
-| **collaboration** | 协作 KB 本体 | 项目轮次日记 |
-| **aggregate 根 / shared 根** | 跨仓指针；非日常写点 | 当第二工作区 |
+| **collab-cli** | collab-pressure* / CLI 闂ㄧ / MCP/validate | 涓氬姟棰嗗煙瀹炵幇 |
+| **evolutionary** | 鎹㈢數瀹炵幇 + 椤圭洰绾?WM/鎶ュ憡 | CLI 鍗忚缁嗚妭 |
+| **collaboration** | 鍗忎綔 KB 鏈綋 | 椤圭洰杞鏃ヨ |
+| **aggregate 鏍?/ shared 鏍?* | 璺ㄤ粨鎸囬拡锛涢潪鏃ュ父鍐欑偣 | 褰撶浜屽伐浣滃尯 |
 
-电池压测 attery-pressure 已 **迁出** working-memory/tasks/，只留 collab-cli。
-见 decisions.md 2026-09-17。
+鐢垫睜鍘嬫祴 attery-pressure 宸?**杩佸嚭** working-memory/tasks/锛屽彧鐣?collab-cli銆?
+瑙?decisions.md 2026-09-17銆?
 
-## 索引
+## 绱㈠紩
 
-见 [W10](../COLLABORATION/workflows/W10-working-memory.md)。
+瑙?[W10](../COLLABORATION/workflows/W10-working-memory.md)銆?
