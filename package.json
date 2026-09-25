@@ -1,6 +1,10 @@
 {
-  "name": "collab-cli",
-  "version": "0.5.0",
+  "name": "@chahuajia/collab-cli",
+  "version": "0.5.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "description": "校验、路由与修剪一个会收缩的决策知识库（validate / catalog / apply / retire / mcp）",
   "license": "MIT",
   "type": "module",

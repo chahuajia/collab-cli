@@ -1,10 +1,14 @@
 # 发布检查单（最小可用版）
 
+> **2026-09-25 改名**：`collab-cli` 在 npm 上**已被他人占用**
+> （`yisang09 10`，1.6.1，2026-06 发布）——所以发布报的 "already 1.6.1" 不是 tag 问题，是重名。
+> 现用作用域名 **`@chahuajia/collab-cli`**（自己的作用域，冲突面为零）。
+
 ## 一、发布（两条命令）
 
 ```bash
 npm version 0.5.0        # 已 bump 可跳过
-npm publish --access public
+npm publish --access public   # 作用域包必须显式 public
 ```
 
 > 为什么是 `0.5.0` 而不是 `1.0.0`：核心命令稳定、734 测试全绿，
