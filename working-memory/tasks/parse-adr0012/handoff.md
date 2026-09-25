@@ -47,3 +47,141 @@ ADR-0012 把边界改成**自描述 frontmatter**：块外散文天然被跳过�
 ## 关联
 
 ADR-0012 · `RELEASE.md` · `working-memory/README.md` · KB `patterns/lenient-parsing`
+
+## 完成记录（2026-09-26，接手的那一轮）
+
+**状态**：落地完成，改动全在工作区，**待人确认 / commit**。
+
+| 项 | 结果 |
+| :--- | :--- |
+| 测试 | **746 / 746 · 52 files**（`npm test`，含 `pretest` 构建） |
+| 类型 / lint | `tsc --noEmit` 干净；`eslint src` **0 error**（5 条 magic-number warning 是既有的） |
+| 回归夹具 | `D:\下载缓存\test.txt` **原样** → `parse` 派生 `patterns/lenient-parsing.md` → `apply` 落盘 **2324 bytes**，无需人工裁剪 |
+| 污染形态 | 开场白 + ` ```text ` 围栏 + 漏写 `END FILE` + 合规说明表 + 追问 → 落盘内容只含条目（表/追问/围栏都不进正文） |
+| KB | `collab validate` → **129 entries / 0 issues** |
+
+**与本文档的偏离（都是有意的，理由见 `decisions.md`）**：
+
+1. `parseCollabText` **不在 `src/domain/parse/`**，而在 `src/infrastructure/parsing/parseCollabText.ts`
+   —— 新契约要读 YAML 拿 `id`/`type`，domain 不许依赖外部包（ESLint 分层）。
+   `ParseIssues` 仍留 `src/domain/parse/`（Issue 工厂，纯）。
+2. 产出形状改为 `Ok({ files, warnings })` —— 否则"跳过并 warn"里的 warning 在成功路径上会被吃掉。
+3. 新增 `PARSE_PATH_MISMATCH`（Warning）：`===== FILE:` 与 frontmatter 不一致时点名两者。
+4. 顺带加了"围栏只当块尾，且仅当块首在围栏内"—— 这是"漏写 END + 整批套围栏"形态的必要条件。
+5. 也顺手改了三处会变成"承诺与现实不符"的文案：`README.md`、`src/cli/index.ts` 的 help、
+   以及 `cli/commands/parse.ts` / `mcp/handlers.ts` / `mcp/tools.ts` 的说明。
+
+**已知边界**（没做，也说明了为什么）：既无标记、无围栏、又漏写了"下一个条目 frontmatter"定界的
+**最后一个**条目，其正文会一路吃到原文末尾 —— 尾随散文与条目正文在那里**无法区分**，工具不猜。
+
+## 收尾清扫（同一轮的追加动作）
+
+改完点名的那批文案后扫了两个仓的 `===== FILE:` / `A17` 引用，分清"记录"（evolution-log、
+ADR、归档 spec —— 不动）与"活文档"（会被当现行契约读的 —— 修）：
+
+| 位置 | 问题 | 处理 |
+| :--- | :--- | :--- |
+| KB `patterns/lenient-parsing` | **直接和新契约矛盾**：它写着"块外非空白内容必须报错"（它是当天从旧实现提炼的） | 判据从"宽容/严格"改成**先问边界依据**：自描述 → 跳过 + warn；靠包装 → 报错。加了"方向修正"小节 |
+| KB `integrations/_index.md` | 索引说明栏写"`===== FILE:` 协议" | 改成"自描述 frontmatter 定边界（标记只是提示）" |
+| KB `skills/S10-collab-cli` | 落地顺序把 `parse` 记成 ⬜ 未做、描述为"A17 文本" | 改 ✅ + 现行描述；顺手把 `init` 从"未做"里拆出（它已落地） |
+| `src/cli/commands/apply.ts` | 注释说"文本协议由**未来的** `collab parse` 负责" | 改成现状描述 |
+| WM `tasks/collab-parse/spec.md` | 规格里的旧边界契约会误导下一个接手的人 | 顶部加作废指针（保留仍有效的 D1–D4 / D6 与"与 apply 的分工"） |
+| WM `tasks/collaboration-refactor/progress.md` | "`parse` 收尾：… 未开始" | 更正为已完成 + 契约变更指针（**不动它的 `更新：` 日期** —— 见下） |
+
+**没做的事（有意）**：`collab memory` 报 **6/7 个 WM 文件过期**（8–9 天），这是既有红灯，
+不是本轮产生。**我不刷时间戳** —— 那会造出一个假绿灯（WM README 自己写着"这一行只能人写"）。
+要灭这盏灯得由人决定"更新还是降级成归档"。
+
+## 第二轮：发布前实测（同一轮的追加动作）
+
+按"更新 `RELEASE.md` 到真实状态"的推荐动手，用**实测**而不是抄旧数字，结果实测反过来抓出三个 bug：
+
+| 项 | 实测 |
+| :--- | :--- |
+| 测试 / 类型 / lint | **747 / 747 · 52 files**；`tsc` 干净；`eslint` 0 error（5 条既有 magic-number warning） |
+| 打包 | `npm pack` → **98 files / 109 kB**（unpacked 329.6 kB）；`.test.js` 0 · `.map` 0 · `.d.ts` 0 · `bin/collab.js` 就位 |
+| 装机 | 干净目录装 tgz → `--version` 通过；`init` 两个 profile 均实测 |
+| 自举 | 真实 KB `validate` → **129 entries / 0 issues**；kb 空骨架 `validate --dir .` → 0 entries / 0 issues |
+
+**抓出的三个 bug（已修）**：`scripts/collab-validate.mjs` 只在 `consumer + --kb` 下生成，
+但 ① kb profile 生成的 `README.md` 把它列成"唯一的 CLI 调用点"并给成验收命令、
+② `init` 收尾的"下一步 2"、③ kb 自检失败路径 —— 都在让人去跑那个不存在的文件。
+②③ 改成按 `gateReady` / profile 分支，① 换成 `npx --yes @chahuajia/collab-cli@^0.5 validate --dir .`；
+`init.test.ts` 加 I12b 并把 I13/I14 的断言收紧（**不许出现 `node scripts/collab-validate.mjs`**，
+除非 wrapper 真的生成了）。顺带清掉 wrapper 兜底文案里"尚未发布到 npm"这句假话。
+
+**未决（没替人决定）**：`init --profile kb` 的空骨架**不能被 `validate` 自动识别**
+（layout B 靠条目目录认人）→ 必须 `--dir .`，或先落第一条条目。要不要让 kb profile
+也建出条目目录 + `_index.md`，是 `tasks/collab-init/spec.md` 的未决项，已记进 `RELEASE.md` 第四节。
+
+## W4 复盘（2026-09-26 · 三问 + 行动项）
+
+> 按 KB 入口症状表的规定动作走：**必须输出行动项，否则不算完成**（`workflows/W4-three-question-retro.md`）。
+
+### Q1 哪个技能 / 模式最有效？
+
+| 最有效 | 它具体做了什么 | 证据 |
+| :--- | :--- | :--- |
+| **交接文档的"已就绪零件"表** | 直接点名 `ParseIssues.skipped` / `Issue.isBlocking()` / `EntryKindDir` 的**位置**，省掉重造三个零件 | 本轮没有重写任何一个；`handoff.md` 那张表是本仓 `tasks/` 里第一次这么写 |
+| [[patterns/parse-dont-validate]] | 拦住"按交接文档把 YAML 解析留在 `domain/parse`"这条路 —— 边界解析、领域只收类型化数据 | 最终落在 `infrastructure/parsing/`；见 `decisions.md` 2026-09-26 第一条 |
+| [[patterns/reproducible-verification]] | 把"验收标准"从仓外文件搬进 CI（真产物夹具 + `-text` + 两条测试） | 749 测试绿；夹具 SHA-256 与原文件一致 |
+
+### Q2 工作流哪一步卡住了？
+
+1. **`brief` 里的文件路径是断言，不是判据。** 交接文档说"重写 `src/domain/parse/parseCollabText.ts`"，
+   而新契约要读 YAML —— domain 不许 import 外部包。真正定音的是 `npm run lint` 的分层规则，
+   **不是文档里那句话**。→ 行动项 A1（已登记候选队列）。
+2. **验收标准的"证据"在仓外。** 交接文档把 `D:\下载缓存\test.txt` 定为回归夹具，
+   但那不在任何仓里 —— 下一个人无法重跑验收。→ 行动项 A2（**已执行**）。
+
+### Q3 约定是否需要补充？
+
+**不需要。** 两个候选（"前提要能被验证" / "手写的数必然腐烂"）都已由既有 patterns 覆盖，
+再加一条约定只会稀释 `agreements/`（该层有上限，且按 A6 约定变更须双方确认）。→ 不新增。
+
+### 行动项（W4 的产物）
+
+| # | 行动项 | 状态 |
+| :--- | :--- | :--- |
+| A1 | `brief` 里写"改哪个文件"要**同时给一条能证伪它的命令**（如 `npm run lint` / `npm test`）—— 只给路径等于把假设当判据 | 已登记 `working-memory/candidate-queue.md`（未达阈值，不新建条目） |
+| A2 | **真产物入仓**：`__tests__/fixtures/real-ai-output.txt`（SHA-256 与原文件一致）+ `.gitattributes`（`-text`，隔离 git 换行策略）+ 单元与 CLI 端到端各一条测试 | **已执行**（749 测试绿） |
+| A3 | KB `meta/interceptions.md` 记一行（[[patterns/reproducible-verification]] 拦住的那条） | **已执行** |
+
+## 提交计划（**待人执行** —— AI 不 commit、不 push）
+
+两仓自己的门禁已过：`npm run check` = 0，`npm run test:ci` = **749 通过 · 0 跳过**。
+按"一个提交一个关切"分组（路径可直接喂给 `git add -A`）：
+
+### collab-cli（4 个提交）
+
+| # | message | 路径 |
+| :--- | :--- | :--- |
+| 1 | `feat(parse)!: 条目边界改用自描述 frontmatter（ADR-0012）` | `.gitattributes` · `src/infrastructure/parsing/` · `src/domain/parse/` · `src/domain/validation/IssueCode.ts` · `src/domain/entry/types.ts` · `src/cli/commands/parse.ts` · `src/cli/commands/apply.ts` · `src/cli/commands/__tests__/parse.test.ts` · `src/cli/index.ts` · `src/mcp/` · `README.md` |
+| 2 | `fix(init): 输出与骨架不再让人跑未生成的 wrapper（按 profile 分支）` | `src/cli/commands/init.ts` · `src/application/InitUseCase.ts` · `src/cli/commands/__tests__/init.test.ts` |
+| 3 | `docs(release): RELEASE.md 按实测重写（目标 0.5.2）` | `RELEASE.md` |
+| 4 | `docs(wm): parse-adr0012 交接 + W4 复盘 + 决策 5 条 + 候选队列 + 旧 spec 作废指针` | `working-memory/` |
+
+第 1 个提交的 body 建议带上（它是**行为变更**，别让人从 diff 里猜）：
+
+```
+- 契约：边界 = 条目自描述 frontmatter（--- … --- 含 id/type）；路径派生 EntryKindDir[type] + "/" + id + ".md"
+- `===== FILE:` 降级为可选冗余：仍定界，但路径以 frontmatter 为准；不一致 → 新增 PARSE_PATH_MISMATCH(warn)
+- 不合法块跳过 + WARN（ParseEmptyBlock / ParseDuplicatePath 由 Error 降为 Warning；重复保留最后一个）
+- 判据 issues.some(isBlocking)；产出形状 Ok({files, warnings}) —— 成功路径也要能带 warning
+- 实现移到 infrastructure/parsing（domain 不许 import YAML；patterns/parse-dont-validate）
+- 验收证据入仓：真产物夹具 + .gitattributes(-text) + 单元/端到端各一条
+BREAKING：输出形状与"拒收"判据都变了；且丢 slug（skills/S36.md，已存在的 slug 文件不会被判成 replace）
+```
+
+### collaboration（2 个提交）
+
+| # | message | 路径 |
+| :--- | :--- | :--- |
+| 1 | `docs(integrations): 条目边界协议改用自描述 frontmatter（ADR-0012）` | `integrations/_index.md` · `integrations/chatgpt-output-format.md` · `skills/S10-collab-cli.md` |
+| 2 | `feat(patterns): lenient-parsing 判据参数化（先问边界依据）+ 两本账` | `patterns/lenient-parsing.md` · `meta/evolution-log.md` · `meta/interceptions.md` |
+
+### 之后（人执行，AI 不碰）
+
+```bash
+npm version 0.5.2 && npm publish --access public   # 见 RELEASE.md 一、二节
+```

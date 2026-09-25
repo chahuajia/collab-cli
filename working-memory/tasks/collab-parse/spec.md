@@ -7,6 +7,13 @@
 
 ---
 
+> ⚠️ **2026-09-26：本文档的"块边界"部分已作废。** 它写的是"靠成对 `===== FILE:` 标记定边界"，
+> 而真实 AI 输出（开场白 + 围栏 + 协议示例 + 说明表）会让那份契约**整单拒收**。
+> 现行契约见 KB 的 `meta/decision-records/ADR-0012-条目边界改用自描述-frontmatter.md`，
+> 落地记录见 `tasks/parse-adr0012/handoff.md`。
+> **仍然有效的部分**：D1（按工作区现状推断 action）、D2（stdin）、D3（默认 `bundle.json`）、
+> D4（只有 `--stdout`）、D6（删旧脚本）—— 以及"与 `apply` 的分工"那一节。
+
 ## 上下文
 
 `collab apply` 打通了"bundle.json → 工作区"。**但 bundle.json 从哪来？**

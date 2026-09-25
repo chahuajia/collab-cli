@@ -176,7 +176,9 @@ export async function cmdInit(args: string[]): Promise<void> {
       console.error(
         `✖ init 已写入，但自检未通过：${report.issues.length} 个问题`,
       );
-      console.error("  下一步：node scripts/collab-validate.mjs —— 看完整清单");
+      console.error(
+        "  下一步：`collab validate --dir .` —— 看完整清单（kb profile 不生成 wrapper 脚本）",
+      );
       process.exit(1);
     }
   }
@@ -193,9 +195,13 @@ export async function cmdInit(args: string[]): Promise<void> {
       ? "    1. 把 AGENTS.md 里的三行症状表换成你自己的"
       : "    1. 把 AGENTS.md 里的 <全局 KB 路径> 换成真的（或用 --kb 重跑）",
   );
-  console.log(
-    "    2. node scripts/collab-validate.mjs（或在 CI / pre-push 里接它）",
-  );
+  // 只指**真实存在**的下一步：wrapper 仅 consumer + --kb 才有（见上面 gateReady）。
+  // 让人去跑一个没生成的脚本，和死链同罪 —— 这条已踩过一次（kb profile 曾承诺 wrapper）。
+  console.log(gateReady
+    ? "    2. node scripts/collab-validate.mjs（或在 CI / pre-push 里接它）"
+    : profile === "kb"
+      ? "    2. 门禁：CI / pre-push 里直接调 `npx --yes @chahuajia/collab-cli@^0.5 validate --dir .`（kb profile 不生成 wrapper 脚本）"
+      : "    2. 用 `--kb <全局 KB 路径>` 重跑才会生成 `scripts/collab-validate.mjs` —— 没有校验目标时门禁不接线");
   console.log(
     "    3. 第一条新条目必须能说出「不读它，模型会照着本地哪个模式写错」",
   );

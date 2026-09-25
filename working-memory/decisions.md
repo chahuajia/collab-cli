@@ -138,3 +138,11 @@
 | 2026-09-17 | **共享只上提一层**：跨仓复用的方法（压测 tick 协议、A10 三层交付）→ COLLABORATION 条目；跨仓复用的脚本/类型 → 显式新建 shared 仓或 aggregate 根，**不**默认塞进 collab-cli | 根目录/shared 要有明确准入：`≥2` 消费者才提取 | 生效中 |
 | 2026-09-17 | **battery-pressure 已迁出** → `evolutionary/working-memory/tasks/battery-pressure/` | 产物是换电领域规格，不是 CLI 功能 | 已完成 |
 | 2026-09-17 | **collab-pressure 收口**（round 1–17）；主任务切 **evolutionary phase-0** | L1 工具链压测不能替代 L3 KB 演化；见 [[patterns/pressure-routing]] | 生效中 |
+
+| 日期 | 决策 | 理由 | 状态 |
+| :--- | :--- | :--- | :--- |
+| 2026-09-26 | **`parseCollabText` 从 `src/domain/parse/` 移到 `src/infrastructure/parsing/`** | 新契约要读 YAML 才能拿 `id`/`type`，而 domain 不得依赖外部包（ESLint 分层已强制过一次）。它和同目录的 `FrontmatterParser` / `BundleParser` 是同类：**格式适配器**。`patterns/parse-dont-validate`：边界解析，领域只收类型化数据；ADR-0012 的"domain 纯度"指的是**不读工作区**（无 IO），这条没变。路径派生仍取 domain 的 `EntryKindDir` | 生效中（工作区，待人 commit） |
+| 2026-09-26 | **parse 的产出形状改为 `{ files, warnings }`**（`Ok` 不再只是文件数组） | 「跳过并 warn」在 `Ok(files)` 上**无处安放** —— 成功路径会把 warning 吃掉，那就成了静默丢弃（ADR-0012 一）。判据仍是 `issues.some(isBlocking)`；Err 时把 warning 一并带出 | 生效中 |
+| 2026-09-26 | **新增 `PARSE_PATH_MISMATCH`**（Warning） | ADR-0012 要求"标记与 frontmatter 不一致 → WARNING 指出两者"。`ParseSkippedBlock` 的语义是"这个块被丢了"——它没被丢，只是路径被纠正。**两个语义挤一个 code**，消费方就分不清"内容缺失"与"路径已修正" | 生效中 |
+| 2026-09-26 | **围栏只当块尾，且仅当"块首本身在围栏内"** | 无外层围栏时按围栏收尾会**静默截断**含 ` ```ts ` 代码块的条目（`D:\下载缓存\test.txt` 就有）。反过来，AI 常把整批包在一个 ` ```text ` 里且不写 `END FILE` —— 那时围栏闭合行确实是块尾，否则最后一个条目会吃到说明表和追问 | 生效中 |
+| 2026-09-26 | **`init` 的输出只准指真实存在的动作**（按 profile 分支） | 发布前装机实测：`scripts/collab-validate.mjs` 只在 `consumer + --kb` 下生成，而 kb profile 的 README、以及两处"下一步"都在让人跑它（三处"承诺与现实不符"，其中一处是**写进用户仓库的文件**）。这与 S10 自己的反面"不要把未实现的命令写进使用说明"同罪，故加测试锁住（I12b / I13 / I14） | 生效中 |

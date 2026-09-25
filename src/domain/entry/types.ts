@@ -96,8 +96,16 @@ export const EntryKindDir: Record<EntryKind, string> = {
     [EntryKindValues.Integration]: 'integrations',
 };
 
-function isEntryKind(value: string): value is EntryKind {
-  return value in EntryKindDir;
+/**
+ * 给定字符串是不是合法的 `EntryKind`。
+ *
+ * @remarks
+ * 用 `hasOwnProperty` 而非 `value in EntryKindDir`：后者对 `"toString"` 这类
+ * **原型链上的键**也返回 true —— 那会让 `EntryKindDir[value]` 变成 `undefined`，
+ * 派生出一个 `undefined/…` 的路径。边界层拿外部字符串来问时必须稳。
+ */
+export function isEntryKind(value: string): value is EntryKind {
+  return Object.prototype.hasOwnProperty.call(EntryKindDir, value);
 }
 /**
  * 目录名 → 期望的 EntryKind。

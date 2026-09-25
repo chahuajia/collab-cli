@@ -2,6 +2,14 @@
 
 > 达阈值后归并沉淀。触发：队列 ≥ 5 / 任一 ≥ 7 天 / 3 个相关 / 用户要求。
 
+## 本轮已处理（2026-09-26）
+
+| 候选 | 处置 |
+| :--- | :--- |
+| 回归夹具放在**仓外**（`D:\下载缓存\test.txt` 当验收标准） | → **已在库** `patterns/reproducible-verification` → 直接修：夹具入仓 + 新建 `.gitattributes`（`-text`）+ 两条测试；KB `meta/interceptions.md` 记一行 |
+| 发布检查单里的数必须是"命令 + 此刻输出" | → **已在库** `patterns/delete-beats-automate` → 标吸收；`RELEASE.md` 已按实测重写（顺带抓出 `init` 三处假承诺） |
+| brief 里的**文件路径**是断言，不是判据 | → **留队列**（见下） |
+
 ## 本轮已处理（2026-09-17 15:30）
 
 | 候选 | 处置 |
@@ -27,4 +35,6 @@
 
 ## 当前队列
 
-（空）
+| 候选 | 出处 | 备注 |
+| :--- | :--- | :--- |
+| brief 里的具体断言要能证伪 —— "改哪个文件"是猜测，"跑哪条命令"才是判据 | 2026-09-26 parse ADR-0012：交接文档让改 `src/domain/parse/parseCollabText.ts`，而 domain 不许 import YAML；真正定音的是 `npm run lint` 的分层规则 | 与 `patterns/reproducible-verification`（"规则的前提必须能被验证"）**可能重叠**，未判定 —— 凑够 3 个相关或挂满 7 天再裁（候选挂着不是推进，见 `check-freshness` 的提醒） |

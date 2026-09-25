@@ -22,7 +22,7 @@ node bin/collab.js --help
 | 命令 | 作用 |
 | :--- | :--- |
 | `collab new <type> [id] [--dry-run]` | 从模板建条目（自动写 `aliases`、`author`） |
-| `collab parse <src.txt\|-> [--out] [--stdout]` | A17 文本 → `bundle.json`（按现状推断 action） |
+| `collab parse <src.txt\|-> [--out] [--stdout]` | 粘贴的 AI 输出 → `bundle.json`（块边界 = 条目自描述 frontmatter；按现状推断 action） |
 | `collab apply <bundle.json> [--dry-run] [--index] [--commit]` | 落盘：**要么全部成功，要么一个字节都不写** |
 | `collab index [dir]` | 增量同步 `_index.md`（保留人工列） |
 | `collab validate [--json]` | 全量校验（链接 / 索引 / id / 目录 / 生成物） |
@@ -55,7 +55,7 @@ codex mcp list
 | `collab_read` | 按 id 或路径读单条（`bodyOnly` 可只取正文） |
 | `collab_search` | 在 id / 标题 / 正文里搜，返回片段与排序 |
 | `collab_validate` | 结构化 Issue 列表（`scope=standard｜content`） |
-| `collab_parse` | A17 文本 → bundle（不落盘） |
+| `collab_parse` | 粘贴的 AI 输出 → bundle（不落盘；跳过的块走 `warnings`） |
 | `collab_apply_plan` | 预演落盘计划（**永不写盘**） |
 
 **没有 `commit` / `push` 工具，也不打算有** —— "AI 不 commit、不 push"这条规则
@@ -66,7 +66,7 @@ codex mcp list
 六边形分层，由 ESLint 强制（`domain` 只能依赖 `domain/` 与 `shared/`）：
 
 ```
-src/domain          纯逻辑：条目、校验规则、parse、apply 计划
+src/domain          纯逻辑：条目、校验规则、parse 的问题工厂、apply 计划
 src/application     用例：校验、落盘、catalog、bundle 组装
 src/infrastructure  IO：文件系统、git、sha256、边界解析
 src/mcp             MCP 协议与工具（不 import cmd*）

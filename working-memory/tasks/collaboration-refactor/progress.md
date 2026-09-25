@@ -59,7 +59,7 @@
 | :--- | :--- | :--- |
 | 1 | **知识库重审**（对照五份 AI 报告 + 8 条约定逐条判定） | 未开始（子 agent 投递失败） |
 | 2 | 修审计发现：F2 幽灵暂存条目 / F3 dry-run 退出码 / 加 help 一致性测试 | 未开始 |
-| 3 | `parse` 收尾：删 `extract-bundle.mjs` 等旧脚本（D6）+ 修 A17 笔误 | 未开始 |
+| 3 | `parse` 收尾：删 `extract-bundle.mjs` 等旧脚本（D6） | ✅ 已完成；**边界契约 2026-09-26 换过**（ADR-0012：自描述 frontmatter），见 `tasks/parse-adr0012/handoff.md` |
 | 4 | 进真实项目压测 collaboration | 待用户指定 |
 | 5 | 真 CI | 用户裁决：**放后面** |
 | 6 | MCP 写工具（可选） | 挂起 —— 避免第二份 apply 流水线 |

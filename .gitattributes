@@ -1,0 +1,5 @@
+# 测试夹具要**原样**：`real-ai-output.txt` 是对话式 AI 的真实输出（CRLF）。
+# 不钉住的话，`core.autocrlf=true` 会在 checkout 时把它换成 LF —— 那会让
+# "parse 不归一化行尾"这条不变量**取决于 git 的换行策略**（见 KB
+# `patterns/reproducible-verification`："别人实现的行为在决定你的规则"）。
+src/**/__tests__/fixtures/*.txt -text

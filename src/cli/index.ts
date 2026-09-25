@@ -50,7 +50,7 @@ Commands:
   init [--profile starter]     Scaffold a minimal workspace (ledgers + entry + gate)
   new <type> [id]              Create a new entry from template
   apply <bundle.json>          Apply a bundle: all files or none
-  parse <source.txt|->         Parse A17 text into bundle.json
+  parse <source.txt|->         Parse pasted AI output into bundle.json
   mcp                          Run as an MCP server on stdio (for AI clients)
   memory [--max-age <days>]    Check working-memory freshness
   catalog                      Generate catalog.json (the routing table)

@@ -277,10 +277,11 @@ describe("MCP 工具", () => {
   });
 
   describe("collab_parse", () => {
-    // 注意：块**外面**不允许有内容（"开场白"会被判为 PARSE_INVALID）——
-    // 这是 `parseCollabText` 的既定契约，测试必须按它构造输入。
+    // 块的边界是条目自己的 frontmatter（ADR-0012）：路径由 type + id 派生，
+    // `===== FILE:` 只是可选冗余。块**外面**的内容（开场白 / 围栏 / 说明表）天然跳过。
+    const DERIVED = "agreements/A11.md";
     const TEXT = [
-      "===== FILE: agreements/A11-新条目.md =====",
+      `===== FILE: ${DERIVED} =====`,
       minimalEntryContent({
         id: "A11",
         kind: EntryKindValues.Agreement,
@@ -294,21 +295,33 @@ describe("MCP 工具", () => {
       expect(outcome.isError).toBe(false);
       expect(parsed.fileCount).toBe(1);
       const bundle = parsed.bundle;
-      expect(bundle).toMatchObject({ version: 1, files: [{ action: "create" }] });
+      expect(bundle).toMatchObject({
+        version: 1,
+        files: [{ action: "create", path: DERIVED }],
+      });
     });
 
-    it("已存在的文件 → replace 且带 base_sha256", () => {
-      const text = TEXT.replace("agreements/A11-新条目.md", AGREEMENT_REL);
-      const { parsed } = call("collab_parse", { text });
+    it("已存在的文件 → replace 且带 base_sha256", async () => {
+      await writeFile(
+        path.join(root, DERIVED),
+        minimalEntryContent({
+          id: "A11",
+          kind: EntryKindValues.Agreement,
+          status: "active",
+        }),
+        "utf8",
+      );
+
+      const { parsed } = call("collab_parse", { text: TEXT });
       expect(parsed.bundle).toMatchObject({
         files: [{ action: "replace", base_sha256: expect.any(String) }],
       });
     });
 
     it("不落盘：解析完磁盘上什么都不多", () => {
-      const before = existsSync(path.join(root, "agreements/A11-新条目.md"));
+      const before = existsSync(path.join(root, DERIVED));
       call("collab_parse", { text: TEXT });
-      const after = existsSync(path.join(root, "agreements/A11-新条目.md"));
+      const after = existsSync(path.join(root, DERIVED));
       expect(before).toBe(false);
       expect(after).toBe(false);
     });
@@ -321,12 +334,21 @@ describe("MCP 工具", () => {
       expect(parsed.parsed).toBe(false);
     });
 
-    it("块外有内容 → 拒绝（宽容的是标记，不是结构）", () => {
+    it("开场白 / 围栏 / 说明表 → 天然跳过，不再整单拒收（ADR-0012）", () => {
       const { parsed, outcome } = call("collab_parse", {
-        text: `开场白\n${TEXT}`,
+        text: ["好的，如下：", "```text", TEXT, "```", "| 项 | 是 |"].join("\n"),
       });
-      expect(outcome.isError).toBe(true);
-      expect(JSON.stringify(parsed.issues)).toContain("outside any block");
+      expect(outcome.isError).toBe(false);
+      expect(parsed.parsed).toBe(true);
+      expect(parsed.fileCount).toBe(1);
+    });
+
+    it("跳过的块进 warnings（宽容 ≠ 静默）", () => {
+      const { parsed, outcome } = call("collab_parse", {
+        text: ["===== FILE: <相对路径> =====", "<完整内容>", "===== END FILE =====", TEXT].join("\n"),
+      });
+      expect(outcome.isError).toBe(false);
+      expect(JSON.stringify(parsed.warnings)).toContain("PARSE_SKIPPED_BLOCK");
     });
 
     it("collab_parse 产物 → collab_apply_plan 可预演（C4）", () => {
@@ -583,7 +605,9 @@ describe("MCP parse → CLI apply chain（round-14）", () => {
   let mcpCtx: ToolContext;
   let envOverrides: Record<string, string>;
 
-  const NEW_SKILL = "skills/S40-agent.md";
+  // 路径由 frontmatter 派生（type=skill + id=S40 → skills/S40.md）；
+  // `===== FILE:` 只是提示，写 slug 也不会被采纳（ADR-0012：slug 落盘后由人补）。
+  const NEW_SKILL = "skills/S40.md";
   const PARSE_TEXT = [
     `===== FILE: ${NEW_SKILL} =====`,
     minimalEntryContent({

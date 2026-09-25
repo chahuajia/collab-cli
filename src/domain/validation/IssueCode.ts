@@ -84,16 +84,18 @@ export const IssueCodeValues = {
     FalsifierRequired: 'FALSIFIER_REQUIRED',
 
     // ─────────────────────────────────────────────
-    // collab parse —— A17 文本协议的切分问题
+    // collab parse —— 条目块（自描述 frontmatter）的切分问题
     // ─────────────────────────────────────────────
-    /** 一个块被跳过（不是条目 / 边界不一致 / 重复）—— **宽容 ≠ 静默**（ADR-0012） */
+    /** 一个块被跳过（没有 frontmatter / 读不出 id·type）—— **宽容 ≠ 静默**（ADR-0012） */
     ParseSkippedBlock: 'PARSE_SKIPPED_BLOCK',
-    /** 文本结构不合法（块外有内容 / 未闭合 / 空输入） */
+    /** 一个合法块都没有（唯一阻断整批的形态） */
     ParseInvalid: 'PARSE_INVALID',
     /** 块内容为空或纯空白 */
     ParseEmptyBlock: 'PARSE_EMPTY_BLOCK',
-    /** 同一 path 出现两次 */
+    /** 同一 path 出现两次（保留最后一个） */
     ParseDuplicatePath: 'PARSE_DUPLICATE_PATH',
+    /** `===== FILE:` 声明的路径与 frontmatter 派生的不一致（以 frontmatter 为准） */
+    ParsePathMismatch: 'PARSE_PATH_MISMATCH',
 
 } as const;
 

@@ -141,10 +141,13 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "collab_parse",
-    title: "A17 文本 → bundle（只解析，不落盘）",
+    title: "粘贴的文本 → bundle（只解析，不落盘）",
     description:
-      "把 `===== FILE: <path> =====` 形式的文本切成 bundle。" +
+      "把 AI 粘贴来的文本切成 bundle。**块的边界是条目自己的 YAML frontmatter " +
+      "（`---` … `---`，含 `id` 与 `type`），路径由它们派生** —— " +
+      "所以开场白、代码围栏、协议示例、合规说明表都能直接粘贴，不必手工裁剪。" +
       "action 由工作区现状推断（不存在 → create；存在 → replace 且带 base_sha256）。" +
+      "被跳过的块走 `warnings`（不阻断整批，但**必须读** —— 它意味着有内容没进 bundle）。" +
       "纯函数式：不写任何文件，返回的 bundle 可交给 `collab_apply_plan` 预演。",
     inputSchema: {
       type: "object",
@@ -152,7 +155,8 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
         dir: DIR_PROPERTY,
         text: {
           type: "string",
-          description: "待切分的完整文本（含 FILE 标记）。",
+          description:
+            "待切分的完整文本（原样粘贴即可，不必先去掉开场白/围栏/说明表）。",
         },
       },
       required: ["text"],

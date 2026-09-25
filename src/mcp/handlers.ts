@@ -9,11 +9,11 @@ import {
 } from "@/application/ValidateUseCase";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { BundleActionValues } from "@/domain/apply/BundleAction";
-import { parseCollabText } from "@/domain/parse/parseCollabText";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { FileApplyWorkspace } from "@/infrastructure/fs/FileApplyWorkspace";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
 import { parseBundle } from "@/infrastructure/parsing/BundleParser";
+import { parseCollabText } from "@/infrastructure/parsing/parseCollabText";
 import { ToolArgumentError, readInt, readRecord, readString } from "@/mcp/args";
 import type { Entry } from "@/domain/entry/Entry";
 import type { Issue } from "@/domain/validation/Issue";
@@ -279,7 +279,12 @@ function validateTool(
 }
 
 /**
- * A17 文本 → bundle（**不落盘**）。
+ * AI 粘贴的文本 → bundle（**不落盘**）。
+ *
+ * @remarks
+ * 边界是自描述 frontmatter（ADR-0012），路径由 `type` + `id` 派生。
+ * 跳过的块走 **warning 通道**：`parsed` 仍为 true，但 `warnings` 必须一起交出去 ——
+ * 调用方（模型）看不到它们就会以为"整份粘贴都进 bundle 了"。
  */
 function parseTool(
   args: Readonly<Record<string, unknown>>,
@@ -302,7 +307,7 @@ function parseTool(
   }
 
   const bundle = buildBundle({
-    blocks: parsed.value,
+    blocks: parsed.value.files,
     workspace: new FileApplyWorkspace(dir),
     hasher: sha256Hex,
     generatedAt: new Date().toISOString(),
@@ -317,6 +322,7 @@ function parseTool(
       parsed: true,
       fileCount: bundle.files.length,
       summary: { create: creates, replace: bundle.files.length - creates },
+      warnings: parsed.value.warnings.map(issueToJson),
       bundle,
     }),
     isError: false,

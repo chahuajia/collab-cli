@@ -3,9 +3,9 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildBundle } from "@/application/buildBundle";
 import { findCollabRoot } from "@/cli/lib/findCollabRoot";
-import { parseCollabText } from "@/domain/parse/parseCollabText";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { FileApplyWorkspace } from "@/infrastructure/fs/FileApplyWorkspace";
+import { parseCollabText } from "@/infrastructure/parsing/parseCollabText";
 import type { Issue } from "@/domain/validation/Issue";
 
 const DEFAULT_OUT = "bundle.json";
@@ -15,7 +15,7 @@ const STDIN = "-";
 /**
  * `collab parse <source.txt|-> [--out <path>] [--stdout]`
  *
- * **A17 文本协议 → `bundle.json`** —— `apply` 的进料口。
+ * **AI 粘贴的文本 → `bundle.json`** —— `apply` 的进料口。
  *
  * @remarks
  * 决策落地（2026-09-16 用户拍板）：
@@ -24,7 +24,10 @@ const STDIN = "-";
  * - **D2** 支持 stdin（`-`）。
  * - **D3** 默认写 `bundle.json`（当前目录），`--out` 可覆盖。
  * - **D4** 只有 `--stdout`（输出就是 JSON），不另设 `--json`。
- * - **D5** 标记宽容解析（`=` 数量不固定）。
+ *
+ * 块边界在 2026-09-26 换了契约（**ADR-0012**）：原 D5「对 `===== FILE:` 标记宽容」
+ * 换成了**自描述 frontmatter** —— 标记保留为可选冗余，路径由 `type` + `id` 派生。
+ * 于是 AI 自带的开场白 / 围栏 / 说明表不再让整批作废。
  *
  * **不做路径白名单** —— 那是 `apply` 的预检；重复就会漂移。
  */
@@ -50,13 +53,16 @@ export async function cmdParse(args: string[]): Promise<void> {
   const parsed = parseCollabText(text);
   if (!parsed.ok) reject(parsed.error);
 
+  // 跳过并 warn（ADR-0012）：不阻断整批，但也不静默 —— 打到 stderr，别污染 --stdout 的 JSON
+  reportWarnings(parsed.value.warnings);
+
   // ── 推断 action：读工作区现状（D1） ──
   const { collabDir } = findCollabRoot(process.cwd());
   const workspace = new FileApplyWorkspace(collabDir);
 
   // 组装规则只有一份（`buildBundle`）—— MCP 的 `collab_parse` 走同一条路径。
   const bundle = buildBundle({
-    blocks: parsed.value,
+    blocks: parsed.value.files,
     workspace,
     hasher: sha256Hex,
     generatedAt: new Date().toISOString(),
@@ -86,6 +92,21 @@ export async function cmdParse(args: string[]): Promise<void> {
   console.log(
     `Next: run \`collab apply ${path.relative(process.cwd(), outPath)}\` (use --dry-run first).`,
   );
+}
+
+/**
+ * 报出被跳过的块。
+ *
+ * @remarks
+ * 「宽容 ≠ 静默」（ADR-0012 一）：跳过的块意味着**一段内容没进 bundle**，
+ * 不说的话用户会以为整份粘贴都落盘了。
+ */
+function reportWarnings(warnings: readonly Issue[]): void {
+  if (warnings.length === 0) return;
+  console.error(`⚠ parse reported ${warnings.length} warning(s):`);
+  for (const warning of warnings) {
+    console.error(`  ${warning.format().split("\n").join("\n  ")}`);
+  }
 }
 
 /** 读输入：`-` 表示 stdin。 */

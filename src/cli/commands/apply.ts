@@ -40,7 +40,7 @@ const JSON_INDENT = 2;
  * @remarks
  * 决策落地（spec §行为规格 / §反面）：
  * - 预检全有或全无：任何一条不过就一个字节都不写。
- * - 只吃 JSON —— 文本协议（`===== FILE:`）由未来的 `collab parse` 负责。
+ * - 只吃 JSON —— 文本（AI 粘贴输出）由 `collab parse` 负责；边界是条目自描述 frontmatter（ADR-0012）。
  * - 复用 `validate` / `index` / `commit` 的既有逻辑，不重写规则。
  * - 落盘门禁用**内容规则**（`contentRules`）—— 刚落的条目还没进 `_index.md`，
  *   索引规则只能等 `--index` 刷新后由 `--commit` 的全量 validate 把关。

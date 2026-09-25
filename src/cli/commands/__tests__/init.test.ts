@@ -136,6 +136,20 @@ describe('collab init — profile=starter', () => {
       .filter((s) => s !== '');
     expect(links, `starter 不应制造死链：${links.join(', ')}`).toEqual([]);
   });
+
+  it('I12b kb profile 不承诺它不生成的 wrapper 脚本', async () => {
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
+    expect(r.exitCode, r.stderr).toBe(0);
+
+    // 生成物里不能让人去**跑**一个不存在的文件（可以提到它不存在这件事本身）
+    const readme = await readFile(path.join(root, 'README.md'), 'utf8');
+    expect(readme).not.toContain('node scripts/collab-validate.mjs');
+    expect(readme).toContain('npx --yes @chahuajia/collab-cli');
+
+    // 输出里的"下一步"同理：只指真实存在的动作
+    expect(r.stdout).not.toContain('node scripts/collab-validate.mjs');
+    expect(r.stdout).toMatch(/npx --yes/);
+  });
 });
 
 
@@ -152,6 +166,8 @@ describe('collab init — profile=consumer（默认）', () => {
       expect(existsSync(path.join(root, f)), `${f} 未生成`).toBe(true);
     }
     expect(existsSync(path.join(root, 'meta')), 'consumer 不该造 KB').toBe(false);
+    // 这一路**确实**生成了 wrapper —— 才允许让人去跑它
+    expect(r.stdout).toContain('node scripts/collab-validate.mjs');
   });
 
   it('I14 未指定 --kb：跳过 wrapper，并出声说明门禁未接线', async () => {
@@ -159,5 +175,8 @@ describe('collab init — profile=consumer（默认）', () => {
     expect(r.exitCode, r.stderr).toBe(0);
     expect(existsSync(path.join(root, 'scripts/collab-validate.mjs'))).toBe(false);
     expect(r.stdout + r.stderr).toMatch(/kb/i);
+    // 没生成就不能让人去跑：指向 --kb 重跑才是真动作
+    expect(r.stdout).not.toContain('node scripts/collab-validate.mjs');
+    expect(r.stdout).toContain('--kb');
   });
 });
