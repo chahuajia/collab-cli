@@ -32,8 +32,12 @@ node working-memory/check-freshness.mjs
 
 ## 活跃任务
 
-> **对齐于 2026-09-25**（只写判断，不写数字）：自上次声明后，evolutionary 的"视图化"线跑完并停了，
-> KB 侧多了一批对外文档。**具体提交数与 HEAD 请看 `node working-memory/check-freshness.mjs` 的输出 —— 不抄进这里。**
+> **对齐于 2026-09-26 下午**（只写判断，不写数字）：自上次声明后 ——
+> evolutionary 的"视图化"线仍在停（HEAD 两次核对未动）；
+> KB 侧做了**一次全库检查**：顶层三篇同一篇文章已并为 `SHARE.md`，
+> CORE/SHARE 里全线腐烂的手写数字已修，并记了一条缺口
+> （**散文里的断言机器验不了**）。
+> **具体提交数与 HEAD 请看 `node working-memory/check-freshness.mjs` 的输出 —— 不抄进这里。**
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
@@ -45,14 +49,18 @@ node working-memory/check-freshness.mjs
 | **evo-collab-extreme** | ⏸ 暂停（09-20 复盘见 evo WM） | `tasks/evo-collab-extreme/loop.md` |
 | **CLI A4** | ✅ 收口 | `tasks/cli-development/loop.md` |
 | **`collab init`（脚手架）** | 📋 规格待拍板（D1 已收敛为"单一调用点"） | `tasks/collab-init/spec.md` |
-| **KB 对外分享** | 📄 SHARE / ARTICLE / CORE / WRITEUP 已落；`adoption-guide` 待提交 | KB 顶层 |
+| **KB 对外分享** | 📄 `SHARE.md`（分享稿）+ `CORE.md`（技术内核） | KB 顶层 |
 | **2026-09-26 会话（parse 契约 + 可用性排查 + DDD 整理）** | 🚧 改动全在工作区；**未提交、未发布 0.5.2** | `tasks/2026-09-26-session-handoff.md`（会话级，含未完成清单） |
+| **全库检查（散文断言 / 三篇并一）** | ✅ 已落；缺口记 KB `known-gaps` | KB `meta/known-gaps.md` 末行 |
 
 > **evolutionary 侧**：wave41 已 merge；enum 重构已提交。
 > 那批积压的 127 个未提交改动已清空。
 
-> **表格更新说明（2026-09-26）**：新增上面那一行；**`更新：` 那一行我没有动** ——
-> 按本文件自己的规则，它是"有人真的看过这份记忆"的**唯一凭据**，只能人写。
+> **表格更新说明（2026-09-26）**：加入了全库检查那行、并修正分享稿那行的文件名；
+> **`更新：` 那一行我没有动** —— 按本文件自己的规则，
+> 它是"有人真的看过这份记忆"的**唯一凭据**，只能人写。
+> 于是本文件**现在仍是红灯**（`check-freshness` 自 09-26 起报漂移）。
+> **这是设计的正确状态，不是故障**：机器给了事实，签名等人。
 
 ## 陷阱
 
