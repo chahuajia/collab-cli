@@ -23,14 +23,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execa } from "execa";
 import { describe, expect, it } from "vitest";
+import { repoRoot } from "@/infrastructure/fs/repoRoots";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CLI_ENTRY = path.join(REPO_ROOT, "dist/cli/index.js");
 
-/** 与 `src/mcp/__tests__/tools.test.ts` 同一约定：可用环境变量覆盖，缺省用本机布局。 */
-const REAL_COLLAB_DIR =
-  process.env["COLLAB_REAL_KB"] ??
-  "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
+/**
+ * 与 `src/mcp/__tests__/tools.test.ts` 同一约定：`COLLAB_REAL_KB` 优先，
+ * 缺省**从布局推导**（`repoRoots.ts` 的解析链）—— 不再手写作者本机的绝对路径。
+ * 推导不出来时路径不存在 → 本文件按 allowlist 跳过，而不是指向一个假的仓。
+ */
+const REAL_COLLAB_DIR = process.env["COLLAB_REAL_KB"] ?? repoRoot("collaboration");
 
 interface TemplateCase {
   readonly template: string;

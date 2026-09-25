@@ -33,15 +33,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execa } from "execa";
 import { describe, expect, it } from "vitest";
+import { repoRoot } from "@/infrastructure/fs/repoRoots";
 import { extractUsage, parseCliHelp } from "../lib/cli-help.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CLI_ENTRY = path.join(REPO_ROOT, "dist/cli/index.js");
 
-/** 与 `src/mcp/__tests__/tools.test.ts` 同一约定。 */
-const REAL_COLLAB_DIR =
-    process.env["COLLAB_REAL_KB"] ??
-    "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
+/**
+ * 与 `src/mcp/__tests__/tools.test.ts` 同一约定：`COLLAB_REAL_KB` 优先，
+ * 缺省从布局推导（不再手写作者本机的绝对路径）。
+ */
+const REAL_COLLAB_DIR = process.env["COLLAB_REAL_KB"] ?? repoRoot("collaboration");
 
 const SKIP_DIRS = new Set(["inbox", "node_modules", ".git", ".obsidian", "_archive"]);
 

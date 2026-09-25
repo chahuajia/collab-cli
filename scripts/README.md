@@ -7,7 +7,7 @@
 
 | 区 | 是什么 | 谁在跑 |
 | :--- | :--- | :--- |
-| `*.ts`（顶层） | **活的工具** | `npm run build` / `npm run test:ci` |
+| `*.ts`（顶层） | **活的工具** | `npm run build` / `npm run test:ci` / `npm run memory` |
 | `lib/` | 工具共用的**纯逻辑**（有单测） | 被上面两者 import |
 | `one-off/` | **跑过的一次性迁移**（档案，不接任何门禁） | 只在人手动调用时 |
 | `__tests__/` | 工具链自己的测试（`vitest` 会跑；见 `vitest.config.ts`） | `npm run test` |
@@ -31,9 +31,16 @@
 ```bash
 npm run build          # 内部：tsx scripts/clean-dist.ts && tsc && tsc-alias
 npm run test:ci        # 内部：tsx scripts/assert-no-skips.ts
+npm run memory         # 内部：tsx scripts/check-freshness.ts（+ `:draft` / `:attest`）
 npm run typecheck      # tsc --noEmit && tsc -p tsconfig.tooling.json
 tsx scripts/one-off/add-dates.ts <collab-dir> --dry-run   # 迁移脚本：先 dry-run
 ```
+
+> **`check-freshness` 是 2026-09-26 搬进来的**（原先在 `working-memory/check-freshness.mjs`）：
+> 它是 `.mjs` 且在 `scripts/` 之外 —— 正是本页第 3 条说的逃逸层，而且它是**最后一处**。
+> 判据拆到了 `lib/freshness.ts`（有单测），三仓路径走
+> `@/infrastructure/fs/repoRoots`（**不再有 `D:\actto\...` 这种绝对路径**：
+> 那种默认值还随 0.5.1 发到了 npm）。
 
 **迁移脚本的前置警告**：`one-off/` 里的目录清单已经改为派生，但**别直接跑** ——
 它们是 2026-09 那几次迁移的现场存档，跑之前先照现契约核对一遍。

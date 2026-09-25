@@ -18,7 +18,7 @@ npm version 0.6.0        # package.json 现在已经是 0.6.0（人工核对这�
 npm publish --access public   # 作用域包必须显式 public
 ```
 
-> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、804 测试全绿，
+> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、822 测试全绿，
 > 但**还没有第二个真实使用者**。"1.0" 是承诺，现在给不出。
 > （`0.6.0` 同理：它说的是"接口变过、按 semver 让位"，不是"成熟了"。）
 
@@ -26,7 +26,7 @@ npm publish --access public   # 作用域包必须显式 public
 
 | 项 | 结果 |
 | :--- | :--- |
-| 测试 | **804 / 804** · 60 files（`pnpm run test:ci` → 804 通过 · 0 跳过；3 条在允许清单里声明） |
+| 测试 | **822 / 822** · 62 files（`pnpm run test:ci` → 822 通过 · 0 跳过；3 条在允许清单里声明） |
 | 类型 | `tsc --noEmit` 干净 |
 | Lint | `eslint src scripts` **0 error**（8 条 magic-number warning 为既有） |
 | 打包 | `pnpm run build` **先清 dist** → `npm pack --dry-run` → **93 files / 114.4 kB**（unpacked 332.7 kB） |
@@ -34,7 +34,8 @@ npm publish --access public   # 作用域包必须显式 public
 | 装机 | `--version` → **0.6.0**；`init` 两个 profile 均实测（kb 骨架 README 与 consumer wrapper 里的范围都是 `@^0.6`） |
 | 自举 | 对真实 KB 跑 `validate` → **129 entries / 0 issues** |
 | 依赖安装 | `pnpm install --frozen-lockfile` → "Lockfile is up to date"（**修锁文件前它是失败的**，见下） |
-| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 804 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
+| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 822 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
+| 装机自检 | `npm run memory`（会话开始那步）能跑：`exit 1` + 逐仓列出未对账的提交（**这是当前正确状态**，签名归人） |
 
 > ⚠️ **本地模拟 ≠ CI 绿**。上一次 "CI 是绿的" 就是从这个误会来的：
 > `npm run check` 在本地连着几天全绿，而 GitHub 上两个 workflow 从没跑起来过（见第三节末）。
@@ -86,6 +87,15 @@ npm publish --access public   # 作用域包必须显式 public
   `package.json` 删掉，`pnpm-lock.yaml` 里还留着三处引用，于是 `pnpm install --frozen-lockfile`
   连本地都过不了。本次按删除项**外科式**同步锁文件（10 行），实测
   `pnpm install --frozen-lockfile` → "Lockfile is up to date"。
+- **不再把作者的盘符发给你**（本次新增）：`enforcedTargets.ts` 曾把三个 `D:\actto\...`
+  写成 `??` 的兜底，而 `dist/` 会打包 —— **实测已发布的 0.5.1 tgz 里就是那三个绝对路径**。
+  现在三仓路径走 `src/infrastructure/fs/repoRoots.ts` 的**唯一一份**解析链
+  （`COLLAB_CLI_DIR` / `COLLAB_KB_DIR` / `EVOLUTIONARY_DIR` → `COLLAB_PROJECTS_DIR` 或从包位置
+  上溯 + 一处声明的相对布局 → 不可达就是"无法判定"）。**这是行为变更**：
+  以前在别的机器上那三个默认值必然指空，现在同样指不空——但至少是你自己的布局说了算。
+- **`check-freshness` 从 `working-memory/` 搬进 `scripts/`**（本次新增）：那是数据目录，
+  而且 `.mjs` 在 `scripts/` 之外会同时逃出 `tsc` / `eslint` / `vitest`。现在入口是
+  `npm run memory` / `memory:draft` / `memory:attest`（会话开始那一步）。
 
 > 以上来自一次**最小可用性排查**（从装包到 MCP 逐条命令实跑）——
 > 记录与命令见 `working-memory/tasks/minimal-usability-audit.md`。

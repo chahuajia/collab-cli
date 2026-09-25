@@ -5,7 +5,7 @@
 ## ⚠️ 先跑这个
 
 ```powershell
-node working-memory/check-freshness.mjs
+npm run memory
 ```
 
 判据是**时间**：上面那行 `**更新**：` 必须晚于三个仓最后一次产品代码提交。
@@ -14,8 +14,11 @@ node working-memory/check-freshness.mjs
 > 而那正是本仓删过两次的"假绿灯"（`echo TODO` 的 CI、写死 `entries: 113` 的测试）。
 > 它是"有人真的看过这份记忆"的**唯一凭据**；必须可能是假的，否则它就不是凭据。
 
-已接 `.husky/pre-push`；仓库路径可用 `COLLAB_CLI_DIR` / `COLLAB_KB_DIR` /
-`EVOLUTIONARY_DIR` 覆盖，**不可达是硬失败不是跳过**。
+接在**会话开始**（`AGENTS.md` 第一步），**不在 pre-push** —— 新鲜度是"读者进场"的属性，
+不是"写者推送"的属性。三仓路径的解析链在 `src/infrastructure/fs/repoRoots.ts`：
+`COLLAB_CLI_DIR` / `COLLAB_KB_DIR` / `EVOLUTIONARY_DIR`（或整体换根 `COLLAB_PROJECTS_DIR`）
+可覆盖，**不可达是硬失败不是跳过**。
+另两个入口：`npm run memory:draft`（只读，看变了什么）、`npm run memory:attest`（人签完再记）。
 `collab-cli` 自身比较时**排除 `working-memory/`** —— 否则"更新本文件"会让它自己过期。
 
 ## 本文件的边界
@@ -41,7 +44,7 @@ node working-memory/check-freshness.mjs
 > 换成真人。
 > **工具链侧**：发布版本改判 `0.6.0`（parse 契约是 breaking）；
 > **两个 CI 从"从未跑起来"修成 pnpm**（根因是 `npm ci` 找不到锁文件 —— 见下）。
-> **具体提交数与 HEAD 请看 `node working-memory/check-freshness.mjs` 的输出 —— 不抄进这里。**
+> **具体提交数与 HEAD 请看 `npm run memory` 的输出 —— 不抄进这里。**
 
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
@@ -58,6 +61,7 @@ node working-memory/check-freshness.mjs
 | **发布 0.6.0（版本 / 安装范围派生 / 锁文件）** | 🚧 待发布；`package.json` 已是 `0.6.0` | `tasks/2026-09-26-version-gap.md` + `RELEASE.md` |
 | **两个 CI 从没跑起来（红）→ 改 pnpm + 真库接线** | 🚧 已修，**真正的绿灯要等下次 push 才知**（本地跑不了 GH Actions） | `tasks/2026-09-26-ci-never-ran.md` |
 | **KB 修剪政策的机制审计 + 全库冲突清扫** | ✅ 已落（KB `v4.13.2`） | KB `meta/pruning-policy.md` 的「机制成熟度」表 |
+| **`check-freshness` 搬家 + 三仓路径去硬编码** | ✅ 已落；入口变 `npm run memory`（⚠️ 时间戳仍待人签） | `scripts/check-freshness.ts` · `scripts/lib/freshness.ts` · `src/infrastructure/fs/repoRoots.ts` |
 | **全库检查（散文断言 / 三篇并一）** | ✅ 已落；缺口记 KB `known-gaps` | KB `meta/known-gaps.md` 末行 |
 
 > **evolutionary 侧**：wave41 已 merge；enum 重构已提交。

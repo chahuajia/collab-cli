@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { isRepoName, repoRoot } from "@/infrastructure/fs/repoRoots";
 
 /**
  * `enforced` 的形态：`<repo>:<path>`。
@@ -9,29 +10,6 @@ import path from "node:path";
  * 这边查**存在性**（需要跨仓读文件系统，所以只在明确要求时跑）。
  */
 const SHAPE = /^([a-z][a-z0-9-]*):([^\s].*)$/;
-
-/**
- * 本机已知的仓名 → 路径。
- *
- * @remarks
- * **唯一一份。** `collab retire --enforced`（写入时查）与
- * `collab validate --check-enforced`（事后复查）共用它 ——
- * 两份必然漂移（[[patterns/derivation-over-copy]]），
- * 而"写入时查的是 A、复查时查的是 B"正是最坏的那种漂移。
- *
- * 与 `working-memory/check-freshness.mjs` 的 `REPOS` 同源（环境变量可覆盖）。
- * 刻意**不**做"扫描 workspace 找仓"的通用逻辑 —— 那是为未知规模设计。
- */
-export const REPO_ROOTS: Record<string, string> = {
-  "collab-cli":
-    process.env.COLLAB_CLI_DIR ?? "D:\\actto\\front\\project\\collab-cli\\collab-cli",
-  collaboration:
-    process.env.COLLAB_KB_DIR ??
-    "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration",
-  evolutionary:
-    process.env.EVOLUTIONARY_DIR ??
-    "D:\\actto\\front\\project\\evolutionary_start\\evolutionary",
-};
 
 export type EnforcedResolution =
   | { readonly kind: "resolved"; readonly abs: string; readonly exists: boolean }
@@ -57,10 +35,16 @@ export function resolveEnforced(value: string): EnforcedResolution {
     return { kind: "unresolvable", reason: "形态不是 <repo>:<path>" };
   }
 
-  const root = REPO_ROOTS[repo];
-  if (root === undefined) {
+  if (!isRepoName(repo)) {
     return { kind: "unresolvable", reason: `不认识仓名 "${repo}"` };
   }
+
+  // 解析链在 `repoRoots.ts` —— **唯一一份**：`retire --enforced`（写入时查）与
+  // `validate --check-enforced`（事后复查）共用它，而且
+  // `working-memory/check-freshness` 的"三仓在哪"也走它。
+  // 两份必然漂移，而"写入时查的是 A、复查时查的是 B"正是最坏的那种漂移。
+  // 刻意**不**做"扫描 workspace 找仓"的通用逻辑 —— 那是为未知规模设计。
+  const root = repoRoot(repo);
   if (!fs.existsSync(root)) {
     return { kind: "unresolvable", reason: `仓 "${repo}" 在本机不可达` };
   }

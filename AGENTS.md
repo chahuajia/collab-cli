@@ -6,7 +6,7 @@
 ## 会话开始：先跑这一步（**不是可选**）
 
 ```bash
-node working-memory/check-freshness.mjs
+npm run memory
 ```
 
 它回答一个问题：**这份工作记忆，还配得上被信任吗？**
@@ -14,7 +14,13 @@ node working-memory/check-freshness.mjs
 | 结果 | 你要做什么 |
 | :--- | :--- |
 | `ok 工作记忆新鲜` | 继续下一步 |
-| 报 `自上次对账以来 N 个产品提交` | 跑 `--draft` 看变了什么 → 改 `working-memory/README.md` 的「活跃任务」栏 → **亲手**改头部 `**更新**：` 的时间 → 跑 `--attest` |
+| 报 `自上次对账以来 N 个产品提交` | 跑 `npm run memory:draft` 看变了什么 → 改 `working-memory/README.md` 的「活跃任务」栏 → **亲手**改头部 `**更新**：` 的时间 → 跑 `npm run memory:attest` |
+
+> 脚本在 `scripts/check-freshness.ts`，判据在 `scripts/lib/freshness.ts`（有单测）。
+> **2026-09-26 从 `working-memory/` 搬出来**：那是**数据**目录，而它是那里唯一的代码；
+> 且 `.mjs` 在 `scripts/` 之外会**同时逃出 `tsc` / `eslint` / `vitest`** ——
+> 一个"判据脚本"自己没有任何判据。三仓路径也不再手写绝对路径，
+> 走 `src/infrastructure/fs/repoRoots.ts` 的解析链（env → 可推导布局 → 硬失败）。
 
 **为什么接在会话开始，而不是 pre-push**：新鲜度是"读者进场"的属性，不是"写者推送"的属性。
 挂在 pre-push 上拦的是写者，受害的却是下一个读者；而且三仓都在活动时，它会每两分钟红一次，

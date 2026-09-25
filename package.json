@@ -45,7 +45,10 @@
     "prepare": "husky || true",
     "prepublishOnly": "npm run build",
     "lint": "eslint src scripts",
-    "test:ci": "tsx scripts/assert-no-skips.ts"
+    "test:ci": "tsx scripts/assert-no-skips.ts",
+    "memory": "tsx scripts/check-freshness.ts",
+    "memory:draft": "tsx scripts/check-freshness.ts --draft",
+    "memory:attest": "tsx scripts/check-freshness.ts --attest"
   },
   "lint-staged": {
     "src/**/*.ts": [

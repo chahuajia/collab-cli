@@ -10,6 +10,7 @@ import {
 } from "@/cli/commands/__tests__/testHelpers";
 import { EntryKindValues } from "@/domain/entry/types";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
+import { repoRoot } from "@/infrastructure/fs/repoRoots";
 import { runTool } from "@/mcp/handlers";
 import type { ToolContext, ToolOutcome } from "@/mcp/handlers";
 
@@ -761,9 +762,7 @@ describe("MCP parse → CLI apply chain（round-14）", () => {
  * 在退出码上不可分**，正是本仓 2026-09-16 删掉的那个"假绿灯"失效模式复发。
  * 数字会腐烂，不变量不会：条目数的家是 KB 的生成块，这里只断言不变量。
  */
-const REAL_COLLAB_DIR =
-  process.env["COLLAB_REAL_KB"] ??
-  "D:\\actto\\front\\project\\collaboration_aggregate\\collaboration";
+const REAL_COLLAB_DIR = process.env["COLLAB_REAL_KB"] ?? repoRoot("collaboration");
 
 describe.skipIf(!existsSync(REAL_COLLAB_DIR))(
   "MCP collab_validate — 真库",
