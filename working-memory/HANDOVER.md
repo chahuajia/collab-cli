@@ -31,7 +31,7 @@ D:\actto\front\project\evolutionary_start\evolutionary\working-memory\HANDOVER.m
 | 文件 | 内容 |
 | :--- | :--- |
 | `README.md` | 本仓当前状态 + `**更新**：` 时间戳（`check-freshness` 会看） |
-| `AGENTS.md` | 活跃任务表（含 evolutionary 侧任务的**状态指针**） |
+| `AGENTS.md` | **已降级为指针**（2026-09-25 —— 避免两个入口；活跃任务表只在 `README.md`） |
 | `tasks/` | 本仓自己的任务记录 |
 
 **跨仓的进度、波次、基线 → 一律以 evolutionary 侧为准**，不要在这里抄第二份。
