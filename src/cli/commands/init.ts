@@ -2,12 +2,25 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildCatalog, serializeCatalog } from "@/application/buildCatalog";
-import { buildInitPlan, writeInitPlan } from "@/application/InitUseCase";
+import {
+  buildConsumerPlan,
+  buildInitPlan,
+  writeInitPlan,
+} from "@/application/InitUseCase";
 import { ValidateUseCase } from "@/application/ValidateUseCase";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
 
-/** 目前只支持一个 profile；未知值必须报错，不能静默降级。 */
-const SUPPORTED_PROFILES = ["starter"] as const;
+/**
+ * 支持的 profile。
+ *
+ * @remarks
+ * - `consumer`（默认）：项目侧接入**全局唯一**的 KB —— 生成入口 + WM 骨架 +
+ *   对全局 KB 跑校验的 wrapper。项目侧**不建 KB**。
+ * - `kb`：真的新建一个独立知识库（罕见；多数情况是 fork，不是 init）。
+ *
+ * 未知值必须报错，不能静默降级 —— 打错字就装错东西是最难查的故障形态。
+ */
+const SUPPORTED_PROFILES = ["consumer", "kb"] as const;
 
 const CI_YML = [
   "name: Validate",
@@ -38,7 +51,7 @@ const HOOK_SH = [
 ].join("\n");
 
 /**
- * `collab init [--profile starter] [--with-ci] [--with-hook] [--dry-run] [--json]`
+ * `collab init [--profile consumer|kb] [--kb <path>] [--with-ci] [--with-hook] [--dry-run] [--json]`
  *
  * 把一个空目录变成"门禁已接、账本已建、入口已写"的最小可运行工作区。
  *
@@ -53,7 +66,8 @@ export async function cmdInit(args: string[]): Promise<void> {
   const { values } = parseArgs({
     args,
     options: {
-      profile: { type: "string", default: "starter" },
+      profile: { type: "string", default: "consumer" },
+      kb: { type: "string" },
       "with-ci": { type: "boolean", default: false },
       "with-hook": { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
@@ -63,7 +77,7 @@ export async function cmdInit(args: string[]): Promise<void> {
   });
 
   const profile =
-    typeof values.profile === "string" ? values.profile : "starter";
+    typeof values.profile === "string" ? values.profile : "consumer";
   if (!SUPPORTED_PROFILES.some((p) => p === profile)) {
     console.error(
       `✖ 未知 --profile: ${profile}（目前只支持 ${SUPPORTED_PROFILES.join(" / ")}）`,
@@ -74,7 +88,14 @@ export async function cmdInit(args: string[]): Promise<void> {
   const collabDir = process.env.COLLAB_DIR ?? process.cwd();
   const ISO_DATE_LENGTH = 10;
   const today = new Date().toISOString().slice(0, ISO_DATE_LENGTH);
-  const plan = buildInitPlan({ collabDir, today });
+  const kb =
+    typeof values.kb === "string" && values.kb.length > 0
+      ? path.resolve(values.kb)
+      : null;
+  const plan =
+    profile === "consumer"
+      ? buildConsumerPlan({ collabDir, today, kb })
+      : buildInitPlan({ collabDir, today });
 
   if (values["dry-run"] === true) {
     console.log(
@@ -90,8 +111,22 @@ export async function cmdInit(args: string[]): Promise<void> {
   for (const s of plan.skipped) console.log(`  = ${s}（已存在，跳过）`);
   for (const f of plan.files) console.log(`  + ${f.path}`);
 
+  // 门禁要有**校验目标**才成立：没有 wrapper（= 没给 --kb）就不接线，并且**出声**。
+  // 静默跳过等于假装接线了 —— 那正是这套系统反复删掉的那类失效。
+  const gateReady = fs.existsSync(
+    path.join(collabDir, "scripts", "collab-validate.mjs"),
+  );
+  if (
+    !gateReady &&
+    (values["with-hook"] === true || values["with-ci"] === true)
+  ) {
+    console.log(
+      "  ! 未指定 --kb —— 跳过 CI/hook：门禁要有校验目标才成立。",
+    );
+  }
+
   // 可选：husky hook（没有 .husky/ 就跳过并说明，不算失败）
-  if (values["with-hook"] === true) {
+  if (values["with-hook"] === true && gateReady) {
     const huskyDir = path.join(collabDir, ".husky");
     if (!fs.existsSync(huskyDir)) {
       console.log(
@@ -109,7 +144,7 @@ export async function cmdInit(args: string[]): Promise<void> {
   }
 
   // 可选：CI
-  if (values["with-ci"] === true) {
+  if (values["with-ci"] === true && gateReady) {
     const ciPath = path.join(collabDir, ".github", "workflows", "validate.yml");
     if (fs.existsSync(ciPath)) {
       console.log("  = .github/workflows/validate.yml（已存在，跳过）");
@@ -120,32 +155,44 @@ export async function cmdInit(args: string[]): Promise<void> {
     }
   }
 
-  // 生成物：catalog 由命令生成，不手写
-  const catalog = buildCatalog(new FileWorkspaceLoader(collabDir).load(), {
-    generatedAt: new Date().toISOString(),
-  });
-  fs.writeFileSync(
-    path.join(collabDir, "catalog.json"),
-    serializeCatalog(catalog),
-    "utf8",
-  );
-
-  // 自检：复用标准规则
-  const { report } = new ValidateUseCase(
-    new FileWorkspaceLoader(collabDir),
-  ).execute();
-  if (report.issues.length > 0) {
-    console.error(
-      `✖ init 已写入，但自检未通过：${report.issues.length} 个问题`,
+  // 生成物与自检**只对 `kb` profile 有意义**：consumer 侧没有知识库，
+  // 给它写一个 catalog.json 会凭空造出「假 KB 产物」。
+  if (profile === "kb") {
+    // 生成物：catalog 由命令生成，不手写
+    const catalog = buildCatalog(new FileWorkspaceLoader(collabDir).load(), {
+      generatedAt: new Date().toISOString(),
+    });
+    fs.writeFileSync(
+      path.join(collabDir, "catalog.json"),
+      serializeCatalog(catalog),
+      "utf8",
     );
-    console.error("  下一步：node scripts/collab-validate.mjs —— 看完整清单");
-    process.exit(1);
+
+    // 自检：复用标准规则
+    const { report } = new ValidateUseCase(
+      new FileWorkspaceLoader(collabDir),
+    ).execute();
+    if (report.issues.length > 0) {
+      console.error(
+        `✖ init 已写入，但自检未通过：${report.issues.length} 个问题`,
+      );
+      console.error("  下一步：node scripts/collab-validate.mjs —— 看完整清单");
+      process.exit(1);
+    }
   }
 
   console.log("");
-  console.log(`✔ init 完成（profile=${profile}）· 自检 0 issues`);
+  console.log(
+    profile === "kb"
+      ? `✔ init 完成（profile=kb）· 自检 0 issues`
+      : `✔ init 完成（profile=consumer）· 项目侧骨架已就绪（未建 KB）`,
+  );
   console.log("  下一步：");
-  console.log("    1. 把 AGENTS.md 里的三行症状表换成你自己的");
+  console.log(
+    profile === "kb"
+      ? "    1. 把 AGENTS.md 里的三行症状表换成你自己的"
+      : "    1. 把 AGENTS.md 里的 <全局 KB 路径> 换成真的（或用 --kb 重跑）",
+  );
   console.log(
     "    2. node scripts/collab-validate.mjs（或在 CI / pre-push 里接它）",
   );

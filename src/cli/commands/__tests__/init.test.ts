@@ -50,7 +50,7 @@ afterEach(async () => {
 
 describe('collab init — profile=starter', () => {
   it('I1 空目录：生成清单里的文件，且随后 validate 为 0 issues', async () => {
-    const r = await runCli(['init', '--dir', '.']);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
     expect(r.exitCode, r.stderr).toBe(0);
     for (const f of EXPECTED) {
       expect(existsSync(path.join(root, f)), `${f} 未生成`).toBe(true);
@@ -60,13 +60,13 @@ describe('collab init — profile=starter', () => {
   });
 
   it('I2 幂等：第二次全部 skip，两次之后内容逐字节不变', async () => {
-    await runCli(['init', '--dir', '.']);
+    await runCli(['init', '--profile', 'kb', '--dir', '.']);
     const before = new Map<string, string>();
     for (const f of EXPECTED) {
       before.set(f, await readFile(path.join(root, f), 'utf8'));
     }
 
-    const second = await runCli(['init', '--dir', '.']);
+    const second = await runCli(['init', '--profile', 'kb', '--dir', '.']);
     expect(second.exitCode, second.stderr).toBe(0);
 
     for (const f of EXPECTED) {
@@ -80,13 +80,13 @@ describe('collab init — profile=starter', () => {
     const mine = '# 我的入口\n\n用户自己写的，不许被动。\n';
     await writeFile(path.join(root, 'AGENTS.md'), mine, 'utf8');
 
-    const r = await runCli(['init', '--dir', '.']);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
     expect(r.exitCode, r.stderr).toBe(0);
     expect(await readFile(path.join(root, 'AGENTS.md'), 'utf8')).toBe(mine);
   });
 
   it('I4 --dry-run：打印计划，但不产生任何生成物', async () => {
-    const r = await runCli(['init', '--dir', '.', '--dry-run']);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.', '--dry-run']);
     expect(r.exitCode, r.stderr).toBe(0);
     for (const f of EXPECTED) {
       expect(existsSync(path.join(root, f)), `${f} 在 dry-run 下被写入`).toBe(
@@ -96,7 +96,7 @@ describe('collab init — profile=starter', () => {
   });
 
   it('I5 编码：生成物为 UTF-8 无 BOM、LF 行尾', async () => {
-    await runCli(['init', '--dir', '.']);
+    await runCli(['init', '--profile', 'kb', '--dir', '.']);
     for (const f of EXPECTED) {
       const buf = await readFile(path.join(root, f));
       expect(buf[0], `${f} 带 BOM`).not.toBe(0xef);
@@ -105,14 +105,14 @@ describe('collab init — profile=starter', () => {
   });
 
   it('I8 --with-hook 且无 .husky：不生成 hook，但 exit 0 并说明原因', async () => {
-    const r = await runCli(['init', '--dir', '.', '--with-hook']);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.', '--with-hook']);
     expect(r.exitCode, r.stderr).toBe(0);
     expect(existsSync(path.join(root, '.husky', 'pre-push'))).toBe(false);
     expect(r.stdout + r.stderr).toMatch(/husky/i);
   });
 
   it('I9 未知 profile：报错退出，且不写任何文件', async () => {
-    const r = await runCli(['init', '--dir', '.', '--profile', 'full']);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.', '--profile', 'full']);
     expect(r.exitCode).not.toBe(0);
     expect(r.stderr).toMatch(/profile/i);
     for (const f of EXPECTED) {
@@ -122,18 +122,42 @@ describe('collab init — profile=starter', () => {
 
   it('I11 目标目录不存在：创建目录树并成功', async () => {
     const nested = path.join(root, 'nested', 'kb');
-    const r = await runCli(['init', '--dir', nested]);
+    const r = await runCli(['init', '--profile', 'kb', '--dir', nested]);
     expect(r.exitCode, r.stderr).toBe(0);
     expect((await stat(nested)).isDirectory()).toBe(true);
     expect(existsSync(path.join(nested, 'AGENTS.md'))).toBe(true);
   });
 
   it('I12 生成的 AGENTS.md 不含指向未落盘条目的双链', async () => {
-    await runCli(['init', '--dir', '.']);
+    await runCli(['init', '--profile', 'kb', '--dir', '.']);
     const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
     const links = [...agents.matchAll(/\[\[([^\]]+)\]\]/g)]
       .map((m) => (m[1] ?? '').trim())
       .filter((s) => s !== '');
     expect(links, `starter 不应制造死链：${links.join(', ')}`).toEqual([]);
+  });
+});
+
+
+describe('collab init — profile=consumer（默认）', () => {
+  it('I13 默认 consumer + --kb：生成项目侧 4 件，且不建知识库', async () => {
+    const r = await runCli(['init', '--dir', '.', '--kb', 'D:/fake-kb']);
+    expect(r.exitCode, r.stderr).toBe(0);
+    for (const f of [
+      'AGENTS.md',
+      'working-memory/README.md',
+      'working-memory/interceptions-candidates.md',
+      'scripts/collab-validate.mjs',
+    ]) {
+      expect(existsSync(path.join(root, f)), `${f} 未生成`).toBe(true);
+    }
+    expect(existsSync(path.join(root, 'meta')), 'consumer 不该造 KB').toBe(false);
+  });
+
+  it('I14 未指定 --kb：跳过 wrapper，并出声说明门禁未接线', async () => {
+    const r = await runCli(['init', '--dir', '.', '--with-ci']);
+    expect(r.exitCode, r.stderr).toBe(0);
+    expect(existsSync(path.join(root, 'scripts/collab-validate.mjs'))).toBe(false);
+    expect(r.stdout + r.stderr).toMatch(/kb/i);
   });
 });

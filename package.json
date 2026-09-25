@@ -1,6 +1,6 @@
 {
   "name": "collab-cli",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "校验、路由与修剪一个会收缩的决策知识库（validate / catalog / apply / retire / mcp）",
   "license": "MIT",
   "type": "module",
