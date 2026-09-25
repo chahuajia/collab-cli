@@ -121,7 +121,7 @@ export async function cmdInit(args: string[]): Promise<void> {
     (values["with-hook"] === true || values["with-ci"] === true)
   ) {
     console.log(
-      "  ! 未指定 --kb —— 跳过 CI/hook：门禁要有校验目标才成立。",
+      "  ! 跳过 CI/hook 接线 —— 门禁要有校验目标才成立：kb profile 不带门禁脚本（请在 CI 里直接调 npx --yes @chahuajia/collab-cli@^0.5 validate --dir .）；consumer 需要 --kb。",
     );
   }
 

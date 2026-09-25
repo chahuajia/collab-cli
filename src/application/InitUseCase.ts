@@ -273,43 +273,6 @@ function pruningPolicyMd(today: string): string {
     ]);
 }
 
-function validateScript(): string {
-    return lines([
-        "#!/usr/bin/env node",
-        "// 唯一的 CLI 调用点 —— CI 与 pre-push 都只调它。",
-        "//",
-        "// 为什么要有这一层：CLI 的来源（本地依赖 / npx / 绝对路径）只应出现在**一处**。",
-        "// 否则改一次要改两处，两处必然漂移。",
-        "//",
-        "// 本机没有全局安装时，用环境变量覆盖：",
-        "//   COLLAB_CLI=\"node /path/to/collab-cli/dist/cli/index.js\" node scripts/collab-validate.mjs",
-        "import { spawnSync } from \"node:child_process\";",
-        "",
-        "// 默认留空 —— **不在未发布时假装能跑**（撒谎比报错贵）。",
-        "// 发布到 npm 之后，把这里改成：process.env.COLLAB_CLI ?? \"npx --yes @chahuajia/collab-cli@^0.5\"",
-        "const CLI = process.env.COLLAB_CLI ?? \"\";",
-        "if (CLI === \"\") {",
-        "  console.error(\"[collab] 未指定 CLI。目前**尚未发布到 npm**，可走的路只有两条：\");",
-        "  console.error(\"  1) 本机已装：npm i -g @chahuajia/collab-cli  然后 COLLAB_CLI=collab\");",
-        "  console.error(\"  2) 指向本地构建：COLLAB_CLI=\\\"node <path>/collab-cli/dist/cli/index.js\\\"\");",
-        "  process.exit(1);",
-        "}",
-        "",
-        "const result = spawnSync(`${CLI} validate`, {",
-        "  shell: true,",
-        "  stdio: \"inherit\",",
-        "});",
-        "",
-        "if (result.error) {",
-        "  console.error(\"[collab] 调用失败：\" + result.error.message);",
-        "  process.exit(1);",
-        "}",
-        "",
-        "process.exit(result.status ?? 1);",
-        "",
-    ]);
-}
-
 export function planInitFiles(today: string): readonly InitFile[] {
   return [
     { path: "AGENTS.md", content: agentsMd() },
@@ -317,7 +280,6 @@ export function planInitFiles(today: string): readonly InitFile[] {
     { path: "meta/interceptions.md", content: interceptionsMd(today) },
     { path: "meta/known-gaps.md", content: knownGapsMd(today) },
     { path: "meta/pruning-policy.md", content: pruningPolicyMd(today) },
-    { path: "scripts/collab-validate.mjs", content: validateScript() },
   ];
 }
 
@@ -436,7 +398,8 @@ function consumerValidateScript(kb: string): string {
         "import { spawnSync } from \"node:child_process\";",
         "",
         "const KB = process.env.COLLAB_KB ?? " + JSON.stringify(kb) + ";",
-        "const CLI = process.env.COLLAB_CLI ?? \"\";",
+        "// 已发布到 npm（0.5.1+）；本机可用 COLLAB_CLI 覆盖。",
+        "const CLI = process.env.COLLAB_CLI ?? \"npx --yes @chahuajia/collab-cli@^0.5\";",
         "",
         "if (CLI === \"\") {",
         "  console.error(\"[collab] 未指定 CLI。目前**尚未发布到 npm**，可走的路只有两条：\");",

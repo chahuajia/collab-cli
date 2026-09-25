@@ -23,7 +23,7 @@ const EXPECTED = [
   'meta/interceptions.md',
   'meta/known-gaps.md',
   'meta/pruning-policy.md',
-  'scripts/collab-validate.mjs',
+
 ];
 
 async function runCli(args: string[]) {
@@ -105,7 +105,7 @@ describe('collab init — profile=starter', () => {
   });
 
   it('I8 --with-hook 且无 .husky：不生成 hook，但 exit 0 并说明原因', async () => {
-    const r = await runCli(['init', '--profile', 'kb', '--dir', '.', '--with-hook']);
+    const r = await runCli(['init', '--profile', 'consumer', '--kb', 'D:/fake-kb', '--dir', '.', '--with-hook']);
     expect(r.exitCode, r.stderr).toBe(0);
     expect(existsSync(path.join(root, '.husky', 'pre-push'))).toBe(false);
     expect(r.stdout + r.stderr).toMatch(/husky/i);
@@ -147,7 +147,7 @@ describe('collab init — profile=consumer（默认）', () => {
       'AGENTS.md',
       'working-memory/README.md',
       'working-memory/interceptions-candidates.md',
-      'scripts/collab-validate.mjs',
+    
     ]) {
       expect(existsSync(path.join(root, f)), `${f} 未生成`).toBe(true);
     }
