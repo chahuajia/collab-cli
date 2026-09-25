@@ -68,6 +68,7 @@ Global options:
 
 Command options (only where listed):
   --dry-run                    new / apply / fix / index / retire / push — plan only, write nothing
+  --profile <consumer|kb>      init — 建哪种工作区（默认 consumer：项目侧接入；kb：新建知识库）
   --kb <path>                  init — 全局 KB 路径（consumer 用它生成 wrapper；kb profile 不用）
   --with-ci / --with-hook      init — 生成 CI / husky 接线（需 wrapper 就位才会动）
   --out <path>                 parse / catalog — 输出路径（默认 bundle.json / catalog.json）
