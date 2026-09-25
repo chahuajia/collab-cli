@@ -1,6 +1,6 @@
 # Working Memory
 
-**更新**：2026-09-19 19:45
+**更新**：2026-09-25 20:50   ⏳ 待人工签署（内容已对齐到 2026-09-25）
 
 ## ⚠️ 先跑这个
 
@@ -32,15 +32,20 @@ node working-memory/check-freshness.mjs
 
 ## 活跃任务
 
+> **对齐于 2026-09-25**（只写判断，不写数字）：自上次声明后，evolutionary 的"视图化"线跑完并停了，
+> KB 侧多了一批对外文档。**具体提交数与 HEAD 请看 `node working-memory/check-freshness.mjs` 的输出 —— 不抄进这里。**
+
 | 任务 | 状态 | 文件 |
 | :--- | :--- | :--- |
-| **KB 生态重构（P0–P2）** | ✅ 收口 · 见任务文件的"未做"清单 | `tasks/2026-09-18-kb-restructure.md` |
-| **`enforced` 机制审计** | ✅ 收口 · 3/8 够格毕业，4 个缺陷已修 | `tasks/2026-09-18-enforced-audit.md` |
-| **接手 evolutionary 实测 KB** | ✅ operator 域 JPA 清零 · 集群仍暂停、未派代理 | `../evolutionary_start/evolutionary/working-memory/tasks/operator-jpa/slice-1-report.md` |
-| **collab-pressure** | ✅ round 1–17 | `tasks/collab-pressure/loop.md` |
-| **collab-pressure-extreme** | ✅ 已停（idle 3 · v4.8.7） | `tasks/collab-pressure-extreme/loop.md` |
-| **evo-collab-extreme** | ⏸ 已暂停（用户 19:17） | `tasks/evo-collab-extreme/loop.md` |
-| CLI A4 | ✅ 收口 | `tasks/cli-development/loop.md` |
+| **KB 生态重构（P0–P2）** | ✅ 收口 | `tasks/2026-09-18-kb-restructure.md` |
+| **`enforced` 机制审计** | ✅ 收口 | `tasks/2026-09-18-enforced-audit.md` |
+| **接手 evolutionary 实测 KB** | ✅ 收口（视图化线已停；证据见 evo WM） | `../evolutionary_start/evolutionary/working-memory/HANDOVER.md` |
+| **L3 停摆复盘（09-20）** | ⚠️ 结论已落，**"零增量"仪器仍未接线** | `../evolutionary_start/evolutionary/working-memory/next-direction.md` §八 |
+| **collab-pressure / -extreme** | ✅ 已停 | `tasks/collab-pressure/loop.md` |
+| **evo-collab-extreme** | ⏸ 暂停（09-20 复盘见 evo WM） | `tasks/evo-collab-extreme/loop.md` |
+| **CLI A4** | ✅ 收口 | `tasks/cli-development/loop.md` |
+| **`collab init`（脚手架）** | 📋 规格待拍板（D1 已收敛为"单一调用点"） | `tasks/collab-init/spec.md` |
+| **KB 对外分享** | 📄 SHARE / ARTICLE / CORE / WRITEUP 已落；`adoption-guide` 待提交 | KB 顶层 |
 
 > **evolutionary 侧**：wave41 已 merge；enum 重构已提交。
 > 那批积压的 127 个未提交改动已清空。
