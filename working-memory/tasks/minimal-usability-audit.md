@@ -63,3 +63,44 @@
 - 契约变更（同一天的上一轮）：`tasks/parse-adr0012/handoff.md`
 - 发布清单：`RELEASE.md`
 - 候选队列：`working-memory/candidate-queue.md`（"文档面取值手写 → 漂移"已标吸收）
+
+## 第三轮深查（同日）：四个此前**从没跑过**的维度
+
+| 维度 | 为什么此前是盲区 | 结果 |
+| :--- | :--- | :--- |
+| **布局 A**（仓库根 + `COLLABORATION/` 子目录） | 前两轮全在布局 B（仓库根 = KB 根）上跑 | ✅ 全通：`init --profile kb --dir COLLABORATION` → 从仓库根 `validate` **自动识别** → `new`（写进 `COLLABORATION/patterns/`）→ `index` → `catalog`（落在 KB 内）→ `validate` 1 entry / 0 issues |
+| **毕业路径**（`retire --enforced` + `validate --check-enforced`） | 前两轮只验了 `--dormant`；毕业要求"目标真的存在"，而临时环境没有跨仓产物 | ✅ 三态全对：目标不存在 → 拒；缺 `--confirm` → 拒；两者都给 → 写成 `enforced: collab-cli:src/cli/index.ts`。`validate --check-enforced` 在目标消失后**多报一条**（2 → 3 issues） |
+| **`parse` 的 stdin** | 上次被 PowerShell 的 `<` 重定向挡住，没跑成 | ✅ 用 node 把真产物**字节流**喂进去：1 block、`patterns/lenient-parsing.md`、**2324 bytes**（与文件模式逐字节相同） |
+| **逐个选项** | 只验过"help 里提到的" | ⚠️ **抓出 2 个缺陷**（见下） |
+
+### 第三轮抓到的两个缺陷
+
+| # | 缺陷 | 修法 |
+| :--- | :--- | :--- |
+| 9 | **help 漏了 6 个真选项**（`--kb` / `--with-ci` / `--with-hook` / `--out` / `--stdout` / `--max-candidate-age`），且 `--author` 的说明**过期**（写着 override `user.email`，实现优先 `user.name`） | 补全 help；加**守卫测试**：从 `src/cli/commands/*.ts` 抽取 `parseArgs` 声明的选项键，逐个断言出现在 `--help` 里（`help.test.ts`） |
+| 10 | **"下一步"只说一半**：`new` 只提示 `collab index`，而 `validate` 还需要 `catalog`（否则 `CATALOG_STALE`）；`retire` 让条目退出路由索引后**完全不提** catalog 过期 | 两处都补上（`new` 的提示改为 `index && catalog`；`retire` 在索引位变化时打印 `⚠ catalog.json 已过期`） |
+
+### 第三轮顺带确认（无缺陷）
+
+- MCP 现代协议：逐请求 `_meta` → 结果带 `resultType: complete`；
+- 协议错分流：未知方法 `-32601`、未知工具/坏参数 `-32602`、不支持的版本 `-32022`；工具错仍走正常响应 + `isError`；
+- stdout 零非 JSON 行（协议纯度）；
+- `new --author`、`new` 自动 id、`index <dir>`、`memory --max-age`、`retire --candidates --grace-days` 均按预期；
+- **观察（不修）**：`isError` 在 false 时**省略**（MCP 规范允许，默认即 false）。
+
+## 第三轮补充：默认值的"来源链"（用户点名）
+
+用户指出 `--author` 与 `new` 的说明要对齐**成熟设计的优先级**、守**最小惊奇**。查了 git 与 npm：
+
+| 工具 | 链 |
+| :--- | :--- |
+| git | `--author` > `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL` > `user.name`/`user.email` |
+| npm | `--init-author-*` > npmrc 的 `init-author-*` |
+
+共同形状是 **flag > env > config**。我们原先**只读 config 一级**，于是：
+
+| # | 缺陷 | 修法 |
+| :--- | :--- | :--- |
+| 11 | ① CI 里常见的"身份只给在环境变量"读不到；② `--author ""` **静默回落到 git 身份**（输入端写了东西却没生效，且不报）；③ 报错信息只说 `user.name`，实际 `user.email` 也认 | 链补全为 `--author > GIT_AUTHOR_NAME/EMAIL > git config user.name/email`；空值显式报错；报错列出三条出路；help 写清链与缺省行为。测试：E8b（链的优先级）+ E8c（空值报错）+ env 兜底一条 |
+
+**没改**（会破坏既有习惯，且都已文档化）：`new <type> [id]` 的位置参数顺序、`id` 缺省自动取号、约定层的上限 —— 三者都在 help 与 KB 症状表里写着。

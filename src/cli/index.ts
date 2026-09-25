@@ -14,7 +14,7 @@ import { cmdParse } from "@/cli/commands/parse";
 import { cmdPush } from "@/cli/commands/push";
 import { cmdRetire } from "@/cli/commands/retire";
 import { cmdValidate } from "@/cli/commands/validate";
-import { COLLAB_VERSION } from "@/cli/lib/version";
+import { COLLAB_VERSION } from "@/infrastructure/version";
 
 /**
  * 命令表 —— CLI 的**唯一**命令清单。
@@ -49,6 +49,7 @@ Usage:
 Commands:
   init [--profile ${SUPPORTED_PROFILES.join("|")}] Scaffold a minimal workspace (ledgers + entry + gate)
   new <type> [id]              Create a new entry from template
+                               （id 缺省 → 自动取下一个号；author 缺省 → 取 git 身份；约定有上限）
   apply <bundle.json>          Apply a bundle: all files or none
   parse <source.txt|->         Parse pasted AI output into bundle.json
   mcp                          Run as an MCP server on stdio (for AI clients)
@@ -67,20 +68,27 @@ Global options:
 
 Command options (only where listed):
   --dry-run                    new / apply / fix / index / retire / push — plan only, write nothing
+  --kb <path>                  init — 全局 KB 路径（consumer 用它生成 wrapper；kb profile 不用）
+  --with-ci / --with-hook      init — 生成 CI / husky 接线（需 wrapper 就位才会动）
+  --out <path>                 parse / catalog — 输出路径（默认 bundle.json / catalog.json）
+  --stdout                     parse / catalog — 打到 stdout，不写文件
   --dormant                    retire — 退役路径：被冷落（过时/重复/表达差/未成熟）
   --enforced <path>            retire — 退役路径：已毕业（内容已被测试/工具固化）
   --reason "<分类>: <证据>"     retire — 必填；判据见 meta/pruning-policy
   --confirm                    retire — --enforced 的确认门
   --candidates                 retire — 列出孤岛条目（只报告）
   --grace-days <n>             retire — 孤岛宽限期，默认 30（新条目还没轮到被引用）
-  --json                       validate / apply — machine-readable (shapes differ)
+  --max-age <days>             memory — 状态文件的过期阈值，默认 7
+  --max-candidate-age <days>   memory — 候选池"挂了多久未 harvest"的阈值，默认 14
+  --json                       validate / apply / init — machine-readable (shapes differ)
   --check-enforced             validate — 复查已毕业条目的 enforced 目标是否还在
                                （要读跨仓文件系统，故非默认；无法判定不算错）
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes
   -m, --message <message>      commit — commit message
   --no-validate                commit — skip validation
-  --author <email>             new — override git user.email
+  --author <name>              new — 覆盖作者。缺省时按 git 的优先级链取：
+                               GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL → git config user.name / user.email
   --remote <name>              push — remote, default "origin"
   --branch <name>              push — branch, default current
 

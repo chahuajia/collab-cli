@@ -1,0 +1,20 @@
+# 统一"编辑器写出来的字节是什么"。
+#
+# 为什么需要它：**BOM 是环境制造的，不是风格偏好**。Windows 的编辑器与
+# PowerShell 的 `Set-Content -Encoding UTF8` 默认写「UTF-8 **with BOM**」，
+# 而 BOM 会让不剥离它的解析器当场失败：
+#   2026-09-26 实测 —— 用 `Set-Content` 重写过一次 `package.json`，
+#   vite/PostCSS 立刻报 `Unexpected token '﻿'`；同一次扫描在仓库里
+#   找出 **7 个带 BOM 的文件**（其中 1 个是更早留下的）。
+# 兜底由 `scripts/__tests__/repo-hygiene.test.ts` 负责（CI 里跑）。
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+# 真产物夹具必须**原样**（CRLF）—— 与 `.gitattributes` 的 `-text` 是同一条
+# 约束的两面：那边管 git 别转，这边管编辑器别转。
+[src/**/__tests__/fixtures/*.txt]
+end_of_line = crlf

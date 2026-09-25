@@ -155,6 +155,9 @@ export async function cmdRetire(args: string[]): Promise<void> {
   if (wantDormant) console.log(`  status   → dormant`);
   if (enforcedPath !== undefined) console.log(`  enforced → ${enforcedPath}`);
   console.log(`  路由索引：${wasRouted ? "在" : "不在"} → ${willBeRouted ? "在" : "不在"}`);
+  // 注意：**不要**在这里另加一句"catalog 过期" —— 收尾已经有
+  // 「下一步：collab catalog（刷新路由表）→ collab validate」。同一事实写两处，
+  // 就是这几轮一直在修的那类毛病（自己刷新太重，说一遍就够）。
   console.log("");
   // pruning-policy §三要求把判断依据记进 evolution-log —— 这里只**打印**待登记的行：
   // 版本号递增是一次演化决策，不该由 CLI 代拟（见 policy-without-mechanism 的反面）。

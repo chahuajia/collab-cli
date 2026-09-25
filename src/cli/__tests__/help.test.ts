@@ -1,9 +1,39 @@
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { toSucceed, useTestWorkspace } from "@/cli/commands/__tests__/testHelpers";
 import { SUPPORTED_PROFILES } from "@/cli/commands/init";
 import { COMMANDS } from "@/cli/index";
 
 const ctx = useTestWorkspace();
+
+const COMMANDS_DIR = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../commands",
+);
+
+/**
+ * 命令源码里 `parseArgs` 声明的选项键。
+ *
+ * @remarks
+ * 从**源码**取，而不是维护一份清单 —— 这份 help 曾经漏掉 `--kb` / `--out` /
+ * `--stdout` / `--with-ci` / `--max-candidate-age` 五个真选项，也曾经写着
+ * 早已不存在的 `--profile starter`。判据只有一条：**源码里有的，help 必须提**。
+ */
+function declaredOptionKeys(): readonly string[] {
+  const keys = new Set<string>();
+  const pattern = /^\s+"?([a-z][a-z-]*)"?:\s*\{\s*type:/gm;
+  for (const name of readdirSync(COMMANDS_DIR)) {
+    if (!name.endsWith(".ts") || name.endsWith(".test.ts")) continue;
+    const source = readFileSync(path.join(COMMANDS_DIR, name), "utf8");
+    for (const match of source.matchAll(pattern)) {
+      const key = match[1];
+      if (key !== undefined) keys.add(key);
+    }
+  }
+  return [...keys].sort();
+}
 
 /**
  * 解析 `--help` 的 Commands 段。
@@ -71,6 +101,23 @@ describe("collab --help", () => {
     const line = result.stdout.split("\n").find((l) => l.includes("--profile")) ?? "";
     const values = line.match(/--profile\s+([a-z|]+)/)?.[1]?.split("|") ?? [];
     expect(values.sort()).toEqual([...advertised].sort());
+  });
+
+  /**
+   * 源码里声明的**每个选项**都要在 help 里出现。
+   *
+   * @remarks
+   * 2026-09-26 深查时实测：help 漏了 `--kb` / `--with-ci` / `--with-hook` /
+   * `--out` / `--stdout` / `--max-candidate-age`，而 `--author` 的说明还写着
+   * "override git user.email"（实现优先 `user.name`）。人工比对会漏 —— 这条测试不会。
+   */
+  it("documents every option the commands actually declare", async () => {
+    const result = await toSucceed(["--help"], ctx().root, ctx().envOverrides);
+    const keys = declaredOptionKeys();
+
+    expect(keys.length, "选项提取器没扫到东西 —— 正则可能过期了").toBeGreaterThan(15);
+    const missing = keys.filter((key) => !result.stdout.includes(`--${key}`));
+    expect(missing, `help 未提及这些选项：${missing.join(", ")}`).toEqual([]);
   });
 
   it("fails an unknown command with a non-zero exit and a help hint", async () => {

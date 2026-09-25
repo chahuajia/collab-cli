@@ -24,7 +24,7 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts","scripts/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "coverage"],
   "tsc-alias": {
     "resolveFullPaths": true

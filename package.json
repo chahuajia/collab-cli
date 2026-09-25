@@ -33,10 +33,10 @@
     "README.md"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tooling.json",
+    "lint:fix": "eslint src scripts --fix",
     "dev": "tsx src/cli/index.ts",
-    "build": "node scripts/clean-dist.mjs && tsc && tsc-alias",
+    "build": "tsx scripts/clean-dist.ts && tsc && tsc-alias",
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -44,8 +44,8 @@
     "check": "npm run typecheck && npm run lint && npm run test",
     "prepare": "husky || true",
     "prepublishOnly": "npm run build",
-    "lint": "eslint src",
-    "test:ci": "node scripts/assert-no-skips.mjs"
+    "lint": "eslint src scripts",
+    "test:ci": "tsx scripts/assert-no-skips.ts"
   },
   "lint-staged": {
     "src/**/*.ts": [

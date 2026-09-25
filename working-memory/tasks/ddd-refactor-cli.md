@@ -45,3 +45,18 @@
 | BOM 扫描 | 全仓 `.ts/.json/.mjs/.md` 带 BOM 者 **0**（本轮修掉 6 个自己埋的 + 1 个上轮遗留） |
 | 最小可用性复跑 | kb 路径（init → 六种 kind → index → catalog → validate = **6 entries / 0 issues**）、AI 粘贴通道（parse → apply —— 真产物链到库里不存在的条目，4 个 `DEAD_LINK` 属**预期**）、MCP（6 工具 + 推导路径 + stdout 纯 JSON）、门禁（commit/push 先过 validate）全部符合预期 |
 | KB 自举 | `collab validate` → **129 entries / 0 issues** |
+
+## 第二轮：`scripts/` 进 TS + 分层（同日）
+
+| 变更 | 从 | 到 | 为什么 |
+| :--- | :--- | :--- | :--- |
+| 门禁脚本 | `assert-no-skips.mjs`（判定与 I/O 混写） | `scripts/assert-no-skips.ts` + `scripts/lib/skip-accounting.ts`（纯，含守卫式报告解析）+ 9 条单测 | 门禁的**判据本身**原先没有任何测试，而它决定"验过了 / 没验"；顺带消掉唯一的 `as` 断言 |
+| 构建脚本 | `clean-dist.mjs` | `clean-dist.ts` | 与其他脚本同语言，进类型检查 |
+| 数据迁移（3 个） | `one-off/*.mjs`，各自手抄目录清单 + 各自写一份 walk/frontmatter 定位 | `one-off/*.ts` + `scripts/lib/entryFiles.ts`（目录从 `EntryKindDir` 派生）+ `scripts/lib/entryFrontmatter.ts`（定位/重建/BOM/换行） | 实测漂移：`add-aliases` 的清单**少了 `integrations`**；BOM 修复只改了 `fix.ts`，脚本那三份不会跟着动 |
+| 源码迁移（3 个） | `one-off/*.mjs` | **保持 `.mjs`**（README 写明是标本） | 它们改的是本仓 `src/` 在 2026-09 那次重构的现场，永远不该再跑 —— 加类型会让人误以为还活着 |
+| 类型检查 | `tsc --noEmit`（只覆盖 src；`.mjs` 完全逃逸） | `tsc --noEmit && tsc -p tsconfig.tooling.json` | 产品构建的 `rootDir: src` 容不下 `scripts/`，故单独一个 noEmit project |
+| Lint | `eslint src` | `eslint src scripts`（parserOptions 挂两个 project；测试 exempt 同步扩到 `scripts/__tests__`） | 脚本原先既不被 `tsc` 也不被 `eslint` 扫到 |
+| 编辑器护栏 | 无 | `.editorconfig`（`charset = utf-8`；夹具目录强制 CRLF）+ `repo-hygiene.test.ts`（无 BOM，含"扫描没扫空"的兜底断言） | BOM 是环境造的：实测一次 `Set-Content` 让 vite 解析 `package.json` 失败，全仓 7 个带 BOM |
+
+**验证**：`npm run check` = 0；`npm run test:ci`（**已是 TS 版**）= **772 通过 · 0 跳过 · 55 files**；
+三个转好的迁移脚本对**真实 KB** 跑 `--dry-run` → 129 条全部幂等跳过、0 警告；KB `validate` = 129 entries / 0 issues。

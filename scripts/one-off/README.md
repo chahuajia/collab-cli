@@ -5,12 +5,22 @@
 
 | 脚本 | 做过什么 | 现状 |
 | :--- | :--- | :--- |
-| `add-aliases.mjs` | 给"文件名 ≠ frontmatter.id"的条目补 `aliases` | 被 `ID_NOT_IN_ALIASES` 规则取代（`collab fix` 可机械补） |
-| `add-author.mjs` | 补 `author` 字段 | 同上：模板已带，规则已管 |
-| `add-dates.mjs` | 补 `created` / `updated` | 同上 |
+| `add-aliases.ts` | 给"文件名 ≠ frontmatter.id"的条目补 `aliases` | 被 `ID_NOT_IN_ALIASES` 规则取代（`collab fix` 可机械补） |
+| `add-author.ts` | 补 `author` 字段 | 同上：模板已带，规则已管 |
+| `add-dates.ts` | 补 `created` / `updated` | 同上 |
 | `migrate-add-falsifier-enforced.mjs` | 补 `enforced: null`（ADR-0011 基座变更） | 迁移完成；新条目由模板带 |
 | `migrate-write-entry.mjs` | 把 `writeEntry({...})` 换成具名工厂 | 测试已迁完 |
-| `rename-entry-kind.mjs` | 批量改条目类型 | 一次性 |
+| `rename-entry-kind.mjs` | 把 `runCliSuccess(` 改成 `toSucceed(`（**改的是本仓 src**） | 一次性 |
+
+## 为什么只有三个是 `.ts`
+
+前三个是**知识库数据**的迁移 —— 换个 fork、换份老数据，它们可能还要再跑一次，
+所以它们进了类型检查，并且把"哪些目录算条目"从 `EntryKindDir` **派生**
+（原先手抄的那份**少了 `integrations`**：集成层的条目会被静默跳过）。
+
+后三个改的是**本仓 `src/` 在 2026-09 那次重构中的现场** —— 那次重构早已完成，
+它们永远不该再跑。留成 `.mjs` 是**刻意的**：它们是标本，不是工具；
+给标本加类型只会让人误以为它还活着。
 
 ## 为什么单独放一层
 
@@ -27,3 +37,9 @@
 
 **删除也是选项**（git 历史里都在）—— `working-memory/parking-lot.md` 有一条未决：
 "是否合并成通用迁移工具（等第三次迁移需求）"。在那之前，这里只是档案。
+
+## 2026-09-26 用户拍板
+
+1. **三个标本（`.mjs`）留着** —— 不删。
+2. **不给标本做美容**（不清 `no-magic-numbers` 之类的 warning）——
+   它们是标本，不是待打磨的代码。

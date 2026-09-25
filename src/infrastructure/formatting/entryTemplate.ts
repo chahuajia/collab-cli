@@ -1,6 +1,6 @@
 // src/infrastructure/formatting/entryTemplate.ts
 import { stringify as stringifyYaml } from 'yaml';
-import { DefaultStatusFor, EntryKindValues } from "@/domain/entry/types";
+import { DefaultStatusFor, EntryKindValues, EntryPrefix } from "@/domain/entry/types";
 import { requiredSectionsFor } from "@/domain/validation/rules/sectionsPresent";
 import type { EntryKind } from "@/domain/entry/types";
 
@@ -13,9 +13,33 @@ import type { EntryKind } from "@/domain/entry/types";
  * "模板与规则漂移"：2026-09-26 实测 `collab new adr` 曾生成缺
  * 背景/决策/后果/替代方案 的条目 —— 模板过得去、规则过不去，而那条
  * "产物通过 validate"的测试只覆盖了 `skill`。现在两者共用一份来源。
+ *
+ * **标题位也在这里发**：真库 117 个条目里 114 个有 `# ` 一行（H1），
+ * `catalog` 与 `_index.md` 都从 H1 取"名字"（没有才退回文件名）。
+ * 此前模板不发 H1 —— 于是 `collab new` 造出的条目与它管理的库**形态不一致**，
+ * 新条目进索引时"名称"列是空的。以实际约定为准：**每种 kind 都发标题位**。
  */
-function bodyFor(type: EntryKind): string {
-    return requiredSectionsFor(type).flatMap((s) => [`## ${s}`, '']).join('\n');
+function bodyFor(type: EntryKind, id: string): string {
+    const sections = requiredSectionsFor(type).flatMap((s) => [`## ${s}`, '']);
+    return [titleSlot(type, id), '', ...sections].join('\n');
+}
+
+/**
+ * 标题位 —— **按 kind 派生**，不手写清单。
+ *
+ * @remarks
+ * 真库的实际约定（117 个条目里 114 个有 H1）：
+ *
+ * | kind | 形态 | 例 |
+ * | :--- | :--- | :--- |
+ * | agreement / workflow / skill / adr | **含 id 前缀** | `# A1 输出从 H2 标题开始` |
+ * | pattern / integration | 不含（id 本身就是语义名） | `# 有根图` |
+ *
+ * 这条规则**不等于**一份手写清单：它就是 `EntryPrefix[type] !== ''`
+ * —— 前缀为空的那两类，id 本身就是名字，再写一遍是重复。
+ */
+function titleSlot(type: EntryKind, id: string): string {
+    return EntryPrefix[type] === '' ? '# <标题>' : `# ${id} <标题>`;
 }
 
 export interface BuildTemplateArgs {
@@ -38,7 +62,7 @@ export function buildTemplate(args: BuildTemplateArgs): string {
     const today = args.today ?? localDate();
     const frontmatter = buildFrontmatter(args.type, args.id, args.author, today);
     const yamlText = stringifyYaml(frontmatter, { lineWidth: 0 });
-    const body = bodyFor(args.type);
+    const body = bodyFor(args.type, args.id);
     return `---\n${yamlText}---\n\n${body}`;
 }
 

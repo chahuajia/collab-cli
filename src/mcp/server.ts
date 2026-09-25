@@ -1,4 +1,4 @@
-import { COLLAB_VERSION } from "@/cli/lib/version";
+import { COLLAB_VERSION } from "@/infrastructure/version";
 import { ToolArgumentError, normalizeArguments } from "@/mcp/args";
 import { runTool } from "@/mcp/handlers";
 import {

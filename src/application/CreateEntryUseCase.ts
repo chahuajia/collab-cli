@@ -98,11 +98,23 @@ function resolveId(request: CreateEntryRequest, deps: CreateEntryDeps): string {
 }
 
 function resolveAuthor(request: CreateEntryRequest, deps: CreateEntryDeps): string {
-  const author = request.author ?? deps.readAuthor();
-  if (author === null || author === undefined || author.length === 0) {
+  // `--author ""` **不是**"没给"：静默回落到 git 身份会让人以为自己的输入生效了。
+  // 显式给了空值 → 显式报错（最小惊奇：你写的东西要么生效，要么被点名）。
+  if (request.author !== null && request.author.trim().length === 0) {
     throw new Error(
-      "git user.name is not set. Run `git config user.name <your-name>` or pass --author.",
+      "`--author` 需要一个非空值。想用 git 里的身份就别传这个选项。",
     );
   }
-  return author;
+  if (request.author !== null) return request.author.trim();
+
+  const discovered = deps.readAuthor();
+  if (discovered === undefined || discovered.trim().length === 0) {
+    throw new Error(
+      "拿不到作者标识。按优先级任选一种给上：\n" +
+        "  1. --author <name>                        （只影响这一次）\n" +
+        "  2. GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL     （环境变量，CI 常用）\n" +
+        "  3. git config user.name（或 user.email）   （本仓库或全局）",
+    );
+  }
+  return discovered.trim();
 }

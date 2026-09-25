@@ -46,9 +46,13 @@ node working-memory/check-freshness.mjs
 | **CLI A4** | ✅ 收口 | `tasks/cli-development/loop.md` |
 | **`collab init`（脚手架）** | 📋 规格待拍板（D1 已收敛为"单一调用点"） | `tasks/collab-init/spec.md` |
 | **KB 对外分享** | 📄 SHARE / ARTICLE / CORE / WRITEUP 已落；`adoption-guide` 待提交 | KB 顶层 |
+| **2026-09-26 会话（parse 契约 + 可用性排查 + DDD 整理）** | 🚧 改动全在工作区；**未提交、未发布 0.5.2** | `tasks/2026-09-26-session-handoff.md`（会话级，含未完成清单） |
 
 > **evolutionary 侧**：wave41 已 merge；enum 重构已提交。
 > 那批积压的 127 个未提交改动已清空。
+
+> **表格更新说明（2026-09-26）**：新增上面那一行；**`更新：` 那一行我没有动** ——
+> 按本文件自己的规则，它是"有人真的看过这份记忆"的**唯一凭据**，只能人写。
 
 ## 陷阱
 

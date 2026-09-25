@@ -23,7 +23,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function readPackageVersion(): string {
   try {
     const pkgPath = fileURLToPath(
-      new URL("../../../package.json", import.meta.url),
+      new URL("../../package.json", import.meta.url),
     );
     const raw = readFileSync(pkgPath, "utf8");
     const parsed: unknown = JSON.parse(raw);

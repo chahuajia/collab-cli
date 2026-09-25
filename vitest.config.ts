@@ -25,6 +25,10 @@ export default defineConfig({
     environment: "node",
     testTimeout: E2E_TIMEOUT_MS,
     hookTimeout: E2E_TIMEOUT_MS,
-    include: ["src/**/__tests__/**/*.test.ts"],
+    include: [
+      "src/**/__tests__/**/*.test.ts",
+      // 工具链的测试也要跑：门禁的判据（跳过记账）与仓库卫生都在 `scripts/` 下
+      "scripts/**/__tests__/**/*.test.ts",
+    ],
   },
 });

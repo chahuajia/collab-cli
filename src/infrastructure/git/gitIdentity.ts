@@ -2,20 +2,38 @@
 import { execFileSync } from "node:child_process";
 
 /**
- * 从 git 配置读**作者标识**（`user.name` → `user.email`）。
+ * 作者标识的**第二、三级来源**：环境 → git 配置。
  *
  * @remarks
- * `author` 的语义是"**人**"（条目里写的是 `heiniao` 这样的名字，不是邮箱），
- * 所以 `user.name` 优先，邮箱只作兜底。
+ * 优先级链与 **git 自己**一致（这是"最小惊奇"的依据 —— 用户已经知道 git 怎么定作者）：
  *
- * 它是**适配器**：命令里原先直接 `execFileSync('git', …)`，于是"条目作者从哪来"
- * 这件事既不属于命令（presentation），也没法在被测时替换。现在它是一个注入点 ——
- * 用例只声明"我要一个作者标识"，怎么拿到由这里决定。
+ * ```
+ * --author <name>                      ← 第一级，由用例先看（本函数看不到）
+ * GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL   ← 环境（CI 常在这里给身份）
+ * git config user.name / user.email    ← 配置（本仓或全局）
+ * ```
  *
- * @returns 作者标识；未配置或命令失败时 `undefined`（**不抛** —— 缺身份由用例决定怎么办）
+ * 每一级内部再按"人 → 邮箱"取：`author` 的语义是**人**（条目里写的是 `heiniao`
+ * 这样的名字，不是邮箱），邮箱只作兜底。
+ *
+ * @param env - 注入环境（默认 `process.env`）—— 让"环境那一级"能被测
+ * @returns 作者标识；都没给或命令失败时 `undefined`（**不抛** —— 缺身份由用例决定怎么办）
  */
-export function readGitAuthor(cwd: string): string | undefined {
-  return readGitConfig(cwd, "user.name") ?? readGitConfig(cwd, "user.email");
+export function readGitAuthor(
+  cwd: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  const fromEnv = firstNonEmpty(env["GIT_AUTHOR_NAME"], env["GIT_AUTHOR_EMAIL"]);
+  if (fromEnv !== undefined) return fromEnv;
+  return firstNonEmpty(readGitConfig(cwd, "user.name"), readGitConfig(cwd, "user.email"));
+}
+
+/** 第一个非空白值；全空返回 `undefined`。 */
+function firstNonEmpty(...values: readonly (string | undefined)[]): string | undefined {
+  for (const value of values) {
+    if (value !== undefined && value.trim().length > 0) return value.trim();
+  }
+  return undefined;
 }
 
 function readGitConfig(cwd: string, key: string): string | undefined {

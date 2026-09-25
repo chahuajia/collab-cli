@@ -61,7 +61,8 @@ export async function cmdNew(args: string[]): Promise<void> {
     {
       type,
       id: positionals[1] ?? null,
-      author: typeof authorOpt === "string" && authorOpt.length > 0 ? authorOpt : null,
+      // 原样传：`--author ""` 是"显式给了空值"，由用例报错，**不在这里悄悄转成 null**
+      author: typeof authorOpt === "string" ? authorOpt : null,
     },
     {
       workspace: new FileWorkspaceLoader(collabDir),
@@ -89,5 +90,7 @@ export async function cmdNew(args: string[]): Promise<void> {
 
   console.log(`✔ created ${display}`);
   console.log("");
-  console.log("Next: run `collab index` to update the directory index.");
+  // 「谁让派生物过期，谁负责刷新它」：新条目同时让 **_index.md** 与 **catalog.json** 过期。
+  // 只说一半会让人跑完 `index` 仍然看到 validate 红（CATALOG_STALE）。
+  console.log("Next: run `collab index && collab catalog` —— 两份生成物都刷新后 `validate` 才会绿。");
 }

@@ -10,7 +10,7 @@ export default [
   {
     settings: {
       "import/resolver": {
-        typescript: { project: "./tsconfig.json" },
+        typescript: { project: ["./tsconfig.json", "./tsconfig.tooling.json"] },
       },
     },
   },
@@ -19,12 +19,14 @@ export default [
   // 基础规则：所有 TS 文件
   // ─────────────────────────────────────────────
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.ts", "scripts/**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        // ⚠️ D2 修复：type-aware 规则需要 project
-        project: "./tsconfig.json",
+        // ⚠️ D2 修复：type-aware 规则需要 project。
+        // 两个 project：产品在 `tsconfig.json`，工具链（`scripts/`）在
+        // `tsconfig.tooling.json` —— 后者不能并进前者（rootDir 冲突，见那个文件）。
+        project: ["./tsconfig.json", "./tsconfig.tooling.json"],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -174,7 +176,12 @@ export default [
   // 测试文件放宽
   // ─────────────────────────────────────────────
   {
-    files: ["src/**/__tests__/**/*.ts", "src/**/*.test.ts"],
+    files: [
+      "src/**/__tests__/**/*.ts",
+      "src/**/*.test.ts",
+      // 工具链的测试同样放宽 —— 它们与 src 里的测试是同一类东西
+      "scripts/**/__tests__/**/*.ts",
+    ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "off",

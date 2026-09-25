@@ -311,6 +311,56 @@ describe("collab new", () => {
       expect(content).toContain("author: alice@x.com");
       expect(content).not.toContain("test@example.com");
     });
+
+    /**
+     * 作者来源的**优先级链**，与 git 自己一致（最小惊奇：用户已经知道 git 怎么定作者）。
+     *
+     * ```
+     * --author  >  GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL  >  git config user.name / user.email
+     * ```
+     */
+    it("--author 胜过环境变量，环境变量胜过 git 配置（E8b）", async () => {
+      const withEnv = { ...envOverrides, GIT_AUTHOR_NAME: "env-author" };
+
+      await toSucceed(["new", "skill", "S30"], testRoot, withEnv);
+      const fromEnv = await readFile(path.join(collabDir, "skills/S30.md"), "utf8");
+      expect(fromEnv).toContain("author: env-author");
+      expect(fromEnv).not.toContain("test@example.com");
+
+      await toSucceed(
+        ["new", "skill", "S31", "--author", "flag-author"],
+        testRoot,
+        withEnv,
+      );
+      const fromFlag = await readFile(path.join(collabDir, "skills/S31.md"), "utf8");
+      expect(fromFlag).toContain("author: flag-author");
+    });
+
+    it("GIT_AUTHOR_EMAIL 也能兜底（env 里只有邮箱时）", async () => {
+      await toSucceed(["new", "skill", "S32"], testRoot, {
+        ...envOverrides,
+        GIT_AUTHOR_EMAIL: "env-by-email@x.com",
+      });
+      const content = await readFile(path.join(collabDir, "skills/S32.md"), "utf8");
+      expect(content).toContain("author: env-by-email@x.com");
+    });
+
+    /**
+     * `--author ""` **不是**"没给"。
+     *
+     * @remarks
+     * 静默回落到 git 身份会让人以为"我写的值生效了" —— 这正是最小惊奇要防的。
+     * 显式给了空值 → 显式报错。
+     */
+    it("显式给空的 --author：报错，不静默回落到 git 身份（E8c）", async () => {
+      const result = await toFail(
+        ["new", "skill", "S33", "--author", ""],
+        testRoot,
+        envOverrides,
+      );
+      expect(result.stderr).toContain("--author");
+      expect(existsSync(path.join(collabDir, "skills/S33.md"))).toBe(false);
+    });
   });
 
   // ─────────────────────────────────────────────
