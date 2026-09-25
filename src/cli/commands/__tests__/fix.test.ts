@@ -7,6 +7,7 @@ import {
   useTestWorkspace,
   writeIndex,
 } from "@/cli/commands/__tests__/testHelpers";
+import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
 
 const ctx = useTestWorkspace();
 
@@ -45,6 +46,57 @@ function abs(rel: string): string {
 }
 
 describe("collab fix", () => {
+  /**
+   * 定位 frontmatter 的判据必须与 loader **一致**（2026-09-26 实测的偏差）。
+   *
+   * @remarks
+   * 症状：`fix` 曾用 `raw.split("\n")` 且直接比 `lines[0] !== "---"`，
+   * 于是带 BOM 的文件出现"validate 看得见、fix 修不了"。
+   */
+  it("带 BOM 的文件照样能补（并且 BOM 原样保留）", async () => {
+    await writeFile(abs(REL), `\uFEFF${entryWithoutAliases("S30")}`, "utf8");
+
+    await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+
+    const content = await readFile(abs(REL), "utf8");
+    expect(content.charCodeAt(0)).toBe(0xfeff);
+    expect(content).toContain("  - S30");
+  });
+
+  it("CRLF 文件补完后仍是 CRLF（不静默改成 LF）", async () => {
+    const crlf = entryWithoutAliases("S30").split("\n").join("\r\n");
+    await writeFile(abs(REL), crlf, "utf8");
+
+    await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+
+    const content = await readFile(abs(REL), "utf8");
+    expect(content).toContain("  - S30");
+    expect(content.includes("\r\n")).toBe(true);
+    expect(content.replace(/\r\n/g, "")).not.toContain("\n");
+  });
+
+  /**
+   * 空的内联数组 —— `aliases: []` 是**合法** YAML，补一个 id 不能写出 `[, x]`。
+   *
+   * @remarks
+   * 2026-09-26 实测：`fix` 盲目拼 `, <id>`，把合法条目改成**非法 YAML**，
+   * 随后 validate 报 `INVALID_YAML` —— 修一个小字段却改坏了整个文件。
+   */
+  it("aliases 是空的内联数组时，补成 [id] 而不是 [, id]", async () => {
+    await writeFile(abs(REL), entryWithoutAliases("S30", ["aliases: []"]), "utf8");
+
+    await toSucceed(["fix"], ctx().root, ctx().envOverrides);
+
+    const content = await readFile(abs(REL), "utf8");
+    expect(content).toContain("aliases: [S30]");
+    expect(content).not.toContain("[, S30]");
+
+    // 而且这份内容必须真的能被 YAML 解析（回归的判据是"解析得开"，不是"字符串像"）
+    const loaded = new FileWorkspaceLoader(ctx().collabDir).load();
+    const entry = loaded.entries.find((e) => e.path === REL);
+    expect(entry?.entry, "fix 之后条目应当仍能被解析").not.toBeNull();
+  });
+
   it("adds the id to aliases when the field is missing", async () => {
     await writeFile(abs(REL), entryWithoutAliases("S30"), "utf8");
 

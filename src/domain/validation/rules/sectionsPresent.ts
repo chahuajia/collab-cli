@@ -30,6 +30,19 @@ const SECTIONS_BY_KIND: Record<EntryKind, readonly string[]> = {
 };
 
 /**
+ * 某种 kind 的必需章节 —— **规则与"新条目模板"共用这一份**。
+ *
+ * @remarks
+ * 2026-09-26 实测的缺陷：模板曾**自己手写**一套骨架（只有模式语言那一套），
+ * 于是 `collab new adr` 生成的文件当场过不了本条规则（4 个 `MISSING_SECTION`）。
+ * 两处各写一份"条目该有哪些章节"就是两份真相 —— 一份改了另一份不知道。
+ * 模板改为从这里派生后，这类漂移在结构上不可能再发生。
+ */
+export function requiredSectionsFor(kind: EntryKind): readonly string[] {
+  return SECTIONS_BY_KIND[kind];
+}
+
+/**
  * 从 Markdown body 中提取所有 H2 章节标题。
  *
  * @remarks

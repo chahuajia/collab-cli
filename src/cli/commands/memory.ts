@@ -80,7 +80,14 @@ export async function cmdMemory(args: string[]): Promise<void> {
 
   const root = findWorkingMemory(process.cwd());
   if (root === null) {
-    console.error("✖ working-memory/ not found (searched upwards from cwd)");
+    // 说清"为什么找不到"而不是只报找不到：**知识库仓本来就没有工作记忆**
+    // （工作记忆属于主体仓，见 KB 的 W10）。2026-09-26 最小可用性排查：
+    // 在 kb 骨架里跑 `collab memory` 只得到一句 "not found"，读起来像故障。
+    console.error(
+      "✖ working-memory/ not found (searched upwards from cwd).\n" +
+        "  注意：**知识库仓没有工作记忆** —— 进度与决策属于主体仓的 working-memory/\n" +
+        "  （本命令要在**项目仓**里跑，不是在 KB 仓里跑）。",
+    );
     process.exit(1);
   }
 

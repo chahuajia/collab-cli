@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { idIsAlias } from "@/domain/validation/rules/idIsAlias";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import type { RuleContext } from "@/domain/validation/Rule";
 
 /** `idIsAlias` 不看 context —— 传空壳即可。 */
@@ -13,6 +13,15 @@ const NO_CONTEXT: RuleContext = {
   indexFiles: new Map(),
   allMarkdownPaths: new Set(),
 };
+
+/**
+ * U+FEFF（BOM）的码位。
+ *
+ * @remarks
+ * `parseDocument` 已经容忍它（读文件时剥掉）—— 这里必须**同样**容忍，
+ * 否则会出现"validate 看得见、fix 修不了"。剥掉只用于定位；写回时**原样保留**。
+ */
+const BOM = 0xfeff;
 
 /**
  * `collab fix [--dry-run]`
@@ -82,7 +91,19 @@ export async function cmdFix(args: string[]): Promise<void> {
  * @returns 新内容；找不到 frontmatter 时返回 null（**不猜** —— 调用方据此报错）
  */
 function addIdAlias(raw: string, id: string): string | null {
-  const lines = raw.split("\n");
+  // 与 `parseDocument` **同判据**：剥掉 BOM、按 CRLF/LF 切分、原样写回。
+  //
+  // 2026-09-26 实测的偏差：这里曾只做 `raw.split("\n")` 且直接比 `lines[0] !== "---"`，
+  // 于是 **带 BOM 的文件**（Windows 编辑器/脚本的默认产物）会出现
+  // "validate 看得见、fix 修不了"（`cannot fix ...: frontmatter not found`）；
+  // 而按 `\n` 切、按 `\n` 拼还会**静默把 CRLF 改成 LF**。两份定位逻辑必然漂移 ——
+  // 这里把两者的语义对齐，并由 `fix.test.ts` 的 BOM / CRLF 两条用例钉住。
+  const bom = raw.charCodeAt(0) === BOM;
+  const text = bom ? raw.slice(1) : raw;
+  const newline = text.includes("\r\n") ? "\r\n" : "\n";
+  const lines = text.split(/\r?\n/);
+  /** 写回时把 BOM 放回去（**只补不删**：BOM 不是我们要改的东西）。 */
+  const finish = (content: string): string => (bom ? `\uFEFF${content}` : content);
   if (lines[0] !== "---") return null;
 
   const end = lines.indexOf("---", 1);
@@ -95,9 +116,13 @@ function addIdAlias(raw: string, id: string): string | null {
   if (inlineIndex !== -1) {
     const line = fm[inlineIndex];
     if (line === undefined) return null;
-    const closed = line.replace(/\]\s*$/, `, ${id}]`);
-    fm[inlineIndex] = closed;
-    return rebuild(lines, end, fm);
+    // 空数组 `[]` 不能盲目拼 `, x`：那会写出**非法 YAML**（`[, x]`）。
+    // 2026-09-26 实测：`aliases: []` 经 `fix` 变成 `aliases: [, S30]`，
+    // 于是"补一个小字段"的动作把一个合法条目改坏了（validate 报 INVALID_YAML）。
+    fm[inlineIndex] = /\[\s*\]/.test(line)
+      ? line.replace(/\[\s*\]/, `[${id}]`)
+      : line.replace(/\]\s*$/, `, ${id}]`);
+    return finish(rebuild(lines, end, fm, newline));
   }
 
   // 2. 块状写法：在最后一条 `  - x` 后追加
@@ -106,19 +131,20 @@ function addIdAlias(raw: string, id: string): string | null {
     let insertAt = blockIndex + 1;
     while (insertAt < fm.length && /^\s*-\s/.test(fm[insertAt] ?? "")) insertAt++;
     fm.splice(insertAt, 0, `  - ${id}`);
-    return rebuild(lines, end, fm);
+    return finish(rebuild(lines, end, fm, newline));
   }
 
   // 1. 没有 aliases：插到收尾 --- 之前
   fm.push("aliases:", `  - ${id}`);
-  return rebuild(lines, end, fm);
+  return finish(rebuild(lines, end, fm, newline));
 }
 
-/** 拼回原文（frontmatter 之外的每一行原样保留）。 */
+/** 拼回原文（frontmatter 之外的每一行原样保留；换行符沿用原文件）。 */
 function rebuild(
   lines: readonly string[],
   end: number,
   fm: readonly string[],
+  newline: string,
 ): string {
-  return [...lines.slice(0, 1), ...fm, ...lines.slice(end)].join("\n");
+  return [...lines.slice(0, 1), ...fm, ...lines.slice(end)].join(newline);
 }

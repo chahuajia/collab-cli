@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { resolveEnforced } from "@/cli/lib/enforcedTargets";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { findUnreachable } from "@/domain/entry/reachability";
 import { isRouted } from "@/domain/entry/routed";
+import { resolveEnforced } from "@/infrastructure/fs/enforcedTargets";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import type { LoadedEntry } from "@/domain/entry/WorkspaceLoader";
 
 /**
@@ -232,7 +232,7 @@ const DATE_PART_WIDTH = 2;
  * 校验 `--enforced` 的目标**真实存在**。
  *
  * @remarks
- * 仓根解析与三态判定都在 `cli/lib/enforcedTargets.ts` —— **与
+ * 仓根解析与三态判定都在 `infrastructure/fs/enforcedTargets.ts` —— **与
  * `collab validate --check-enforced` 共用同一份**。
  * 写两份的后果是"写入时查的是 A、复查时查的是 B"，而那种漂移最难发现。
  */

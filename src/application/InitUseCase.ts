@@ -1,6 +1,8 @@
 // src/application/InitUseCase.ts
 import fs from "node:fs";
 import path from "node:path";
+import { renderIndex } from "@/application/renderIndex";
+import { EntryKindDir, EntryKindValues } from "@/domain/entry/types";
 
 /**
  * 计划里要写的一个文件：目标相对路径 + 完整内容。
@@ -80,7 +82,7 @@ function agentsMd(): string {
         "1. 下面那张「症状 → 条目」表（**第一路由**，按\"你要干什么\"组织）",
         "2. `catalog.json` 做关键词检索（它是目录，不是路由）",
         "3. 都没有 → **报告\"找不到\"，不要凭空发明规范**，并记进 `meta/known-gaps.md`",
-        "4. 进度与决策**不在这里** —— 在 `working-memory/`",
+        "4. 进度与决策**不在本仓库** —— 工作记忆属于主体仓（`kb` profile 不建 `working-memory/`）",
         "5. 按需读条目，**不要全量读**：`agreements/` 边界 · `workflows/` 剧本 · `skills/` 做法 · `patterns/` 判据",
         "",
         "## 症状 → 条目",
@@ -138,11 +140,12 @@ function readmeMd(): string {
         "## 验收",
         "",
         "```sh",
-        "npx --yes @chahuajia/collab-cli@^0.5 validate --dir .",
+        "npx --yes @chahuajia/collab-cli@^0.5 validate",
         "```",
         "",
         "> **本 profile（`kb`）不生成 `scripts/collab-validate.mjs`** —— wrapper 是 `consumer`",
-        "> profile 的产物（它才有跨仓的调用点差异）。CI / pre-push 直接用上面那条命令。",
+        "> profile 的产物（它才有跨仓的调用点差异）。CI / pre-push 直接用上面那条命令，",
+        "> 不必 `--dir`：本仓根就是知识库根（六个 kind 目录的 `_index.md` 已就位，识别得到）。",
         "",
     ]);
 }
@@ -282,7 +285,28 @@ export function planInitFiles(today: string): readonly InitFile[] {
     { path: "meta/interceptions.md", content: interceptionsMd(today) },
     { path: "meta/known-gaps.md", content: knownGapsMd(today) },
     { path: "meta/pruning-policy.md", content: pruningPolicyMd(today) },
+    ...entryDirIndexes(),
   ];
+}
+
+/**
+ * 六个 kind 目录的 `_index.md`（空索引）。
+ *
+ * @remarks
+ * **为什么骨架必须写它们**（2026-09-26 实测的 bug）：
+ * 工作区识别（`findCollabRoot`，布局 B）只认"仓库根有 `agreements/` 等目录"，
+ * 而**空目录进不了 git** —— 于是一个刚 `init` 出来的知识库在 clone 之后
+ * 对所有命令都变成"找不到工作区"：`validate` / `new` / `catalog` / `index` / `fix`
+ * 全部报错，**连第一条条目都落不了**（而 `init` 自检却说 0 issues，因为它绕过了识别）。
+ *
+ * 内容**不由这里发明**：走 `collab index` 用的同一个 `renderIndex`。
+ * 手写一份表头 = 第二份索引格式，早晚和真库漂移。
+ */
+function entryDirIndexes(): readonly InitFile[] {
+  return Object.values(EntryKindValues).map((kind) => ({
+    path: `${EntryKindDir[kind]}/_index.md`,
+    content: renderIndex({ kind, existing: null, actualEntries: [] }).content,
+  }));
 }
 
 /**

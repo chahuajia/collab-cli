@@ -20,7 +20,7 @@ import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
  *
  * 未知值必须报错，不能静默降级 —— 打错字就装错东西是最难查的故障形态。
  */
-const SUPPORTED_PROFILES = ["consumer", "kb"] as const;
+export const SUPPORTED_PROFILES = ["consumer", "kb"] as const;
 
 const CI_YML = [
   "name: Validate",
@@ -177,7 +177,7 @@ export async function cmdInit(args: string[]): Promise<void> {
         `✖ init 已写入，但自检未通过：${report.issues.length} 个问题`,
       );
       console.error(
-        "  下一步：`collab validate --dir .` —— 看完整清单（kb profile 不生成 wrapper 脚本）",
+        "  下一步：`collab validate` —— 看完整清单（kb profile 不生成 wrapper 脚本）",
       );
       process.exit(1);
     }
@@ -200,7 +200,7 @@ export async function cmdInit(args: string[]): Promise<void> {
   console.log(gateReady
     ? "    2. node scripts/collab-validate.mjs（或在 CI / pre-push 里接它）"
     : profile === "kb"
-      ? "    2. 门禁：CI / pre-push 里直接调 `npx --yes @chahuajia/collab-cli@^0.5 validate --dir .`（kb profile 不生成 wrapper 脚本）"
+      ? "    2. 门禁：CI / pre-push 里直接调 `npx --yes @chahuajia/collab-cli@^0.5 validate`（kb profile 不生成 wrapper 脚本）"
       : "    2. 用 `--kb <全局 KB 路径>` 重跑才会生成 `scripts/collab-validate.mjs` —— 没有校验目标时门禁不接线");
   console.log(
     "    3. 第一条新条目必须能说出「不读它，模型会照着本地哪个模式写错」",

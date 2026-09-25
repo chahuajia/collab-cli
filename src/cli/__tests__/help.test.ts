@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toSucceed, useTestWorkspace } from "@/cli/commands/__tests__/testHelpers";
+import { SUPPORTED_PROFILES } from "@/cli/commands/init";
 import { COMMANDS } from "@/cli/index";
 
 const ctx = useTestWorkspace();
@@ -49,6 +50,27 @@ describe("collab --help", () => {
     const result = await toSucceed(["--help"], ctx().root, ctx().envOverrides);
     const names = commandsInHelp(result.stdout);
     expect(names.length).toBe(new Set(names).size);
+  });
+
+  /**
+   * help 里的 `--profile` 取值必须与 **实际支持的** 一致。
+   *
+   * @remarks
+   * 2026-09-26 实测：help 写着 `--profile starter`，而 `starter` 早就不是合法值
+   * （`init` 当场报"未知 --profile"）。**手写的取值清单必然漂移** ——
+   * 现在它从 `SUPPORTED_PROFILES` 派生，这条测试钉住派生关系。
+   */
+  it("advertises exactly the supported --profile values", async () => {
+    const result = await toSucceed(["--help"], ctx().root, ctx().envOverrides);
+    const advertised = new Set(SUPPORTED_PROFILES);
+
+    for (const profile of advertised) {
+      expect(result.stdout, `help 未列出 --profile ${profile}`).toContain(profile);
+    }
+    // 反向：不许出现任何"看起来像 profile 但不在清单里"的取值
+    const line = result.stdout.split("\n").find((l) => l.includes("--profile")) ?? "";
+    const values = line.match(/--profile\s+([a-z|]+)/)?.[1]?.split("|") ?? [];
+    expect(values.sort()).toEqual([...advertised].sort());
   });
 
   it("fails an unknown command with a non-zero exit and a help hint", async () => {

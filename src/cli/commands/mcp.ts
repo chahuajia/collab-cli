@@ -1,7 +1,7 @@
 import path from "node:path";
 import readline from "node:readline";
 import { parseArgs } from "node:util";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import { createSession, dispatch } from "@/mcp/server";
 import type { ToolContext } from "@/mcp/handlers";
 

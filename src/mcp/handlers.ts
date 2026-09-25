@@ -7,11 +7,11 @@ import {
   contentRules,
   standardRules,
 } from "@/application/ValidateUseCase";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { BundleActionValues } from "@/domain/apply/BundleAction";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { FileApplyWorkspace } from "@/infrastructure/fs/FileApplyWorkspace";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import { parseBundle } from "@/infrastructure/parsing/BundleParser";
 import { parseCollabText } from "@/infrastructure/parsing/parseCollabText";
 import { ToolArgumentError, readInt, readRecord, readString } from "@/mcp/args";

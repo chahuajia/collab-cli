@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildCatalog, serializeCatalog } from "@/application/buildCatalog";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 
 /** 默认输出文件名（写在知识库根）。 */
 const DEFAULT_OUT = "catalog.json";

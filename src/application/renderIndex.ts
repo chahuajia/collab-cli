@@ -1,7 +1,7 @@
 import { type EntryKind, EntryKindValues } from "@/domain/entry/types";
 import { refersToIdentity } from "@/domain/validation/resolvesRef";
 import type { IndexEntry } from "@/application/extractIndexEntries";
-import type { ParsedIndex, ParsedRow } from "@/cli/lib/parseIndex";
+import type { ParsedIndex, ParsedRow } from "@/application/parseIndex";
 
 export interface RenderInput {
   readonly kind: EntryKind;

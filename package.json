@@ -36,7 +36,7 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --fix",
     "dev": "tsx src/cli/index.ts",
-    "build": "tsc && tsc-alias",
+    "build": "node scripts/clean-dist.mjs && tsc && tsc-alias",
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -45,11 +45,6 @@
     "prepare": "husky || true",
     "prepublishOnly": "npm run build",
     "lint": "eslint src",
-    "script:add-author": "node scripts/add-author.mjs",
-    "script:add-dates": "node scripts/add-dates.mjs",
-    "script:migrate-write-entry": "node scripts/migrate-write-entry.mjs",
-    "migrate:write-entry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__",
-    "migrate:write-entry:dry": "node scripts/migrate-write-entry.mjs src/cli/commands/__tests__ --dry-run",
     "test:ci": "node scripts/assert-no-skips.mjs"
   },
   "lint-staged": {
@@ -72,7 +67,6 @@
     "execa": "^9.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
-    "prettier": "^3.9.6",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.15.0",
     "typescript": "^5.5.0",

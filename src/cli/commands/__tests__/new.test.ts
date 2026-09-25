@@ -447,17 +447,38 @@ describe("collab new", () => {
   describe("产物通过 validate", () => {
     beforeEach(() => setupWorkspace());
 
-    it("generated file passes all domain rules (E10)", async () => {
-      await toSucceed(["new", "skill", "S30"], testRoot, envOverrides);
+    /**
+     * **六种 kind 都要覆盖**（2026-09-26 修的 bug）：`adr` 的章节体系与模式语言不同，
+     * 而这条测试原先只测 `skill` —— 于是"`collab new adr` 生成的条目当场过不了
+     * validate"躲过了全部测试（4 个 `MISSING_SECTION`）。**核实范围由想象决定**：
+     * 测一种 kind 就宣布"产物通过 validate"，覆盖的是想象，不是种类。
+     */
+    const SAMPLES = [
+      { kind: "skill", id: "S30" },
+      { kind: "agreement", id: "A30" },
+      { kind: "workflow", id: "W30" },
+      { kind: "pattern", id: "generated-pattern" },
+      { kind: "adr", id: "ADR-0030" },
+      { kind: "integration", id: "generated-integration" },
+    ] as const;
 
-      const loader = new FileWorkspaceLoader(collabDir);
-      const useCase = new ValidateUseCase(loader, {
-        perEntry: [typeMatchesDir, sectionsPresent, linksResolve],
-        global: [],
-      });
-      const { report } = useCase.execute();
+    it.each(SAMPLES)(
+      "generated $kind file passes all domain rules (E10)",
+      async ({ kind, id }) => {
+        await toSucceed(["new", kind, id], testRoot, envOverrides);
 
-      expect(report.errors()).toEqual([]);
-    });
+        const loader = new FileWorkspaceLoader(collabDir);
+        const useCase = new ValidateUseCase(loader, {
+          perEntry: [typeMatchesDir, sectionsPresent, linksResolve],
+          global: [],
+        });
+        const { report } = useCase.execute();
+
+        expect(
+          report.errors().map((i) => i.format()),
+          `${kind} 模板生成的条目没通过自己的规则`,
+        ).toEqual([]);
+      },
+    );
   });
 });

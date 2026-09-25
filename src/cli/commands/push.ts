@@ -4,8 +4,8 @@ import {
   standardRules,
 } from "@/application/ValidateUseCase";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import { gitRun } from "@/infrastructure/git/gitRunner";
-import { findCollabRoot } from "../lib/findCollabRoot.js";
 
 const MAX_COMMITS_SHOWN = 5;
 

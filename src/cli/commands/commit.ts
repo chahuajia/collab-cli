@@ -5,8 +5,8 @@ import {
   ValidateUseCase,
   standardRules,
 } from "@/application/ValidateUseCase";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import { gitRun } from "@/infrastructure/git/gitRunner";
 
 /**

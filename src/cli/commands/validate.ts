@@ -1,10 +1,10 @@
 import { parseArgs } from "node:util";
 import { standardRules, ValidateUseCase } from "@/application/ValidateUseCase";
-import { resolveEnforced } from "@/cli/lib/enforcedTargets";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { Issue } from "@/domain/validation/Issue";
 import { ValidationReport } from "@/domain/validation/ValidationReport";
+import { resolveEnforced } from "@/infrastructure/fs/enforcedTargets";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import {
   renderHumanReport,
   renderJsonReport,

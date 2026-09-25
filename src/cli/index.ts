@@ -6,7 +6,7 @@ import { cmdApply } from "@/cli/commands/apply";
 import { cmdCatalog } from "@/cli/commands/catalog";
 import { cmdCommit } from "@/cli/commands/commit";
 import { cmdFix } from "@/cli/commands/fix";
-import { cmdInit } from "@/cli/commands/init";
+import { cmdInit, SUPPORTED_PROFILES } from "@/cli/commands/init";
 import { cmdMcp } from "@/cli/commands/mcp";
 import { cmdMemory } from "@/cli/commands/memory";
 import { cmdNew } from "@/cli/commands/new";
@@ -47,7 +47,7 @@ Usage:
   collab [--dir <path>] <command> [options]
 
 Commands:
-  init [--profile starter]     Scaffold a minimal workspace (ledgers + entry + gate)
+  init [--profile ${SUPPORTED_PROFILES.join("|")}] Scaffold a minimal workspace (ledgers + entry + gate)
   new <type> [id]              Create a new entry from template
   apply <bundle.json>          Apply a bundle: all files or none
   parse <source.txt|->         Parse pasted AI output into bundle.json

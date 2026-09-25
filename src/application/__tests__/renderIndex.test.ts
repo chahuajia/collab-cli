@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { parseIndex } from "@/cli/lib/parseIndex";
-import { renderIndex } from "@/cli/lib/renderIndex";
+import { parseIndex } from "@/application/parseIndex";
+import { renderIndex } from "@/application/renderIndex";
 import { EntryKindValues } from "@/domain/entry/types";
 import type { IndexEntry } from "@/application/extractIndexEntries";
 

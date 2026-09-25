@@ -2,9 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildBundle } from "@/application/buildBundle";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { FileApplyWorkspace } from "@/infrastructure/fs/FileApplyWorkspace";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 import { parseCollabText } from "@/infrastructure/parsing/parseCollabText";
 import type { Issue } from "@/domain/validation/Issue";
 

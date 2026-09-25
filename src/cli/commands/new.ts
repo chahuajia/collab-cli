@@ -1,193 +1,93 @@
 // src/cli/commands/new.ts
-import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 import { parseArgs } from "node:util";
-import { computeNextId } from "@/application/computeNextId";
-import { extractIdsForKind } from "@/application/extractIdsForKind";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
-import { buildTemplate } from "@/cli/lib/templates";
-import { EntryId } from "@/domain/entry/EntryId";
-import { isRouted } from "@/domain/entry/routed";
-import {
-  type EntryKind,
-  EntryKindDir,
-  EntryKindValues,
-} from "@/domain/entry/types";
+import { planCreateEntry } from "@/application/CreateEntryUseCase";
+import { EntryKindValues } from "@/domain/entry/types";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
-
-
-/**
- * CLI 接受的 `<type>` 字符串到领域 EntryKind 的映射。
- */
-const VALID_TYPES: Record<string, EntryKind> = {
-    skill: EntryKindValues.Skill,
-    workflow: EntryKindValues.Workflow,
-    agreement: EntryKindValues.Agreement,
-    pattern: EntryKindValues.Pattern,
-    adr: EntryKindValues.Adr,
-    integration: EntryKindValues.Integration,
-};
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
+import { readGitAuthor } from "@/infrastructure/git/gitIdentity";
+import type { EntryKind } from "@/domain/entry/types";
 
 /**
- * 约定层的**上限**。
+ * CLI 接受的 `<type>` 字符串 → 领域 `EntryKind`。
  *
  * @remarks
- * 这是全库唯一的"环境型代谢机制"：**让"加"包含"减"的代价**。
- *
- * 为什么只限 `agreement`：协议层是**稀缺**的（每加一条，向未来每一次交互收税），
- * 而技能/模式/工作流是**手册**，本来就该增长，成本只在检索。
- *
- * 为什么没有 `--force`：绕过它的成本必须高于遵守它的成本。
- * 一个便宜的逃生口会让它退化成仪式 —— 那与"给鼓励"是同一类失效。
+ * **派生，不手写**：每个 kind 的值（`skill` / `adr` / …）本来就是给命令行用的词。
+ * 手抄一份清单就会漂移 —— help 里的 `--profile starter` 就是同类事故
+ * （2026-09-26 最小可用性排查）。
  */
-const AGREEMENT_LIMIT = 10;
+const VALID_TYPES: Record<string, EntryKind> = Object.fromEntries(
+  Object.values(EntryKindValues).map((kind) => [kind, kind]),
+);
 
 /**
- * `collab new <type> [id] [--author <email>]`
+ * `collab new <type> [id] [--author <email>] [--dry-run]`
  *
- * 从模板生成新条目文件。不更新 `_index.md`——那由 `collab index` 负责。
+ * 从模板生成新条目文件。**不更新 `_index.md`** —— 那是 `collab index` 的事。
+ *
+ * @remarks
+ * 本命令只做三件事：解析参数 → 调用例拿计划 → 落盘并打印。
+ * 配额判据、id 校验与生成、作者来源、模板内容都在各自该在的层里
+ * （`domain/entry/agreementQuota` · `application/CreateEntryUseCase` ·
+ * `infrastructure/formatting` · `infrastructure/git`）。
  */
 export async function cmdNew(args: string[]): Promise<void> {
-    const { values, positionals } = parseArgs({
-        args,
-        options: {
-            author: { type: 'string' },
-            "dry-run": { type: 'boolean', default: false },
-        },
-        allowPositionals: true,
-        strict: false,
-    });
+  const { values, positionals } = parseArgs({
+    args,
+    options: {
+      author: { type: "string" },
+      "dry-run": { type: "boolean", default: false },
+    },
+    allowPositionals: true,
+    strict: false,
+  });
 
-    // 1. 解析 type
-    const typeArg = positionals[0];
-    if (!typeArg) {
-        throw new Error('missing <type> argument. Usage: collab new <type> [id]');
-    }
-    const type = VALID_TYPES[typeArg];
-    if (!type) {
-        throw new Error(
-            `unknown type "${typeArg}". Valid types: ${Object.keys(VALID_TYPES).join(', ')}`,
-        );
-    }
-
-    // 2. 定位 COLLABORATION
-    const { collabDir, gitRoot } = findCollabRoot(process.cwd());
-
-    // 2b. 约定层配额（代谢机制）：加之前必须先减
-    if (type === EntryKindValues.Agreement) {
-        const loader = new FileWorkspaceLoader(collabDir);
-        // 只数**占路由索引位**的条目 —— 判据与 buildCatalog 同源（isRouted）。
-        // 此前用 extractIdsForKind().length（不带状态过滤）会把已退役的也算进去，
-        // 于是下面那句"归档腾位置"是空头支票：照做也解不开配额。
-        const occupying = loader
-            .load()
-            .entries.filter(
-                (loaded) =>
-                    loaded.entry !== null &&
-                    loaded.entry.frontmatter.type === type &&
-                    isRouted(loaded.entry.frontmatter),
-            ).length;
-        if (occupying >= AGREEMENT_LIMIT) {
-            throw new Error(
-                `约定已达上限（${occupying}/${AGREEMENT_LIMIT}）。` +
-                    `约定是承重墙 —— 每加一条，都在向未来每一次交互收税。\n` +
-                    `先让一条退役（退出路由索引，文件与 git 历史保留）：\n` +
-                    `  collab retire <id> --reason "<过时|重复|表达差|未成熟>: <证据>"\n` +
-                    `也可以并入已有条目。若这一条确实不可谈判，` +
-                    `它多半该改写成 工作流 / 模式 / 集成层 的模样。`,
-            );
-        }
-    }
-
-    // 3. 解析 id
-  const idArg = positionals[1];
-  let id: string;
-
-  if (idArg !== undefined) {
-    // 用户显式给 id —— 用领域层的权威校验
-    const result = EntryId.create(idArg, type);
-    if (!result.ok) {
-      const issue = result.error;
-      // D4：显示 suggestion（如果存在）
-      const suffix = issue.suggestion ? `\n  → ${issue.suggestion}` : "";
-      throw new Error(issue.message + suffix);
-    }
-    id = result.value;
-  } else {
-    // 自动生成 —— 内部保证合法，无需再校验
-    const loader = new FileWorkspaceLoader(collabDir);
-    const workspace = loader.load();
-    const existingIds = extractIdsForKind(workspace, type);
-    id = computeNextId(existingIds, type);
+  const typeArg = positionals[0];
+  if (!typeArg) {
+    throw new Error("missing <type> argument. Usage: collab new <type> [id]");
+  }
+  const type = VALID_TYPES[typeArg];
+  if (!type) {
+    throw new Error(
+      `unknown type "${typeArg}". Valid types: ${Object.keys(VALID_TYPES).join(", ")}`,
+    );
   }
 
-    // 4. 检查文件已存在
-    const relDir = EntryKindDir[type];
-    const filePath = path.join(collabDir, relDir, `${id}.md`);
-    if (fs.existsSync(filePath)) {
-        throw new Error(`file already exists: ${path.relative(process.cwd(), filePath)}`);
-    }
+  const { collabDir, gitRoot } = findCollabRoot(process.cwd());
+  const authorOpt = values.author;
 
-    // 5. 确定 author
-    const authorOpt = values.author;
-    const author =
-        typeof authorOpt === 'string' && authorOpt.length
-            ? authorOpt
-            : readGitAuthor(gitRoot);
-    if (!author) {
-        throw new Error(
-            'git user.name is not set. Run `git config user.name <your-name>` or pass --author.',
-        );
-    }
+  const plan = planCreateEntry(
+    {
+      type,
+      id: positionals[1] ?? null,
+      author: typeof authorOpt === "string" && authorOpt.length > 0 ? authorOpt : null,
+    },
+    {
+      workspace: new FileWorkspaceLoader(collabDir),
+      readAuthor: () => readGitAuthor(gitRoot),
+    },
+  );
 
-    // 6. 构建内容
-    const content = await buildTemplate({ type, id, author });
+  const filePath = path.join(collabDir, plan.relPath);
+  const display = path.relative(process.cwd(), filePath);
 
-    // 7. 写入（'wx' 保证不覆盖已存在文件——即使检查后被并发创建）
-    const relPath = path.relative(process.cwd(), filePath);
+  if (fs.existsSync(filePath)) {
+    throw new Error(`file already exists: ${display}`);
+  }
 
-    if (values["dry-run"] === true) {
-        console.log(`(dry-run) would create ${relPath}`);
-        console.log('');
-        console.log('(dry-run) nothing was written.');
-        return;
-    }
+  if (values["dry-run"] === true) {
+    console.log(`(dry-run) would create ${display}`);
+    console.log("");
+    console.log("(dry-run) nothing was written.");
+    return;
+  }
 
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, content, { encoding: 'utf8', flag: 'wx' });
+  // 'wx' 兜住"检查之后、写之前"被并发创建的情况 —— 绝不覆盖
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, plan.content, { encoding: "utf8", flag: "wx" });
 
-    // 8. 输出
-    console.log(`✔ created ${relPath}`);
-    console.log('');
-    console.log('Next: run `collab index` to update the directory index.');
-}
-
-/**
- * 从 git 配置读取作者标识。
- *
- * @remarks
- * 顺序：`user.name` → `user.email`。
- * `author` 字段的语义是"**人**"（条目里写的是 `heiniao` 这样的名字，不是邮箱），
- * 所以 `user.name` 优先；邮箱只作兜底。
- *
- * @returns 作者标识，或 undefined（都没配 / 命令失败）
- */
-function readGitAuthor(cwd: string): string | undefined {
-    return readGitConfig(cwd, 'user.name') ?? readGitConfig(cwd, 'user.email');
-}
-
-/** 读取单个 git 配置项；未配置或命令失败返回 undefined。 */
-function readGitConfig(cwd: string, key: string): string | undefined {
-    try {
-        const out = execFileSync('git', ['config', key], {
-            cwd,
-            encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'ignore'],
-        });
-        const trimmed = out.trim();
-        return trimmed.length > 0 ? trimmed : undefined;
-    } catch {
-        return undefined;
-    }
+  console.log(`✔ created ${display}`);
+  console.log("");
+  console.log("Next: run `collab index` to update the directory index.");
 }

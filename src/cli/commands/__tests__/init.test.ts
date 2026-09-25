@@ -23,7 +23,13 @@ const EXPECTED = [
   'meta/interceptions.md',
   'meta/known-gaps.md',
   'meta/pruning-policy.md',
-
+  // 六个 kind 目录的空索引 —— 空目录进不了 git，没有它们 clone 后工作区识别不到
+  'agreements/_index.md',
+  'workflows/_index.md',
+  'skills/_index.md',
+  'patterns/_index.md',
+  'meta/decision-records/_index.md',
+  'integrations/_index.md',
 ];
 
 async function runCli(args: string[]) {
@@ -31,6 +37,24 @@ async function runCli(args: string[]) {
     cwd: root,
     reject: false,
     env: { ...process.env, ...envOverrides },
+  });
+}
+
+/**
+ * 把临时根变成 git 仓库。
+ *
+ * @remarks
+ * 工作区**自动识别**是"向上找到 `.git`，再看布局"，所以不 git init 就测不到它 ——
+ * 只有显式 `--dir` 才不需要 git。这两条测试关心的正是"不带 `--dir` 也能用"。
+ */
+async function initGitRepo(): Promise<void> {
+  const env = { ...process.env, ...envOverrides };
+  await execa('git', ['init', '-q'], { cwd: root, env });
+  // `collab new` 的 author 取自 git 身份（见 decisions：author 的语义是"人"）
+  await execa('git', ['config', '--local', 'user.name', 'Test'], { cwd: root, env });
+  await execa('git', ['config', '--local', 'user.email', 'test@example.com'], {
+    cwd: root,
+    env,
   });
 }
 
@@ -50,13 +74,32 @@ afterEach(async () => {
 
 describe('collab init — profile=starter', () => {
   it('I1 空目录：生成清单里的文件，且随后 validate 为 0 issues', async () => {
+    await initGitRepo();
     const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
     expect(r.exitCode, r.stderr).toBe(0);
     for (const f of EXPECTED) {
       expect(existsSync(path.join(root, f)), `${f} 未生成`).toBe(true);
     }
-    const v = await runCli(['validate', '--dir', '.']);
+    // 不带 --dir：骨架必须能被**自动识别**（这正是 2026-09-26 修的那个 bug）
+    const v = await runCli(['validate']);
     expect(v.exitCode, v.stdout + v.stderr).toBe(0);
+  });
+
+  it('I1b 骨架立刻可用：不指定 --dir 也能落第一条条目', async () => {
+    await initGitRepo();
+    await runCli(['init', '--profile', 'kb', '--dir', '.']);
+
+    // 修 bug 之前这里五条命令全部报 "no COLLABORATION workspace found"
+    const created = await runCli(['new', 'pattern', 'first']);
+    expect(created.exitCode, created.stdout + created.stderr).toBe(0);
+    expect(existsSync(path.join(root, 'patterns/first.md'))).toBe(true);
+
+    expect((await runCli(['catalog'])).exitCode).toBe(0);
+    expect((await runCli(['index'])).exitCode).toBe(0);
+
+    const v = await runCli(['validate']);
+    expect(v.exitCode, v.stdout + v.stderr).toBe(0);
+    expect(v.stdout).toContain('1 entries');
   });
 
   it('I2 幂等：第二次全部 skip，两次之后内容逐字节不变', async () => {

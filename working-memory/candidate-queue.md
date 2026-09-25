@@ -9,6 +9,7 @@
 | 回归夹具放在**仓外**（`D:\下载缓存\test.txt` 当验收标准） | → **已在库** `patterns/reproducible-verification` → 直接修：夹具入仓 + 新建 `.gitattributes`（`-text`）+ 两条测试；KB `meta/interceptions.md` 记一行 |
 | 发布检查单里的数必须是"命令 + 此刻输出" | → **已在库** `patterns/delete-beats-automate` → 标吸收；`RELEASE.md` 已按实测重写（顺带抓出 `init` 三处假承诺） |
 | brief 里的**文件路径**是断言，不是判据 | → **留队列**（见下） |
+| **文档面手写的取值/清单必然漂移**（最小可用性排查抓到 3 例：help 的 `--profile starter`、kb AGENTS.md 指 `working-memory/`、KB 症状表漏 `--reason`） | → **已在库** `patterns/delete-beats-automate`（"该不该在 → 能不能派生 → 才轮到生成器"）→ 标吸收；已按"派生"修掉其中能派生的那处（help 从 `SUPPORTED_PROFILES` 派生 + `help.test.ts` 钉住）。**没有新建条目**：这是既有判据的第 N 次显形，不是新判据 |
 
 ## 本轮已处理（2026-09-17 15:30）
 

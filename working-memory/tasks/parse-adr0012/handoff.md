@@ -110,9 +110,25 @@ ADR、归档 spec —— 不动）与"活文档"（会被当现行契约读的 �
 `init.test.ts` 加 I12b 并把 I13/I14 的断言收紧（**不许出现 `node scripts/collab-validate.mjs`**，
 除非 wrapper 真的生成了）。顺带清掉 wrapper 兜底文案里"尚未发布到 npm"这句假话。
 
-**未决（没替人决定）**：`init --profile kb` 的空骨架**不能被 `validate` 自动识别**
-（layout B 靠条目目录认人）→ 必须 `--dir .`，或先落第一条条目。要不要让 kb profile
-也建出条目目录 + `_index.md`，是 `tasks/collab-init/spec.md` 的未决项，已记进 `RELEASE.md` 第四节。
+**第三轮又抓出一个 bug（已修）**：`init --profile kb` 的骨架**工具链根本不认** ——
+实测 `validate` / `new` / `catalog` / `index` / `fix` **五条命令全部**报
+`no COLLABORATION workspace found`，**连第一条条目都落不了**；而 `init` 自检报 0 issues
+（它直接 `FileWorkspaceLoader(collabDir)`，绕过了工作区识别）。
+根因：布局 B 的标记是**目录**，而**空目录进不了 git** → clone 之后骨架就"不是知识库"了。
+修法：kb profile 把六个 kind 目录的 `_index.md`（空表，内容由 `renderIndex` 生成）写进**计划**
+（进计划 `--dry-run` 才不会说谎）。验收测试 I1/I1b：`init → new → catalog → index → validate`
+全程不带 `--dir`，`1 entries / 0 issues`。
+
+**为此外加的一次分层修正**：`renderIndex` / `parseIndex` 原在 `src/cli/lib/`，而"生成索引内容"
+是 application 层的活（它和 `extractIndexEntries` 是同一关切的两半）。若从 `InitUseCase`
+import `cli/lib` 就是**反向依赖**，所以把它俩（含测试）移进 `src/application/`。
+
+**同一轮又抓到第三个（会上市的那种）**：`tsc` 不清 `outDir`，而 `files` 收整个 `dist/` ——
+**源文件一改名/移动，删掉的模块照样被打包发布**。证据：已发布的 `0.5.1`（97 files）里带着
+`GitAdapter` / `ConsoleReporter` / `extractAllIdsByKind` / `falsifierRatchet` / `rules/index.js`
+五个**早已无源**的模块。修法：`npm run build` 先跑 `scripts/clean-dist.mjs` 清空 `dist` →
+本仓包从 98 files（含 7 处残留）降到 **91 files**（逐项核对：被移除的每个模块在 `src/` 里
+既无源也无引用）。机制优先于散文 —— 不写"记得删 dist"。
 
 ## W4 复盘（2026-09-26 · 三问 + 行动项）
 
@@ -147,21 +163,28 @@ ADR、归档 spec —— 不动）与"活文档"（会被当现行契约读的 �
 | A2 | **真产物入仓**：`__tests__/fixtures/real-ai-output.txt`（SHA-256 与原文件一致）+ `.gitattributes`（`-text`，隔离 git 换行策略）+ 单元与 CLI 端到端各一条测试 | **已执行**（749 测试绿） |
 | A3 | KB `meta/interceptions.md` 记一行（[[patterns/reproducible-verification]] 拦住的那条） | **已执行** |
 
-## 提交计划（**待人执行** —— AI 不 commit、不 push）
+## 提交状态与剩余计划（**AI 不 commit、不 push**）
 
-两仓自己的门禁已过：`npm run check` = 0，`npm run test:ci` = **749 通过 · 0 跳过**。
-按"一个提交一个关切"分组（路径可直接喂给 `git add -A`）：
+两仓自己的门禁已过：`npm run check` = 0，`npm run test:ci` = **750 通过 · 0 跳过**。
 
-### collab-cli（4 个提交）
+**已由人提交**（2026-09-26，两个提交就装下了整轮 parse 变更 —— 原本备了 6 个，人的收尾更紧）：
+
+| 仓 | commit | 内容 |
+| :--- | :--- | :--- |
+| collab-cli | `fe10844 feat(parse)!: 条目边界改用自描述 frontmatter（ADR-0012）` | 契约 + 夹具 + `init` 文案修正 + RELEASE.md + WM（26 files） |
+| collaboration | `a0b0d2f feat(chatgpt-output-format): 更新AI输出格式协议支持自描述frontmatter边界` | 协议节 + 索引 + S10 + 两本账（6 files） |
+
+**待提交（第三轮：kb 骨架 + 构建卫生）** —— 三个关切，路径可直接喂 `git add -A`：
 
 | # | message | 路径 |
 | :--- | :--- | :--- |
-| 1 | `feat(parse)!: 条目边界改用自描述 frontmatter（ADR-0012）` | `.gitattributes` · `src/infrastructure/parsing/` · `src/domain/parse/` · `src/domain/validation/IssueCode.ts` · `src/domain/entry/types.ts` · `src/cli/commands/parse.ts` · `src/cli/commands/apply.ts` · `src/cli/commands/__tests__/parse.test.ts` · `src/cli/index.ts` · `src/mcp/` · `README.md` |
-| 2 | `fix(init): 输出与骨架不再让人跑未生成的 wrapper（按 profile 分支）` | `src/cli/commands/init.ts` · `src/application/InitUseCase.ts` · `src/cli/commands/__tests__/init.test.ts` |
-| 3 | `docs(release): RELEASE.md 按实测重写（目标 0.5.2）` | `RELEASE.md` |
-| 4 | `docs(wm): parse-adr0012 交接 + W4 复盘 + 决策 5 条 + 候选队列 + 旧 spec 作废指针` | `working-memory/` |
+| 1 | `fix(init): kb 骨架自带六个 kind 目录的空 _index.md（空目录进不了 git，骨架曾"工具链认不出"）` | `src/application/InitUseCase.ts` · `src/cli/commands/init.ts` · `src/cli/commands/__tests__/init.test.ts` |
+| 2 | `refactor(application): renderIndex / parseIndex 移出 cli/lib（与 extractIndexEntries 同层，避免 InitUseCase 反向依赖）` | `src/application/renderIndex.ts` · `src/application/parseIndex.ts` · `src/application/__tests__/` · `src/cli/commands/index.ts` |
+| 3 | `fix(build): 构建先清 dist（tsc 不清 outDir，已删模块会被打包发布；0.5.1 实测带 5 个无源模块）` | `scripts/clean-dist.mjs` · `package.json` · `RELEASE.md` |
 
-第 1 个提交的 body 建议带上（它是**行为变更**，别让人从 diff 里猜）：
+`collaboration` 侧待提交：`meta/interceptions.md`（新增一条拦截行）。
+
+已提交那个 parse 提交的 body 要点（若之后要写 release note，从这里取）：
 
 ```
 - 契约：边界 = 条目自描述 frontmatter（--- … --- 含 id/type）；路径派生 EntryKindDir[type] + "/" + id + ".md"

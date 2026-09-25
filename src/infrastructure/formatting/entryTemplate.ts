@@ -1,27 +1,22 @@
-// src/cli/lib/templates.ts
+// src/infrastructure/formatting/entryTemplate.ts
 import { stringify as stringifyYaml } from 'yaml';
-import { DefaultStatusFor, EntryKindValues } from '../../domain/entry/types.js';
-import { formatMarkdown } from './formatEntry.js';
-import type { EntryKind } from '../../domain/entry/types.js';
+import { DefaultStatusFor, EntryKindValues } from "@/domain/entry/types";
+import { requiredSectionsFor } from "@/domain/validation/rules/sectionsPresent";
+import type { EntryKind } from "@/domain/entry/types";
 
 /**
- * 五个固定章节的空骨架。
+ * 空骨架 —— **从校验规则派生**，不在这里手写章节清单。
  *
  * @remarks
- * 与 S8 的章节命名严格一致——`sectionsPresent` 规则会校验。
+ * 章节体系按 kind 分两套（模式语言 / ADR），而"要哪些章节"的权威只有一个：
+ * `sectionsPresent`（`requiredSectionsFor`）。模板自己抄一份就会出现
+ * "模板与规则漂移"：2026-09-26 实测 `collab new adr` 曾生成缺
+ * 背景/决策/后果/替代方案 的条目 —— 模板过得去、规则过不去，而那条
+ * "产物通过 validate"的测试只覆盖了 `skill`。现在两者共用一份来源。
  */
-const EMPTY_BODY = [
-    '## 上下文',
-    '',
-    '## 问题',
-    '',
-    '## 方案',
-    '',
-    '## 反面',
-    '',
-    '## 关联',
-    '',
-].join('\n');
+function bodyFor(type: EntryKind): string {
+    return requiredSectionsFor(type).flatMap((s) => [`## ${s}`, '']).join('\n');
+}
 
 export interface BuildTemplateArgs {
     readonly type: EntryKind;
@@ -39,11 +34,11 @@ export interface BuildTemplateArgs {
  * 1. YAML frontmatter（字段顺序固定，便于人工阅读）
  * 2. 空章节骨架（用 Prettier 格式化，失败则原样）
  */
-export async function buildTemplate(args: BuildTemplateArgs): Promise<string> {
+export function buildTemplate(args: BuildTemplateArgs): string {
     const today = args.today ?? localDate();
     const frontmatter = buildFrontmatter(args.type, args.id, args.author, today);
     const yamlText = stringifyYaml(frontmatter, { lineWidth: 0 });
-    const body = await formatMarkdown(EMPTY_BODY);
+    const body = bodyFor(args.type);
     return `---\n${yamlText}---\n\n${body}`;
 }
 

@@ -3,15 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { extractAllIndexEntries } from "@/application/extractIndexEntries";
-import { findCollabRoot } from "@/cli/lib/findCollabRoot";
-import { parseIndex } from "@/cli/lib/parseIndex";
-import { renderIndex } from "@/cli/lib/renderIndex";
+import { parseIndex } from "@/application/parseIndex";
+import { renderIndex } from "@/application/renderIndex";
 import {
   type EntryKind,
   EntryKindDir,
   EntryKindValues,
 } from "@/domain/entry/types";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
 
 interface Target {
   readonly kind: EntryKind;
