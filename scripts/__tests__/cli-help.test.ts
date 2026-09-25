@@ -23,6 +23,7 @@ const HELP = [
     "  validate                     Validate the entire workspace",
     "  mcp                          Run as an MCP server on stdio",
     "  commit -m \"<message>\"        Validate + git add + git commit",
+    "  push                         Validate + git push",
     "",
     "Global options:",
     "  --dir <path>                 COLLABORATION workspace (also: COLLAB_DIR env)",
@@ -46,6 +47,7 @@ describe("parseCliHelp", () => {
             "commit",
             "init",
             "mcp",
+            "push",
             "retire",
             "validate",
         ]);
@@ -79,6 +81,7 @@ describe("extractUsage", () => {
     it("全局选项在前的形态", () => {
         expect(extractUsage("collab --dir <KB> validate", commands)).toEqual({
             sub: "validate",
+            known: true,
             flags: ["--dir"],
         });
     });
@@ -88,6 +91,7 @@ describe("extractUsage", () => {
             'node $COLLAB --dir $KB retire <id> --enforced <测试路径> --reason "<分类>: <证据>" --confirm';
         expect(extractUsage(line, commands)).toEqual({
             sub: "retire",
+            known: true,
             flags: ["--dir", "--enforced", "--reason", "--confirm"],
         });
     });
@@ -97,7 +101,24 @@ describe("extractUsage", () => {
             "codex mcp add collab -- node <repo>/bin/collab.js mcp --dir <KB>";
         expect(extractUsage(line, commands)).toEqual({
             sub: "mcp",
+            known: true,
             flags: ["--dir"],
+        });
+    });
+
+    it("选项的值是普通单词时，不会被误当成子命令（--remote origin push）", () => {
+        expect(extractUsage("collab --remote origin push", commands)).toEqual({
+            sub: "push",
+            known: true,
+            flags: ["--remote"],
+        });
+    });
+
+    it("子命令打错 → 不再静默跳过，而是标成 known:false", () => {
+        expect(extractUsage("collab retiree --candidates", commands)).toEqual({
+            sub: "retiree",
+            known: false,
+            flags: ["--candidates"],
         });
     });
 

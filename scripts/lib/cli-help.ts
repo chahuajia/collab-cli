@@ -21,6 +21,8 @@ export interface CliHelp {
 /** `collab …` 的一次用法：哪个子命令、带了哪些选项。 */
 export interface Usage {
     readonly sub: string;
+    /** 这个子命令 `--help` 认得吗？`false` = 打错了。 */
+    readonly known: boolean;
     readonly flags: readonly string[];
 }
 
@@ -98,20 +100,52 @@ export function parseCliHelp(help: string): CliHelp {
  *    这里的 `collab` 是**别人命令的参数**，真正的子命令是 `mcp`。
  *
  * 第 3 种先剥掉 `codex mcp add <name> --` 前缀，再看 `bin/collab.js` 之后的 token。
- * 判定「这是不是一次用法」的锚点是：**token 里出现了已知子命令** ——
- * 于是 `COLLAB=<collab-cli>/dist/cli/index.js` 这类赋值行自然被排除。
+ * 判定「子命令是哪个」分两步，顺序不能反：
+ *
+ * 1. **先找已知子命令** —— 只要 token 里有，就用它。
+ *    这一步保证 `collab --remote origin push` 里的 `origin`（选项的值）
+ *    不会被误当成子命令；
+ * 2. 一个已知的都没有时，**退而取第一个形如标识符的 token** ——
+ *    它是"打算当子命令用、但打错了"的位置（如 `collab retiree --candidates`）。
+ *    这一步是为了堵住"打错子命令 → 静默跳过"。
+ *
+ * 于是 `COLLAB=<collab-cli>/dist/…`（rest 以 `-` 开头）与
+ * `collab <cmd> --help`（占位符不是标识符）都被排除。
  */
 export function extractUsage(line: string, commands: ReadonlySet<string>): Usage | null {
     const stripped = line.replace(/^\s*codex\s+mcp\s+add\s+\S+\s+--\s*/, "");
-    const m = /(?:\$COLLAB\b|bin\/collab\.js|(?<![\w/-])collab)\b(.*)$/.exec(stripped);
+    // 注意 `(?![\w-])`：`collab-cli`（包名/仓库名）不能被当成一次调用 ——
+    // 散文里它后面常跟着 `工具：validate / catalog …`，会造出假阳性。
+    const m = /(?:\$COLLAB\b|bin\/collab\.js|(?<![\w/-])collab(?![\w-]))(.*)$/.exec(stripped);
     if (m?.[1] === undefined) return null;
 
-    const tokens = m[1].split(/\s+/).filter((t) => t.length > 0);
-    const sub = tokens.find((t) => commands.has(t));
-    if (sub === undefined) return null;
-
+    // 先去掉行内代码的反引号/前后标点 —— 否则 `` `collab validate` `` 切出来的
+    // token 是 `` validate` ``，认不出子命令，反而会把后面的散文词当候选（实测踩过）。
+    const tokens = m[1]
+        .replace(/`/g, " ")
+        .split(/\s+/)
+        .map((t) => t.replace(/^[^\w<>-]+/, "").replace(/[^\w<>-]+$/, ""))
+        .filter((t) => t.length > 0);
     const flags = tokens.filter(
         (t) => /^--[A-Za-z][\w-]*$/.test(t) || /^-[A-Za-z]$/.test(t),
     );
-    return { sub, flags };
+
+    const knownSub = tokens.find((t) => commands.has(t));
+    if (knownSub !== undefined) return { sub: knownSub, known: true, flags };
+
+    // 位置必须像"命令位"：**第一个非空 token**；若它是个选项，则看紧跟其后的那个。
+    // 再往后就是散文了 —— `| [[S10]] | collab CLI 使用 | meta, … |` 里的 `meta`
+    // 曾被误判成子命令（实测，因为中文 token 被归一化清掉后 `meta` 落到了第二位）。
+    // 注意不要写成 `t is string` 谓词：那会把 false 分支窄化成 `never`，
+    // 于是 `first.startsWith(...)` 直接编译不过（`npm run check` 抓到过）。
+    const isIdent = (t: string): boolean => /^[a-z][a-z0-9-]*$/.test(t);
+    const first = tokens[0] ?? "";
+    const second = tokens[1] ?? "";
+    const candidate = isIdent(first)
+        ? first
+        : first.startsWith("-") && isIdent(second)
+          ? second
+          : undefined;
+    if (candidate === undefined) return null;
+    return { sub: candidate, known: false, flags };
 }
