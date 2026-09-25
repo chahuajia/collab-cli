@@ -11,12 +11,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execa } from 'execa';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { COLLAB_NPM_RANGE } from '@/infrastructure/version';
 import { CLI_ENTRY } from './testHelpers.js';
 
 let root: string;
 let envOverrides: Record<string, string>;
 
-/** 规格里的生成清单（profile=starter）。 */
+/** 规格里的生成清单（profile=kb）。 */
 const EXPECTED = [
   'AGENTS.md',
   'README.md',
@@ -72,7 +73,7 @@ afterEach(async () => {
   if (root) await rm(root, { recursive: true, force: true });
 });
 
-describe('collab init — profile=starter', () => {
+describe('collab init — profile=kb', () => {
   it('I1 空目录：生成清单里的文件，且随后 validate 为 0 issues', async () => {
     await initGitRepo();
     const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
@@ -177,7 +178,7 @@ describe('collab init — profile=starter', () => {
     const links = [...agents.matchAll(/\[\[([^\]]+)\]\]/g)]
       .map((m) => (m[1] ?? '').trim())
       .filter((s) => s !== '');
-    expect(links, `starter 不应制造死链：${links.join(', ')}`).toEqual([]);
+    expect(links, `kb 骨架不应制造死链：${links.join(', ')}`).toEqual([]);
   });
 
   it('I12b kb profile 不承诺它不生成的 wrapper 脚本', async () => {
@@ -192,6 +193,16 @@ describe('collab init — profile=starter', () => {
     // 输出里的"下一步"同理：只指真实存在的动作
     expect(r.stdout).not.toContain('node scripts/collab-validate.mjs');
     expect(r.stdout).toMatch(/npx --yes/);
+  });
+
+  // 回归：安装范围曾在四处**手写** `@^0.5`，升到 0.6.0 时会把用户钉回旧线且不报错。
+  it('I12c 生成物里的安装范围跟着 package.json 走，不手写', async () => {
+    const r = await runCli(['init', '--profile', 'kb', '--dir', '.']);
+    expect(r.exitCode, r.stderr).toBe(0);
+
+    const readme = await readFile(path.join(root, 'README.md'), 'utf8');
+    expect(readme).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE} validate`);
+    expect(r.stdout).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE}`);
   });
 });
 
@@ -221,5 +232,16 @@ describe('collab init — profile=consumer（默认）', () => {
     // 没生成就不能让人去跑：指向 --kb 重跑才是真动作
     expect(r.stdout).not.toContain('node scripts/collab-validate.mjs');
     expect(r.stdout).toContain('--kb');
+  });
+
+  it('I13b consumer wrapper 里的安装范围同样派生', async () => {
+    const r = await runCli(['init', '--dir', '.', '--kb', 'D:/fake-kb']);
+    expect(r.exitCode, r.stderr).toBe(0);
+
+    const wrapper = await readFile(
+      path.join(root, 'scripts/collab-validate.mjs'),
+      'utf8',
+    );
+    expect(wrapper).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE}`);
   });
 });

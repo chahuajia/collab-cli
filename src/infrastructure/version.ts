@@ -16,8 +16,31 @@ import { fileURLToPath } from "node:url";
  */
 export const COLLAB_VERSION: string = readPackageVersion();
 
+/**
+ * 生成物里该装哪条线 —— `@chahuajia/collab-cli` 的 npm 范围，如 `^0.6`。
+ *
+ * @remarks
+ * `init` 会把安装命令写进三个生成物（kb 骨架 README、consumer wrapper、下一步提示），
+ * 加命令行上的跳过说明一共**四处**。它们曾经各自手写 `@^0.5` —— 于是升到 `0.6.0` 时，
+ * 四处会同时把用户钉回旧线，而且**不报错**：npx 老老实实装 0.5.x，
+ * 用户拿到的是换 `parse` 契约之前的版本。
+ *
+ * 这是"同一事实写两处必然漂移"的又一例，所以改成从 `package.json` **派生**
+ * （见 patterns/derivation-over-copy）。取 `major.minor` 而不是整串：
+ * 同一 minor 线内的补丁版应当自动跟上，不必重跑 `init`。
+ *
+ * 读不到版本号（`0.0.0` 兜底）时退回 `latest` —— 编一个陌生的 pin 会静默装错版本。
+ */
+export const COLLAB_NPM_RANGE: string = npmRangeFrom(COLLAB_VERSION);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function npmRangeFrom(version: string): string {
+  if (version === "0.0.0") return "latest";
+  const match = /^(\d+)\.(\d+)\./.exec(version);
+  return match ? `^${match[1]}.${match[2]}` : "latest";
 }
 
 function readPackageVersion(): string {

@@ -133,4 +133,33 @@ describe("extractUsage", () => {
     it("只是提到这个词不算", () => {
         expect(extractUsage("工具：validate / catalog / retire / memory / mcp", commands)).toBeNull();
     });
+
+    // 回归：2026-09-26 检查器指控 KB 文档写错，实际是**检查器**把两个 span 的选项算在了一起
+    // （`collab retire …` + `--check-enforced`，后者是 validate 的）。修检查器，不改文档。
+    it("一行两个行内代码 span：选项只算在自己那个 span 里", () => {
+        const line =
+            "| 毕业 | ✅ | `collab retire <id> --enforced <路径> --confirm --reason` + `--check-enforced` 复查目标仍在 |";
+        expect(extractUsage(line, commands)).toEqual({
+            sub: "retire",
+            known: true,
+            flags: ["--enforced", "--confirm", "--reason"],
+        });
+    });
+
+    it("命令在反引号外、选项跟着写在同一个片段里，仍能收到", () => {
+        const line = "- 跑 collab retire --candidates 看看（见 `meta/pruning-policy`）";
+        expect(extractUsage(line, commands)).toEqual({
+            sub: "retire",
+            known: true,
+            flags: ["--candidates"],
+        });
+    });
+
+    it("后续 span 里的选项不会凭空造出一次用法", () => {
+        expect(extractUsage("`collab validate` 也认 `--check-enforced`", commands)).toEqual({
+            sub: "validate",
+            known: true,
+            flags: [],
+        });
+    });
 });

@@ -58,3 +58,45 @@ describe("仓库编码卫生", () => {
     expect(statSync(path.join(ROOT, "package.json")).isFile()).toBe(true);
   });
 });
+
+/**
+ * 安装范围只有一个真相源。
+ *
+ * @remarks
+ * 2026-09-26 实测：`@^0.5` 曾**手写在四处**（kb 骨架 README、consumer wrapper、
+ * `init` 的两条下一步提示）。升到 `0.6.0` 时，四处会同时把用户钉回 0.5.x ——
+ * 而且**不报错**：`npx` 老老实实装旧版本，用户拿到的是换 `parse` 契约之前的包。
+ *
+ * 现在从 `package.json` 派生（`COLLAB_NPM_RANGE`）。这条测试防止有人再抄一遍。
+ * 只扫 `src/`、`scripts/` 的源码 —— `working-memory/` 与 `RELEASE.md` 里的历史记录
+ * 不算（它们记的是"当时是什么"，不该被追着改）。
+ */
+describe("CLI 安装范围只有一个真相源", () => {
+  const HANDWRITTEN_RANGE = /@chahuajia\/collab-cli@[\^~]?\d/;
+  const SINGLE_SOURCE = path.join("src", "infrastructure", "version.ts");
+
+  // 标题里也不写那个字面量 —— 本文件在扫描范围内，守卫会指控它自己（实测踩过）
+  it("源码里没有手写的安装范围（应派生自 package.json）", () => {
+    const offenders = walk(ROOT)
+      .map((abs) => path.relative(ROOT, abs))
+      .filter(
+        (rel) =>
+          (rel.startsWith(`src${path.sep}`) ||
+            rel.startsWith(`scripts${path.sep}`)) &&
+          rel !== SINGLE_SOURCE,
+      )
+      .filter((rel) => HANDWRITTEN_RANGE.test(readFileSync(path.join(ROOT, rel), "utf8")));
+
+    expect(
+      offenders,
+      `手写的安装范围（应改用 COLLAB_NPM_RANGE）:\n${offenders.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("守卫本身有效：认得出写死的范围，也放得过不带范围的命令行", () => {
+    // 样本必须拼接构造：本文件也在扫描范围内，写成字面量会让守卫指控它自己
+    const hardcoded = ["npx --yes @chahuajia/collab-cli", "@^0.5 validate"].join("");
+    expect(HANDWRITTEN_RANGE.test(hardcoded)).toBe(true);
+    expect(HANDWRITTEN_RANGE.test("npx --yes @chahuajia/collab-cli --version")).toBe(false);
+  });
+});

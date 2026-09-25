@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { renderIndex } from "@/application/renderIndex";
 import { EntryKindDir, EntryKindValues } from "@/domain/entry/types";
+import { COLLAB_NPM_RANGE } from "@/infrastructure/version";
 
 /**
  * 计划里要写的一个文件：目标相对路径 + 完整内容。
@@ -59,7 +60,7 @@ function metaFrontmatter(id: string, today: string, provenance: string): string 
 }
 
 /**
- * starter 的 AGENTS.md。
+ * `kb` profile 的 AGENTS.md。
  *
  * @remarks
  * 硬约束（见验收 I12）：**里面不得出现任何双链**。
@@ -140,7 +141,7 @@ function readmeMd(): string {
         "## 验收",
         "",
         "```sh",
-        "npx --yes @chahuajia/collab-cli@^0.5 validate",
+        "npx --yes @chahuajia/collab-cli@" + COLLAB_NPM_RANGE + " validate",
         "```",
         "",
         "> **本 profile（`kb`）不生成 `scripts/collab-validate.mjs`** —— wrapper 是 `consumer`",
@@ -310,7 +311,7 @@ function entryDirIndexes(): readonly InitFile[] {
 }
 
 /**
- * 生成 starter 计划。
+ * 生成 `kb` profile 的计划。
  *
  * @remarks
  * **只增不改**：已存在的路径进 `skipped`，绝不覆盖 ——
@@ -424,8 +425,10 @@ function consumerValidateScript(kb: string): string {
         "import { spawnSync } from \"node:child_process\";",
         "",
         "const KB = process.env.COLLAB_KB ?? " + JSON.stringify(kb) + ";",
-        "// 已发布到 npm（0.5.1+）；本机可用 COLLAB_CLI 覆盖。",
-        "const CLI = process.env.COLLAB_CLI ?? \"npx --yes @chahuajia/collab-cli@^0.5\";",
+        "// 已发布到 npm；本机可用 COLLAB_CLI 覆盖。",
+        "const CLI = process.env.COLLAB_CLI ?? \"npx --yes @chahuajia/collab-cli@" +
+            COLLAB_NPM_RANGE +
+            "\";",
         "",
         "if (CLI === \"\") {",
         "  console.error(\"[collab] COLLAB_CLI 被设成了空串。两种覆盖方式：\");",

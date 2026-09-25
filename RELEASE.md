@@ -4,29 +4,41 @@
 > （`yisang09 10`，1.6.1，2026-06 发布）——所以发布报的 "already 1.6.1" 不是 tag 问题，是重名。
 > 现用作用域名 **`@chahuajia/collab-cli`**（自己的作用域，冲突面为零）。
 >
-> **已发布**：`0.5.0` / `0.5.1`（`npm view @chahuajia/collab-cli versions` 可查）。**本次目标：`0.5.2`（未发布）**。
+> **已发布**：`0.5.0` / `0.5.1`（`npm view @chahuajia/collab-cli versions` 可查）。**本次目标：`0.6.0`**。
+>
+> **为什么是 0.6.0 而不是 0.5.2**：`0.5.1` 之后落了一条 **breaking**（KB 的 `ADR-0012`：
+> `parse` 的块边界从 `===== FILE:` 分隔符换成条目自描述 frontmatter，且**不再用 slug 命名落盘文件**）。
+> `parse` 契约是**对外接口**（粘贴协议），不是内部实现 —— 用 `0.5.2` 会让同一个号指两种行为。
+> 按 semver，0.x 里 breaking 走 **minor**。（KB 的 `v4.x` 是另一条线，两者不要混。）
 
 ## 一、发布（两条命令）
 
 ```bash
-npm version 0.5.2        # package.json 现在是 0.5.1
+npm version 0.6.0        # package.json 现在已经是 0.6.0（人工核对这一步可跳过）
 npm publish --access public   # 作用域包必须显式 public
 ```
 
-> 为什么还是 `0.5.x` 而不是 `1.0.0`：核心命令稳定、759 测试全绿，
+> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、804 测试全绿，
 > 但**还没有第二个真实使用者**。"1.0" 是承诺，现在给不出。
+> （`0.6.0` 同理：它说的是"接口变过、按 semver 让位"，不是"成熟了"。）
 
 ## 二、发布前已验证（2026-09-26）
 
 | 项 | 结果 |
 | :--- | :--- |
-| 测试 | **759 / 759** · 52 files（`npm run test:ci`：0 跳过） |
+| 测试 | **804 / 804** · 60 files（`pnpm run test:ci` → 804 通过 · 0 跳过；3 条在允许清单里声明） |
 | 类型 | `tsc --noEmit` 干净 |
-| Lint | `eslint src` **0 error**（5 条 magic-number warning 为既有） |
-| 打包 | `npm run build` **先清 dist** → `npm pack` → **91 files / 109 kB**（unpacked 325.4 kB） |
+| Lint | `eslint src scripts` **0 error**（8 条 magic-number warning 为既有） |
+| 打包 | `pnpm run build` **先清 dist** → `npm pack --dry-run` → **93 files / 114.4 kB**（unpacked 332.7 kB） |
 | 包内容 | `dist/**/*.test.js` **0** · `.map` **0** · `.d.ts` **0** · `bin/collab.js` 就位 · **无"已删源"的残留** |
-| 装机 | 干净目录装 tgz → `--version` 通过；`init` 两个 profile 均实测 |
+| 装机 | `--version` → **0.6.0**；`init` 两个 profile 均实测（kb 骨架 README 与 consumer wrapper 里的范围都是 `@^0.6`） |
 | 自举 | 对真实 KB 跑 `validate` → **129 entries / 0 issues** |
+| 依赖安装 | `pnpm install --frozen-lockfile` → "Lockfile is up to date"（**修锁文件前它是失败的**，见下） |
+| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 804 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
+
+> ⚠️ **本地模拟 ≠ CI 绿**。上一次 "CI 是绿的" 就是从这个误会来的：
+> `npm run check` 在本地连着几天全绿，而 GitHub 上两个 workflow 从没跑起来过（见第三节末）。
+> 真正的确认只能等下一次 push 之后看 Actions。
 
 > **为什么"先清 dist"要单独说**：`tsc` 不清 `outDir`，而 `files` 收的是整个 `dist/` ——
 > 源文件一改名/移动，**删掉的模块照样被打包发布**。实测：已发布的 `0.5.1`（97 files）里带着
@@ -34,7 +46,7 @@ npm publish --access public   # 作用域包必须显式 public
 > 五个**早已无源**的模块；本次构建清干净后包降到 91 files（复现：`npm pack @chahuajia/collab-cli@0.5.1`
 > 后看包内文件）。
 
-## 三、0.5.2 里改了什么（release note 素材）
+## 三、0.6.0 里改了什么（release note 素材）
 
 - **parse 的边界契约换了**（KB `ADR-0012`）：块边界从 `===== FILE:` 人为分隔符改成
   **条目自描述 frontmatter**（`---` … `---`），路径由 `type` + `id` **派生**。
@@ -48,7 +60,7 @@ npm publish --access public   # 作用域包必须显式 public
   replace（会新建一个）。ADR-0012 明说 slug 落盘后由人补。
 - **`init` 不再让人去跑不存在的脚本**：`scripts/collab-validate.mjs` 只有
   `consumer + --kb` 才生成；kb profile 的输出与骨架 README 改成直接给
-  `npx --yes @chahuajia/collab-cli@^0.5 validate`（原来是三处指着一个没生成的文件）。
+  `npx --yes @chahuajia/collab-cli@^<当前线> validate`（原来是三处指着一个没生成的文件）。
 - **kb 骨架立刻可用**：以前工具链**认不出**它（布局 B 的标记是目录，而空目录进不了 git），
   `validate` / `new` / `catalog` / `index` / `fix` **五条命令全报"找不到工作区"**；
   现在骨架自带六个 kind 目录的空 `_index.md`，`init → new → index → catalog → validate`
@@ -60,14 +72,29 @@ npm publish --access public   # 作用域包必须显式 public
   带 BOM 的文件曾被拒（`frontmatter not found`）、CRLF 文件会被静默改成 LF。
 - **`--help` 不再列错 `--profile`**：原来写着早已不存在的 `starter`；现在从
   `SUPPORTED_PROFILES` **派生**，并由 `help.test.ts` 钉住。
+- **安装范围不再手写**（本次新增）：`@^0.5` 曾**手写在四处**（kb 骨架 README、consumer
+  wrapper、`init` 的两条提示）。升到 0.6.0 时它们会**同时**把用户钉回 0.5.x，而且不报错 ——
+  `npx` 老老实实装旧包，用户拿到的是**换 parse 契约之前**的版本。现在统一从
+  `package.json` 派生（`COLLAB_NPM_RANGE`），并由 `repo-hygiene.test.ts` 挡住再抄一遍。
+- **两个 CI 都红着，修了**（本次新增）：`collab-cli` 与 `collaboration` 的 workflow 都写
+  `cache: npm` + `npm ci`，而两个仓**只有 `pnpm-lock.yaml`** —— `actions/setup-node`
+  在找锁文件那一步当场失败，后面的步骤全是 `skipped`。实测 GitHub API：
+  2026-09-25 的 5 次运行 `conclusion = failure`。**本地 `npm run check` 全绿并不是 CI 绿。**
+  现在两边都走 pnpm，且 CI 里把 KB checkout 过来，`COLLAB_REAL_KB` 一设，
+  三条"要真库才跑"的测试从静默 skip 变成真跑。
+  修的过程中又撞出第三处"承诺 vs 现实"：**锁文件本身也是陈旧的** —— `prettier` 早已从
+  `package.json` 删掉，`pnpm-lock.yaml` 里还留着三处引用，于是 `pnpm install --frozen-lockfile`
+  连本地都过不了。本次按删除项**外科式**同步锁文件（10 行），实测
+  `pnpm install --frozen-lockfile` → "Lockfile is up to date"。
 
-> 以上五条来自一次**最小可用性排查**（从装包到 MCP 逐条命令实跑）——
+> 以上来自一次**最小可用性排查**（从装包到 MCP 逐条命令实跑）——
 > 记录与命令见 `working-memory/tasks/minimal-usability-audit.md`。
 
 ## 四、发布后可以做的两件小事
 
 1. ~~wrapper 默认值改回来~~ **已完成**（`1f1488b`）：生成物 `scripts/collab-validate.mjs` 里
-   默认已是 `?? "npx --yes @chahuajia/collab-cli@^0.5"`。
+   默认已是 `?? "npx --yes @chahuajia/collab-cli@^<当前线>"`；**2026-09-26 起这个 `^0.x`
+   由 `package.json` 派生**（`COLLAB_NPM_RANGE`），不再手写。
 2. `collab init` 的 `--with-ci` / `--with-hook` 可以改成默认开（现在要人显式给）。
 3. ~~空 kb 骨架不能被 `validate` 自动识别~~ **已修（2026-09-26）**：kb profile 现在把六个 kind
    目录的 `_index.md` 写进计划（空目录进不了 git，所以"标记"必须是文件）。实测骨架
@@ -80,7 +107,7 @@ npm publish --access public   # 作用域包必须显式 public
 > 不是条目内容。唯一干净的对照实验测出**零差异**，读库那一路墙钟 **+55%**。
 > "读了有没有用"**至今不可判定**。
 >
-> **0.5.2 新增的边界**：`parse` 只认**带 frontmatter 的条目**（任意文件，如 `src/foo.ts`，
+> **0.6.0 新增的边界**：`parse` 只认**带 frontmatter 的条目**（任意文件，如 `src/foo.ts`，
 > 本来就不该走这条通道）。既没标记、也没外层围栏、后面又没跟下一个条目的**最后一块**，
 > 其尾随散文与正文**无法区分** —— 工具不猜，由落盘后的人与 `validate` 兜底。
 > 另：`collab init --profile kb` 曾造出一个"工具链认不出"的骨架（空目录进不了 git → 布局 B

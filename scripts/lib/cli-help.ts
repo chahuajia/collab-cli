@@ -114,9 +114,43 @@ export function parseCliHelp(help: string): CliHelp {
  */
 export function extractUsage(line: string, commands: ReadonlySet<string>): Usage | null {
     const stripped = line.replace(/^\s*codex\s+mcp\s+add\s+\S+\s+--\s*/, "");
+    // **作用域 = 行内代码 span**（没有反引号时才是整行）。
+    //
+    // 起因（2026-09-26 实测误报）：KB 里常见一行两个 span 的写法 ——
+    // `` `collab retire <id> --enforced … --reason "<分类>: <证据>"` + `--check-enforced` ``，
+    // 后一个 span 的 `--check-enforced` 是 **validate** 的选项，按整行收集却算到了 `retire` 头上。
+    // 检查器当时指控的是**文档**，而文档是对的 —— 所以修的是检查器。
+    //
+    // 代价（写清楚）：同一行里出现两次 `collab …` 时，仍只看**第一处**；
+    // 命令在反引号外、而选项被反引号隔在后面时，那个选项不再被收集。
+    for (const scope of usageScopes(stripped)) {
+        const usage = usageIn(scope, commands);
+        if (usage !== null) return usage;
+    }
+    return null;
+}
+
+/**
+ * 把一行切成**作用域**：反引号 span 各自成段，span 之外的文字也各成段，保持位置顺序。
+ */
+function usageScopes(line: string): string[] {
+    const scopes: string[] = [];
+    let cursor = 0;
+    for (const m of line.matchAll(/`([^`]*)`/g)) {
+        const start = m.index ?? cursor;
+        if (start > cursor) scopes.push(line.slice(cursor, start));
+        scopes.push(m[1] ?? "");
+        cursor = start + m[0].length;
+    }
+    if (cursor < line.length) scopes.push(line.slice(cursor));
+    return scopes;
+}
+
+/** 在**一个作用域**里抽一次 `collab …` 用法。 */
+function usageIn(scope: string, commands: ReadonlySet<string>): Usage | null {
     // 注意 `(?![\w-])`：`collab-cli`（包名/仓库名）不能被当成一次调用 ——
     // 散文里它后面常跟着 `工具：validate / catalog …`，会造出假阳性。
-    const m = /(?:\$COLLAB\b|bin\/collab\.js|(?<![\w/-])collab(?![\w-]))(.*)$/.exec(stripped);
+    const m = /(?:\$COLLAB\b|bin\/collab\.js|(?<![\w/-])collab(?![\w-]))(.*)$/.exec(scope);
     if (m?.[1] === undefined) return null;
 
     // 先去掉行内代码的反引号/前后标点 —— 否则 `` `collab validate` `` 切出来的

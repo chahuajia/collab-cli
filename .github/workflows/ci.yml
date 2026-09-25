@@ -1,4 +1,17 @@
-# collab-cli 真 CI —— typecheck + lint + test（经 npm run check）
+# collab-cli 真 CI —— typecheck + lint + test（经 `pnpm run check`）
+#
+# 2026-09-26 修：这段曾写 `cache: npm` + `npm ci`，而本仓**只有 pnpm-lock.yaml**
+# （没有 package-lock.json）——于是 `actions/setup-node` 在"找依赖锁文件"这一步当场失败，
+# 后面每一步都是 skipped。实测 GitHub API：`conclusion = failure`，5 次全红，
+# 而本地 `npm run check` 一直是绿的 —— **本地绿 + CI 红，是两条独立的线**。
+#
+# 现在：pnpm 走 action-setup，装依赖用 `pnpm install --frozen-lockfile`。
+#
+# 为什么不用 `packageManager` 字段自动推导 pnpm 版本（单一真相源）：本机 pnpm 12
+# 一加那个字段，就会把 `pnpm-lock.yaml` 改写成**双 YAML 文档**（多一段
+# `packageManagerDependencies` + `@pnpm/exe` 平台包）。那是本机 pnpm 构建的行为，
+# 上游是否接受**没验过** —— 不拿没验过的产物去赌 CI。故此处显式钉 major。
+# ⚠️ 同一行也写在 collaboration 仓的 `.github/workflows/validate.yml` 里，改要同步。
 name: CI
 
 on:
@@ -12,13 +25,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # 真库 checkout 到工作区里：三条"要 KB 才能验"的测试（模板 / 文档↔--help / MCP）
+      # 就不再是静默 skip，而是真的跑。见 .vitest-skip-allowlist.json 的删除条件。
+      - uses: actions/checkout@v4
+        with:
+          repository: chahuajia/collaboration
+          path: .collab-kb
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "12"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run check
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run check
+        env:
+          COLLAB_REAL_KB: ${{ github.workspace }}/.collab-kb
+
       # 跳过 ≠ 通过。任何 numSkipped 都要在 .vitest-skip-allowlist.json 里声明。
-      # 这里刻意**不** checkout 真库：拿不到它就显式跳过、并因此可审计，
-      # 而不是让一个静默的 skip 冒充全绿。
-      - run: npm run test:ci
+      # 真库已在上面 checkout 过：所以这一跑**没有 skip**，allowlist 只是兜底。
+      - run: pnpm run test:ci
+        env:
+          COLLAB_REAL_KB: ${{ github.workspace }}/.collab-kb

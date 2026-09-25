@@ -4,17 +4,17 @@
     {
       "file": "src/mcp/__tests__/tools.test.ts",
       "name": "真库",
-      "reason": "依赖真库路径（COLLAB_REAL_KB 或本机默认位置）。在拿不到该仓库的机器/CI 上只能跳过。删除条件：真库能作为 submodule 或 CI checkout 步骤提供。"
+      "reason": "依赖真库路径（COLLAB_REAL_KB 或本机默认位置）。本机没有该仓时只能跳过。2026-09-26 起 CI 已 checkout 真库并设 COLLAB_REAL_KB（不再是静默 skip）；这一条只剩本机兜底。"
     },
     {
       "file": "scripts/__tests__/kb-templates.test.ts",
       "name": "真库",
-      "reason": "同上：要读 KB 的 templates/ 才能验“抄出来能过 validate”。删除条件：KB 作为 submodule 或 CI checkout 步骤提供。"
+      "reason": "同上：要读 KB 的 templates/ 才能验“抄出来能过 validate”。CI 已接线（COLLAB_REAL_KB），本机无 KB 时兜底。"
     },
     {
       "file": "scripts/__tests__/kb-command-docs.test.ts",
       "name": "真库",
-      "reason": "同上：要读 KB 的文档才能比对「文档 ↔ --help」。删除条件：KB 作为 submodule 或 CI checkout 步骤提供。"
+      "reason": "同上：要读 KB 的文档才能比对「文档 ↔ --help」。CI 已接线（COLLAB_REAL_KB），本机无 KB 时兜底。"
     }
   ]
 }

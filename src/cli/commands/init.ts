@@ -9,6 +9,7 @@ import {
 } from "@/application/InitUseCase";
 import { ValidateUseCase } from "@/application/ValidateUseCase";
 import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { COLLAB_NPM_RANGE } from "@/infrastructure/version";
 
 /**
  * 支持的 profile。
@@ -121,7 +122,9 @@ export async function cmdInit(args: string[]): Promise<void> {
     (values["with-hook"] === true || values["with-ci"] === true)
   ) {
     console.log(
-      "  ! 跳过 CI/hook 接线 —— 门禁要有校验目标才成立：kb profile 不带门禁脚本（请在 CI 里直接调 npx --yes @chahuajia/collab-cli@^0.5 validate --dir .）；consumer 需要 --kb。",
+      "  ! 跳过 CI/hook 接线 —— 门禁要有校验目标才成立：kb profile 不带门禁脚本（请在 CI 里直接调 npx --yes @chahuajia/collab-cli@" +
+        COLLAB_NPM_RANGE +
+        " validate --dir .）；consumer 需要 --kb。",
     );
   }
 
@@ -200,7 +203,9 @@ export async function cmdInit(args: string[]): Promise<void> {
   console.log(gateReady
     ? "    2. node scripts/collab-validate.mjs（或在 CI / pre-push 里接它）"
     : profile === "kb"
-      ? "    2. 门禁：CI / pre-push 里直接调 `npx --yes @chahuajia/collab-cli@^0.5 validate`（kb profile 不生成 wrapper 脚本）"
+      ? "    2. 门禁：CI / pre-push 里直接调 `npx --yes @chahuajia/collab-cli@" +
+        COLLAB_NPM_RANGE +
+        " validate`（kb profile 不生成 wrapper 脚本）"
       : "    2. 用 `--kb <全局 KB 路径>` 重跑才会生成 `scripts/collab-validate.mjs` —— 没有校验目标时门禁不接线");
   console.log(
     "    3. 第一条新条目必须能说出「不读它，模型会照着本地哪个模式写错」",
