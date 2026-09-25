@@ -285,7 +285,15 @@ function validateScript(): string {
         "//   COLLAB_CLI=\"node /path/to/collab-cli/dist/cli/index.js\" node scripts/collab-validate.mjs",
         "import { spawnSync } from \"node:child_process\";",
         "",
-        "const CLI = process.env.COLLAB_CLI ?? \"npx --yes collab-cli@^1\";",
+        "// 默认留空 —— **不在未发布时假装能跑**（撒谎比报错贵）。",
+        "// 发布到 npm 之后，把这里改成：process.env.COLLAB_CLI ?? \"npx --yes collab-cli@^1\"",
+        "const CLI = process.env.COLLAB_CLI ?? \"\";",
+        "if (CLI === \"\") {",
+        "  console.error(\"[collab] 未指定 CLI。目前**尚未发布到 npm**，可走的路只有两条：\");",
+        "  console.error(\"  1) 本机已装：npm i -g collab-cli  然后 COLLAB_CLI=collab\");",
+        "  console.error(\"  2) 指向本地构建：COLLAB_CLI=\\\"node <path>/collab-cli/dist/cli/index.js\\\"\");",
+        "  process.exit(1);",
+        "}",
         "",
         "const result = spawnSync(`${CLI} validate`, {",
         "  shell: true,",
@@ -293,10 +301,7 @@ function validateScript(): string {
         "});",
         "",
         "if (result.error) {",
-        "  console.error(\"[collab] 找不到 CLI。三种装法：\");",
-        "  console.error(\"  1) npx --yes collab-cli@^1 validate   （最省事，需要能连 npm）\");",
-        "  console.error(\"  2) npm i -D collab-cli && npx collab validate\");",
-        "  console.error(\"  3) COLLAB_CLI=\\\"node <path>/dist/cli/index.js\\\" 覆盖本文件里的 CLI 变量\");",
+        "  console.error(\"[collab] 调用失败：\" + result.error.message);",
         "  process.exit(1);",
         "}",
         "",
@@ -325,9 +330,8 @@ export function planInitFiles(today: string): readonly InitFile[] {
  */
 export function buildInitPlan(opts: BuildInitPlanOptions): InitPlan {
   const { collabDir, today } = opts;
-  if (!fs.existsSync(collabDir)) {
-    throw new Error(`collabDir 不存在: ${collabDir}`);
-  }
+  // 目录不存在是合法输入（--dir nested/kb，见验收 I11）：
+  // fs.existsSync 对不存在的路径返回 false，于是全部文件都算「新建」。
   const files: InitFile[] = [];
   const skipped: string[] = [];
   for (const f of planInitFiles(today)) {
@@ -343,4 +347,139 @@ export function writeInitPlan(collabDir: string, plan: InitPlan): void {
         fs.mkdirSync(path.dirname(full), { recursive: true });
         fs.writeFileSync(full, f.content, { encoding: "utf8" });
     }
+}
+
+// ─────────────────── consumer profile（2026-09-25） ───────────────────
+//
+// 为什么有它：`collaboration` 是**全局唯一最上层**的 KB。项目侧不该各造一份 KB ——
+// 那是把"两份真相源"放大到每个项目一份，账本从空开始 → 知识不往任何地方累积。
+// 而两个账本的全部价值恰恰来自**累积**（拦截攒起来才知道哪条承重）。
+//
+// fork ≠ init：fork 是"继承 + 有谱系"，才有水平基因转移 / 主干吸收；
+// init 造的是无谱系的孤儿 KB，两边从零开始、永远无法杂交。
+
+/** consumer 的 AGENTS.md：入口只指路，第一步是新鲜度自检。 */
+function consumerAgentsMd(kb: string | null): string {
+    const kbLine = kb ?? "<待定：把全局 KB 的绝对路径写在这里>";
+    return lines([
+        "# AGENTS.md",
+        "",
+        "> 本文件是 **AI 进入本仓的入口**。人类读者看 `README.md`。",
+        "> 原则：**入口指向，不复制内容。**",
+        "",
+        "## 长期知识在哪",
+        "",
+        "本仓**不维护**知识库。长期知识在**全局唯一**的 KB：",
+        "",
+        "```",
+        kbLine,
+        "```",
+        "",
+        "项目自己的 `working-memory/` 只放**进度**（高频改、允许错、不进 KB）。",
+        "",
+        "## 协作规则（摘要）",
+        "",
+        "- 回答从 H2 开始；不客套、不堆砌。",
+        "- **先给规格再写实现**：规格 > 测试 > 类型 > 实现。",
+        "- 拿不准就去全局 KB 的症状表查；查不到就**报「找不到」**，别凭空发明规范。",
+        "- **AI 不 commit、不 push**：改动留在工作区，由人确认。",
+        "",
+        "## 撞墙了怎么办",
+        "",
+        "先记进 `working-memory/interceptions-candidates.md`（一行：拦住了什么 + 证据）。",
+        "复盘通过后再回填全局 KB 的拦截账本**一行** —— 证据正文留在本仓。",
+        "",
+    ]);
+}
+
+/** consumer 的 WM 骨架。 */
+function consumerMemoryFiles(today: string): readonly InitFile[] {
+    const readme = lines([
+        "# Working Memory —— <项目名>",
+        "",
+        `**更新**：${today} 00:00`,
+        "",
+        "> 跨对话的工作状态。**AI 主动维护，用户只需纠正。**",
+        "> 规则：**只写在做什么、为什么。不写可计算的事实**（计数 / HEAD / 文件数一律现算）。",
+        "",
+        "## 活跃任务",
+        "",
+        "| 任务 | 状态 | 文件 |",
+        "| :--- | :--- | :--- |",
+        "",
+    ]);
+    const candidates = lines([
+        "# 拦截候选（项目侧）",
+        "",
+        "> L2 撞墙先记这里；复盘通过后再回填全局 KB 的拦截账本**一行**。",
+        "> 证据正文留本仓 —— 见全局 KB 的 patterns/project-evidence-vs-kb-ledger。",
+        "",
+        "| 日期 | 条目（候选） | 拦住了什么 | 证据路径 | 状态 |",
+        "| :--- | :--- | :--- | :--- | :--- |",
+        "",
+    ]);
+    return [
+        { path: "working-memory/README.md", content: readme },
+        { path: "working-memory/interceptions-candidates.md", content: candidates },
+    ];
+}
+
+/** consumer 的 wrapper：对**全局 KB** 跑校验。 */
+function consumerValidateScript(kb: string): string {
+    return lines([
+        "#!/usr/bin/env node",
+        "// 唯一的 CLI 调用点 —— CI 与 pre-push 都只调它。",
+        "//",
+        "// 校验对象是**全局 KB**（下面的 KB 常量），不是本仓 —— 本仓没有知识库。",
+        "// CLI 来源只出现在一处；本机可用 COLLAB_CLI 覆盖：",
+        "//   COLLAB_CLI=\"node /path/to/collab-cli/dist/cli/index.js\" node scripts/collab-validate.mjs",
+        "import { spawnSync } from \"node:child_process\";",
+        "",
+        "const KB = process.env.COLLAB_KB ?? " + JSON.stringify(kb) + ";",
+        "const CLI = process.env.COLLAB_CLI ?? \"\";",
+        "",
+        "if (CLI === \"\") {",
+        "  console.error(\"[collab] 未指定 CLI。目前**尚未发布到 npm**，可走的路只有两条：\");",
+        "  console.error(\"  1) 本机已装：npm i -g collab-cli  然后 COLLAB_CLI=collab\");",
+        "  console.error(\"  2) 指向本地构建：COLLAB_CLI=\\\"node <path>/collab-cli/dist/cli/index.js\\\"\");",
+        "  process.exit(1);",
+        "}",
+        "",
+        "const result = spawnSync(`${CLI} --dir ${KB} validate`, { shell: true, stdio: \"inherit\" });",
+        "if (result.error) {",
+        "  console.error(\"[collab] 调用失败：\" + result.error.message);",
+        "  process.exit(1);",
+        "}",
+        "process.exit(result.status ?? 1);",
+        "",
+    ]);
+}
+
+/**
+ * consumer profile 的计划：项目侧接入全局 KB。
+ *
+ * @param kb - 全局 KB 路径；为 null 时**不生成 wrapper**（没有目标可校验），
+ *             调用方必须因此**出声**，不能静默跳过。
+ */
+export function buildConsumerPlan(opts: {
+    readonly collabDir: string;
+    readonly today: string;
+    readonly kb: string | null;
+}): InitPlan {
+    const { collabDir, today, kb } = opts;
+    const all: InitFile[] = [
+        { path: "AGENTS.md", content: consumerAgentsMd(kb) },
+        ...consumerMemoryFiles(today),
+    ];
+    if (kb !== null) {
+        all.push({ path: "scripts/collab-validate.mjs", content: consumerValidateScript(kb) });
+    }
+
+    const files: InitFile[] = [];
+    const skipped: string[] = [];
+    for (const f of all) {
+        if (fs.existsSync(path.join(collabDir, f.path))) skipped.push(f.path);
+        else files.push(f);
+    }
+    return { files, skipped };
 }

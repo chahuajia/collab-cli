@@ -1,13 +1,31 @@
 {
   "name": "collab-cli",
   "version": "0.4.0",
+  "description": "校验、路由与修剪一个会收缩的决策知识库（validate / catalog / apply / retire / mcp）",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chahuajia/collab-cli.git"
+  },
+  "keywords": [
+    "knowledge-base",
+    "ai-agents",
+    "agents-md",
+    "documentation-lint",
+    "markdown"
+  ],
   "bin": {
     "collab": "bin/collab.js"
   },
   "files": [
     "bin/",
     "dist/",
+    "!dist/**/__tests__/",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.map",
+    "!dist/**/*.d.ts",
     "README.md"
   ],
   "scripts": {
@@ -20,7 +38,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "prepare": "husky",
+    "prepare": "husky || true",
+    "prepublishOnly": "npm run build",
     "lint": "eslint src",
     "script:add-author": "node scripts/add-author.mjs",
     "script:add-dates": "node scripts/add-dates.mjs",

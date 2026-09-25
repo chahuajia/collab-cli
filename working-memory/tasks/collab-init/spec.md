@@ -56,7 +56,28 @@ collab init [--dir <path>] [--profile starter] [--with-ci] [--with-hook] [--dry-
 | `--dry-run` | 只打印计划 |
 | `--json` | 机器可读输出（计划 + 结果） |
 
-## 生成清单（profile=starter）
+## 2026-09-25 修订：默认 profile 改为 `consumer`（全局唯一 KB）
+
+**起因**：现状的 `init` 给**每个项目**造一份 KB（各自的账本 / pruning / catalog），
+与"`collaboration` 是全局唯一最上层"的意图相反 —— 那是把"两份真相源"放大到每个项目一份。
+
+**证据**：`evolutionary` 已经是正确形态 —— 全局 KB 只读 + 项目自己的 `working-memory/` +
+候选记在项目侧、W4 后**回填全局 KB 一行**。是 `init` 推翻了它，不是它需要 `init`。
+
+**关键区分：fork ≠ init。** fork 是"继承 + 有谱系"（才有水平基因转移 / 主干吸收）；
+`init` 造的是**无谱系的孤儿 KB**，两边从零开始，永远无法杂交。
+
+| profile | 生成什么 | 何时用 |
+| :--- | :--- | :--- |
+| **`consumer`（新默认）** | `AGENTS.md`（指向全局 KB + 会话开始步骤）、`working-memory/README.md`、`interceptions-candidates.md`、`scripts/collab-validate.mjs`（**对 `--kb` 指向的全局 KB** 跑校验） | 99%：接入一个新项目 |
+| `kb`（原 `starter`） | 下面「生成清单」那 6 个文件 | 罕见：真的要新建一个独立 KB / 做 fork 模板 |
+
+新增选项：`--kb <path>` —— 全局 KB 的路径（consumer 必填；写入生成的 `AGENTS.md` 与 wrapper）。
+
+**连带**：`--with-ci` / `--with-hook` 在 **npm 发布之前**生成出来就是坏的（默认值走不通），
+所以它们仍然默认关；且 wrapper 的默认值改为**显式留空 + 打印两条当前真能走的路**，
+不在没发布时假装能跑。
+## 生成清单（profile=kb）
 
 | 路径 | 内容 | 依据 |
 | :--- | :--- | :--- |
