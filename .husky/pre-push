@@ -1,7 +1,10 @@
 npm run typecheck
 
-# 工作记忆新鲜度 —— 过期的记忆比没有更坏，因为它长得像"查过了"。
-# 接在这里而不是 CI：默认路径是各人本机布局（可用 COLLAB_CLI_DIR / COLLAB_KB_DIR /
-# EVOLUTIONARY_DIR 覆盖），且 evolutionary 是本地仓库。假装 CI 覆盖了它，
-# 就是 patterns/policy-without-mechanism 描述的那种政策。
-node working-memory/check-freshness.mjs
+# 工作记忆新鲜度检查**已从这里移走**（2026-09-25）。
+#
+# 原因：新鲜度是"**读者进场时**"的属性，不是"**写者推送时**"的属性。
+# 接在 pre-push 上，拦的是写者，而受害的是下一个读者 —— 而且三仓都在活动时，
+# 签完两分钟就会被下一次跨仓提交判过期，红灯变成噪音，最后只能靠顺手乱签压下去。
+#
+# 现在接在**会话开始**：见仓库根 AGENTS.md 的第一步。
+# 脚本本身不变：`node working-memory/check-freshness.mjs`

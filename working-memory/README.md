@@ -52,6 +52,23 @@ node working-memory/check-freshness.mjs
 
 ## 陷阱
 
-AI 不 push；merge `version/v0` / topic 须确认。
-`.husky/pre-push` 会跑 `check-freshness` —— 产品代码一动、这里没跟着改就会被拦下。
-**这是设计，不是故障。**
+- **AI 不 push**；merge `version/v0` / topic 须用户明确确认。
+- **先改 git，再刷新登记** —— 勿空登记。
+- **双轴勿混**：`version × phase` 分开 commit / 分记 WM，勿互相顶替。
+- **计数 / HEAD / 文件数一律现算**（`git log`、`collab validate`），不抄进任何文档 —— 手抄必然腐烂。
+- **新鲜度自检已不在 pre-push**（2026-09-25 移走）：现在接在**会话开始**，见仓库根 `AGENTS.md`。
+  挂在 pre-push 上拦的是写者，受害的却是下一个读者；三仓都在活动时它会每两分钟红一次，
+  红灯变噪音 → 只能靠顺手乱签压下去。**红灯的响应协议见根 AGENTS.md。**
+
+
+## 仓职责（跨仓分工）
+
+> 从 `working-memory/AGENTS.md` 并入（2026-09-25）。那份文件已降级为指针 ——
+> **本地状态只在本文件**，两份副本必然漂移。
+
+| 仓 | 角色 | 不该塞什么 |
+| :--- | :--- | :--- |
+| **collab-cli** | 工具链 / 门禁 / MCP / validate | 业务领域实现 |
+| **evolutionary** | 业务实现 + 项目级 WM（**真相仓**） | CLI 协议细节 |
+| **collaboration** | 协作知识库本体（长期知识） | 项目轮次日记 |
+| **aggregate 根 / shared 根** | 跨仓指针 | 当第二工作区 |
