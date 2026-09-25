@@ -86,6 +86,8 @@ export const IssueCodeValues = {
     // ─────────────────────────────────────────────
     // collab parse —— A17 文本协议的切分问题
     // ─────────────────────────────────────────────
+    /** 一个块被跳过（不是条目 / 边界不一致 / 重复）—— **宽容 ≠ 静默**（ADR-0012） */
+    ParseSkippedBlock: 'PARSE_SKIPPED_BLOCK',
     /** 文本结构不合法（块外有内容 / 未闭合 / 空输入） */
     ParseInvalid: 'PARSE_INVALID',
     /** 块内容为空或纯空白 */

@@ -21,6 +21,23 @@ export const ParseIssues = {
     });
   },
 
+  /**
+   * 一个块被跳过 —— **宽容 ≠ 静默**（ADR-0012）。
+   *
+   * @remarks
+   * 它是 **Warning 级**：跳过不阻断整批，但**必须报出来**。
+   * 判据据此从 `issues.length > 0` 改为 `issues.some(isBlocking)` ——
+   * 否则一旦开始宽容，`parse` 会因为"有 warning"而整体失败，等于没宽容。
+   */
+  skipped(reason: string, snippet: string): Issue {
+    return Issue.of({
+      severity: SeverityValues.Warning,
+      code: IssueCodeValues.ParseSkippedBlock,
+      message: `skipped a block: ${reason}`,
+      suggestion: `first line: ${snippet}`,
+    });
+  },
+
   /** 块内容为空或纯空白 —— 多半是粘贴截断。 */
   emptyBlock(path: string): Issue {
     return Issue.of({
