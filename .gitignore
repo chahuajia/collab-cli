@@ -38,3 +38,7 @@ Thumbs.db
 src/**/*.js
 src/**/*.js.map
 src/**/*.d.ts
+
+# 生成物：parse 的默认输出（在仓库根跑时会出现）
+bundle.json
+*.tgz
