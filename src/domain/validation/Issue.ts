@@ -400,6 +400,26 @@ export class Issue {
     }
 
     /**
+     * `enforced` 的目标**没能被检查**（仓名不认识 / 那个仓在本机不可达）。
+     *
+     * @remarks
+     * **WARNING 而不是 ERROR**，理由与 `enforcedTargetMissing` 相反：
+     * 这一支既可能是"你换了机器"（正常），也可能是"仓名打错了"（缺陷），
+     * 工具分不出来。报成 error 会在拿不到业务仓的机器上全红，于是这条检查被关掉 ——
+     * 那正是它的反面。但**必须出声**：静默通过会让"没验成"冒充"验过了"。
+     */
+    static enforcedTargetUnchecked(path: string, value: string, reason: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Warning,
+            code: IssueCodeValues.EnforcedUnchecked,
+            message: `enforced target could not be checked: "${value}" — ${reason}; this run cannot tell whether the graduation evidence is still there`,
+            path,
+            suggestion:
+                'point the repo at its location (COLLAB_CLI_DIR / COLLAB_KB_DIR / EVOLUTIONARY_DIR, or COLLAB_PROJECTS_DIR for all three); a misspelled repo name also lands here',
+        });
+    }
+
+    /**
      * 门槛生效日之后创建的条目缺 `falsifier`。
      *
      * @remarks

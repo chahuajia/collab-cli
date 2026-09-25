@@ -85,7 +85,11 @@ function withEnforcedTargets(
     if (value === null) return [];
 
     const r = resolveEnforced(value);
-    if (r.kind === "unresolvable" || r.exists) return [];
+    // 无法判定 → **出声**（warning）。静默 return 会让"没验成"冒充"验过了"。
+    if (r.kind === "unresolvable") {
+      return [Issue.enforcedTargetUnchecked(entry.path, value, r.reason)];
+    }
+    if (r.exists) return [];
 
     return [Issue.enforcedTargetMissing(entry.path, value, r.abs)];
   });

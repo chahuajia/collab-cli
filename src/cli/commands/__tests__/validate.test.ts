@@ -361,7 +361,7 @@ describe("collab validate", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("F4: 仓名不认识 → 不报（无法判定 ≠ 不存在）", async () => {
+    it("F4: 仓不可达 → 不算 error（无法判定 ≠ 不存在），但**必须出声**", async () => {
       // 把 EVOLUTIONARY_DIR 指到不存在的路径 → 不可达 → 无法判定
       envOverrides = {
         ...envOverrides,
@@ -372,6 +372,20 @@ describe("collab validate", () => {
       const result = await runCli(["validate", "--check-enforced"], testRoot);
       // 把"无法判定"当"不存在"会让拿不到仓的机器全红 → 检查被关掉 → 真漂移也没人看
       expect(result.exitCode).toBe(0);
+      // 但静默通过会让"没验成"冒充"验过了" —— 所以补了 WARNING（2026-09-26）
+      const out = result.stdout + result.stderr;
+      expect(out).toContain("ENFORCED_UNCHECKED");
+      expect(out).toContain("1 warning");
+    });
+
+    it("F5: 仓名不在名单里（打错字）→ 出声，且 message 说清是哪种无法判定", async () => {
+      await writeGraduated("evolutonary:src/X.java");
+
+      const result = await runCli(["validate", "--check-enforced"], testRoot);
+      expect(result.exitCode).toBe(0);
+      const out = result.stdout + result.stderr;
+      expect(out).toContain("ENFORCED_UNCHECKED");
+      expect(out).toContain("不认识仓名");
     });
   });
 });

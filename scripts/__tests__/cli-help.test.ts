@@ -122,6 +122,15 @@ describe("extractUsage", () => {
         });
     });
 
+    it("并列写法（--a|--b）拆成两个选项 —— 不拆就一个都看不见", () => {
+        const usage = extractUsage(
+            '| `collab retire <id> --dormant|--enforced <path> --reason "<分类>: <证据>"` | 退役 |',
+            commands,
+        );
+        expect(usage?.sub).toBe("retire");
+        expect(usage?.flags).toEqual(["--dormant", "--enforced", "--reason"]);
+    });
+
     it("赋值行不是调用", () => {
         expect(extractUsage("COLLAB=<collab-cli>/dist/cli/index.js", commands)).toBeNull();
     });

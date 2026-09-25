@@ -1,6 +1,11 @@
 # 依赖
 node_modules/
 .pnpm-store/
+# 本仓用 pnpm（`pnpm-lock.yaml` 是唯一锁文件）。npm 的锁文件一旦混进来，
+# 就会出现"CI 装的和本地装的不一样"——**实测过一次**：两个 CI 都写 `npm ci`，
+# 而仓里只有 pnpm 锁，于是 setup-node 当场失败、后面全是 skipped（2026-09-26）。
+package-lock.json
+npm-shrinkwrap.json
 
 # 构建产物
 dist/

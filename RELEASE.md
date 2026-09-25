@@ -18,7 +18,7 @@ npm version 0.6.0        # package.json 现在已经是 0.6.0（人工核对这�
 npm publish --access public   # 作用域包必须显式 public
 ```
 
-> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、822 测试全绿，
+> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、826 测试全绿，
 > 但**还没有第二个真实使用者**。"1.0" 是承诺，现在给不出。
 > （`0.6.0` 同理：它说的是"接口变过、按 semver 让位"，不是"成熟了"。）
 
@@ -26,7 +26,7 @@ npm publish --access public   # 作用域包必须显式 public
 
 | 项 | 结果 |
 | :--- | :--- |
-| 测试 | **822 / 822** · 62 files（`pnpm run test:ci` → 822 通过 · 0 跳过；3 条在允许清单里声明） |
+| 测试 | **826 / 826** · 63 files（`pnpm run test:ci` → 826 通过 · 0 跳过；3 条在允许清单里声明） |
 | 类型 | `tsc --noEmit` 干净 |
 | Lint | `eslint src scripts` **0 error**（8 条 magic-number warning 为既有） |
 | 打包 | `pnpm run build` **先清 dist** → `npm pack --dry-run` → **93 files / 114.4 kB**（unpacked 332.7 kB） |
@@ -34,7 +34,7 @@ npm publish --access public   # 作用域包必须显式 public
 | 装机 | `--version` → **0.6.0**；`init` 两个 profile 均实测（kb 骨架 README 与 consumer wrapper 里的范围都是 `@^0.6`） |
 | 自举 | 对真实 KB 跑 `validate` → **129 entries / 0 issues** |
 | 依赖安装 | `pnpm install --frozen-lockfile` → "Lockfile is up to date"（**修锁文件前它是失败的**，见下） |
-| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 822 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
+| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 826 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
 | 装机自检 | `npm run memory`（会话开始那步）能跑：`exit 1` + 逐仓列出未对账的提交（**这是当前正确状态**，签名归人） |
 
 > ⚠️ **本地模拟 ≠ CI 绿**。上一次 "CI 是绿的" 就是从这个误会来的：
@@ -96,6 +96,23 @@ npm publish --access public   # 作用域包必须显式 public
 - **`check-freshness` 从 `working-memory/` 搬进 `scripts/`**（本次新增）：那是数据目录，
   而且 `.mjs` 在 `scripts/` 之外会同时逃出 `tsc` / `eslint` / `vitest`。现在入口是
   `npm run memory` / `memory:draft` / `memory:attest`（会话开始那一步）。
+- **`validate --check-enforced` 不再"假装查过"**（本次新增）：目标**无法判定**时
+  （仓名不认识 / 那个仓在本机不可达）原先静默放过 —— 于是"查过了没问题"和
+  "根本没查成"在输出上一样。现在报 **`ENFORCED_UNCHECKED`（WARNING）**：
+  退出码仍是 0（"无法判定 ≠ 不存在"是既有裁决，报 error 会让拿不到业务仓的机器全红、
+  然后整条检查被关掉），但**你必须看得见**。
+- **本仓文档也被 `--help` 检查了**（本次新增）：原先只有 KB 的文档有这条检查，
+  本仓 `README.md`（**随 npm 包发布**）漏了 `retire --enforced` 必填的 `--confirm`，
+  还指着一个已改名的文件（`assert-no-skips.mjs`）。现在
+  `scripts/__tests__/cli-docs.test.ts` 扫 `README.md` / `AGENTS.md` / `RELEASE.md` /
+  `scripts/README.md`，除"选项存在且用对命令"外多一条**成对规则**
+  （写了 `--enforced` 就必须写 `--confirm`）；顺带修了检查器的盲区：
+  `--dormant|--enforced` 这种并列写法原先**一个都不被识别**。
+- **发布卫生**（本次新增）：补 `LICENSE`（MIT —— `package.json` 一直写着 MIT，
+  而仓库里没有那个文件）；`.gitignore` 加上 `package-lock.json` / `npm-shrinkwrap.json`
+  （两个锁文件就是"CI 装的和本地装的不一样"，本轮已经踩过一次）；
+  `working-memory/reach-check.cjs` 搬进 `scripts/one-off/` 并把两个绝对路径改成必填参数
+  （标本可以失效，但不该把某台机器的盘符带进公开仓）。
 
 > 以上来自一次**最小可用性排查**（从装包到 MCP 逐条命令实跑）——
 > 记录与命令见 `working-memory/tasks/minimal-usability-audit.md`。

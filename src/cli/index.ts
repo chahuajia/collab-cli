@@ -83,7 +83,7 @@ Command options (only where listed):
   --max-candidate-age <days>   memory — 候选池"挂了多久未 harvest"的阈值，默认 14
   --json                       validate / apply / init — machine-readable (shapes differ)
   --check-enforced             validate — 复查已毕业条目的 enforced 目标是否还在
-                               （要读跨仓文件系统，故非默认；无法判定不算错）
+                               （要读跨仓文件系统，故非默认；无法判定不算错，但会报 WARNING）
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes
   -m, --message <message>      commit — commit message

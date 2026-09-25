@@ -77,6 +77,17 @@ export const IssueCodeValues = {
     /** `enforced` 指向的产物**不存在** —— 毕业的依据没了（只在 `--check-enforced` 下报） */
     EnforcedTargetMissing: 'ENFORCED_TARGET_MISSING',
 
+    /**
+     * `enforced` 的目标**没能被检查** —— 仓名不认识，或那个仓在本机不可达。
+     *
+     * @remarks
+     * **不是错，但必须出声。** 原先这一支是静默 `return []`：于是
+     * "验过了，没问题"和"根本没验成"在输出上长得一模一样 ——
+     * 正是本仓删过两次的假绿灯形态。判据沿用三态：存在 / 不存在 / **无法判定**，
+     * 只有"不存在"是 error（假阳性会让这条检查被无视）。
+     */
+    EnforcedUnchecked: 'ENFORCED_UNCHECKED',
+
     /** 路由面（症状表 / 域索引）指向一条已毕业的条目，却没有标注 */
     RoutingToGraduated: 'ROUTING_TO_GRADUATED',
 

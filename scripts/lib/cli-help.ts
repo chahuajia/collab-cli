@@ -160,9 +160,12 @@ function usageIn(scope: string, commands: ReadonlySet<string>): Usage | null {
         .split(/\s+/)
         .map((t) => t.replace(/^[^\w<>-]+/, "").replace(/[^\w<>-]+$/, ""))
         .filter((t) => t.length > 0);
-    const flags = tokens.filter(
-        (t) => /^--[A-Za-z][\w-]*$/.test(t) || /^-[A-Za-z]$/.test(t),
-    );
+    // 选项的**并列写法**（`--dormant|--enforced <path>`）要拆开算两个 ——
+    // 文档里这种写法很常见（本仓 README 就写过），不拆的话那两个选项**一个都不被看见**：
+    // 于是"漏了必填的 `--confirm`"这种缺陷两条检查都抓不到（2026-09-26 实测）。
+    const flags = tokens
+        .flatMap((t) => t.split("|"))
+        .filter((t) => /^--[A-Za-z][\w-]*$/.test(t) || /^-[A-Za-z]$/.test(t));
 
     const knownSub = tokens.find((t) => commands.has(t));
     if (knownSub !== undefined) return { sub: knownSub, known: true, flags };

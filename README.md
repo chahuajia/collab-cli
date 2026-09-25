@@ -2,16 +2,22 @@
 
 `collab` —— 驱动 **COLLABORATION 知识库**（markdown + frontmatter）的命令行工具。
 
-> 这个文件此前是**空的**（0 字节）。十个命令、一套校验器，却没有任何入口文档 ——
+> 这个文件此前是**空的**（0 字节）。十几个命令、一套校验器，却没有任何入口文档 ——
 > 属于"实现了但没写下来"。这里补上。
+>
+> **命令与选项的权威是 `collab <cmd> --help`**（本表由 `scripts/__tests__/cli-docs.test.ts` 对照它检查）。
 
 ## 安装与运行
 
 ```sh
-npm install
-npm run build          # 产物在 dist/，bin/collab.js 从那里加载
+pnpm install           # 本仓用 pnpm（仓库里只有 pnpm-lock.yaml；npm 锁文件在 .gitignore 里）
+pnpm run build         # 产物在 dist/，bin/collab.js 从那里加载
 node bin/collab.js --help
 ```
+
+> **只用一种包管理器。** 2026-09-26 实测：两个仓的 CI 都写着 `npm ci`，而仓里只有
+> `pnpm-lock.yaml` —— `actions/setup-node` 找不到锁文件，后面每一步都 skipped，
+> **CI 从来没跑起来过**，而本地 `npm run check` 一直是绿的。本地绿 ≠ CI 绿。
 
 定位工作区有三种方式，优先级从高到低：`--dir <path>` → 环境变量 `COLLAB_DIR`
 → 从当前目录向上找 `.git`，再探测两种布局（`COLLABORATION/` 子目录，或顶层
@@ -28,11 +34,30 @@ node bin/collab.js --help
 | `collab validate [--json]` | 全量校验（链接 / 索引 / id / 目录 / 生成物） |
 | `collab catalog [--out] [--stdout]` | 生成 `catalog.json`（agent 的路由表） |
 | `collab fix [--dry-run]` | 补齐机械字段（**只补不删**，补不了就报错） |
-| `collab retire <id> --dormant\|--enforced <path> --reason "<分类>: <证据>" [--dry-run]` | 让条目**退出路由索引**（不是删除）。两条路径：被冷落 / 已毕业 |
-| `collab memory [--max-age <days>]` | 检查工作记忆里"声称当前状态"的文件是否过期 |
+| `collab retire <id> --dormant --reason "<分类>: <证据>" [--dry-run]` | 让条目**退出路由索引**（不是删除）——被冷落（过时 / 重复 / 表达差 / 未成熟） |
+| `collab retire <id> --enforced <path> --confirm --reason "<分类>: <证据>"` | 同上，另一条路径：**已毕业**（内容已被测试/工具固化）。`--confirm` 是必填的确认门 |
+| `collab retire --candidates [--grace-days <n>]` | 列出孤岛条目（**只报告，不写盘**；默认 30 天宽限） |
+| `collab memory [--max-age <days>] [--max-candidate-age <days>]` | 检查工作记忆里"声称当前状态"的文件是否过期 / 候选池挂多久没 harvest |
 | `collab commit -m <msg>` | validate + `git add` + `git commit` |
-| `collab push` | validate + `git push` |
+| `collab push [--remote <name>] [--branch <name>]` | validate + `git push` |
 | `collab mcp [--dir <path>]` | 以 **MCP 服务器**运行（stdio），供 AI 客户端调用 |
+
+> `retire` 的 `--enforced` 那条**必须同时给 `--confirm`** —— 少了它命令直接拒收
+> （本表 2026-09-26 之前就漏了它，属于"照文档抄就报错"）。
+
+### `--enforced` 的 `<repo>` 是什么
+
+值的形式是 **`<repo>:<path>`**，`<repo>` 目前只认三个名字：
+`collab-cli` / `collaboration` / `evolutionary`。
+
+本机位置按这条链找（**都不成立就是"无法判定"，不是"不存在"**）：
+
+1. `COLLAB_CLI_DIR` / `COLLAB_KB_DIR` / `EVOLUTIONARY_DIR`（逐仓覆盖）；
+2. `COLLAB_PROJECTS_DIR`（一次给共同父目录），或从包位置推导 + 内置的相对布局；
+3. 都不成立 → 报"无法判定"。写 `retire --enforced` 时会给警告后放行；
+   事后 `collab validate --check-enforced` 会报 **`ENFORCED_UNCHECKED`（WARNING）** ——
+   它**不是错**（拿不到业务仓的机器不该全红），但**必须出声**：
+   否则"验过了"和"没验成"在输出上分不出来。
 
 退出码：`0` 通过、`1` 有阻断性问题或参数错误。**没有退出码 2**
 （未知命令 / 缺参数 / 校验红 都走 `1`）。
@@ -78,7 +103,10 @@ src/cli             命令与渲染
 `npm run test:ci` = 同样的测试，但**跳过会失败**：任何 `skip` 都必须写进
 `.vitest-skip-allowlist.json` 并说明理由 —— 跳过 = 没验，不是验过了。
 （本仓曾有一处写死绝对路径 + `skipIf` 的测试：CI 上静默跳过、本机断言过时而红，
-两种"绿"的含义完全不同。见 `scripts/assert-no-skips.mjs`。）
+两种"绿"的含义完全不同。见 `scripts/assert-no-skips.ts`。）
+
+`npm run memory` = 会话开始那一步：工作记忆还配得上被信任吗（`memory:draft` 只读，
+`memory:attest` 记录已对账的 HEAD）。判据在 `scripts/lib/freshness.ts`，有单测。
 
 > 测试条数不写在这里 —— 手写的可计算量必然腐烂（本行曾写"595 tests / 43 files"）。
 > 想要数字就跑 `npm test`。

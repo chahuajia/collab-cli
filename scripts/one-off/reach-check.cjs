@@ -1,11 +1,31 @@
-// 一次性分析脚本：核对 mark-and-sweep 的两种读法各扫出多少条。
-// 结论写进 meta/pruning-policy.md；本脚本留作证据（可重跑）。
-const B = "D:/actto/front/project/collab-cli/collab-cli/dist";
+// 一次性分析脚本：核对 mark-and-sweep 的三种读法各扫出多少条。
+// 结论写进 KB 的 `meta/pruning-policy.md`；本脚本留作证据（**可重跑**）。
+//
+// 用法（两个路径必填）：
+//   node scripts/one-off/reach-check.cjs <collab-cli>/dist <KB>
+// 或：
+//   COLLAB_DIST_DIR=<dist> COLLAB_KB_DIR=<KB> node scripts/one-off/reach-check.cjs
+//
+// 为什么要参数化：原先这里写着作者本机的两个绝对路径（`D:/actto/...`）——
+// 那是"机器专属默认值"，换台机器就指错或指空。**2026-09-26 改。**
+//
+// 为什么留在 `one-off/` 而不转 TS：它是**标本**（跑过的实验，不接门禁）。
+// 它 require 的是 `dist/` 里的**内部模块路径**（`_shared.js` / `resolvesRef.js`），
+// 模块一搬家它就失效 —— 那是标本的正常命运，不该装成"还活着的工具"。
+// 真要重跑：先 `pnpm run build`。
+const [argDist, argKb] = process.argv.slice(2);
+const B = process.env.COLLAB_DIST_DIR ?? argDist;
+const KB = process.env.COLLAB_KB_DIR ?? argKb;
+if (B === undefined || KB === undefined) {
+  console.error("用法：node scripts/one-off/reach-check.cjs <collab-cli>/dist <KB>");
+  console.error("（或设 COLLAB_DIST_DIR / COLLAB_KB_DIR）");
+  process.exit(1);
+}
+
 const { FileWorkspaceLoader } = require(B + "/infrastructure/fs/FileWorkspaceLoader.js");
 const { extractLinks, lastSegmentOf } = require(B + "/domain/validation/rules/_shared.js");
 const { fileNameOf } = require(B + "/domain/validation/resolvesRef.js");
 
-const KB = "D:/actto/front/project/collaboration_aggregate/collaboration";
 const ws = new FileWorkspaceLoader(KB).load();
 const entries = ws.entries.filter((l) => l.entry);
 
@@ -102,8 +122,6 @@ for (const [rel, c] of ws.rootDocs)
     const t = findNode(ref);
     if (t) addDir(rel, t);
   }
-const rC = bfs(rootIds, []);
-// 有向 BFS 需单独实现
 const seenC = new Set(rootIds);
 const qC = [...rootIds];
 while (qC.length) {

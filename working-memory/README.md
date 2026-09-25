@@ -62,6 +62,8 @@ npm run memory
 | **两个 CI 从没跑起来（红）→ 改 pnpm + 真库接线** | 🚧 已修，**真正的绿灯要等下次 push 才知**（本地跑不了 GH Actions） | `tasks/2026-09-26-ci-never-ran.md` |
 | **KB 修剪政策的机制审计 + 全库冲突清扫** | ✅ 已落（KB `v4.13.2`） | KB `meta/pruning-policy.md` 的「机制成熟度」表 |
 | **`check-freshness` 搬家 + 三仓路径去硬编码** | ✅ 已落；入口变 `npm run memory`（⚠️ 时间戳仍待人签） | `scripts/check-freshness.ts` · `scripts/lib/freshness.ts` · `src/infrastructure/fs/repoRoots.ts` |
+| **本仓文档↔`--help` 检查 + 发布卫生** | ✅ 已落（README 的 `--confirm` 缺失、`assert-no-skips.ts` 改名、MIT LICENSE、npm 锁文件护栏） | `scripts/__tests__/cli-docs.test.ts` · `README.md` · `LICENSE` · `.gitignore` |
+| **`--check-enforced` 不再静默** | ✅ 已落：无法判定 → `ENFORCED_UNCHECKED`（WARNING，仍 exit 0） | `src/cli/commands/validate.ts` · `src/domain/validation/Issue.ts` |
 | **全库检查（散文断言 / 三篇并一）** | ✅ 已落；缺口记 KB `known-gaps` | KB `meta/known-gaps.md` 末行 |
 
 > **evolutionary 侧**：wave41 已 merge；enum 重构已提交。

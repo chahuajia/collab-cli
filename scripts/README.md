@@ -9,7 +9,7 @@
 | :--- | :--- | :--- |
 | `*.ts`（顶层） | **活的工具** | `npm run build` / `npm run test:ci` / `npm run memory` |
 | `lib/` | 工具共用的**纯逻辑**（有单测） | 被上面两者 import |
-| `one-off/` | **跑过的一次性迁移**（档案，不接任何门禁） | 只在人手动调用时 |
+| `one-off/` | **跑过的一次性迁移 / 实验**（档案，不接任何门禁） | 只在人手动调用时 |
 | `__tests__/` | 工具链自己的测试（`vitest` 会跑；见 `vitest.config.ts`） | `npm run test` |
 
 ## 为什么脚本也要分层
@@ -34,6 +34,7 @@ npm run test:ci        # 内部：tsx scripts/assert-no-skips.ts
 npm run memory         # 内部：tsx scripts/check-freshness.ts（+ `:draft` / `:attest`）
 npm run typecheck      # tsc --noEmit && tsc -p tsconfig.tooling.json
 tsx scripts/one-off/add-dates.ts <collab-dir> --dry-run   # 迁移脚本：先 dry-run
+node scripts/one-off/reach-check.cjs <dist> <KB>          # 实验脚本：三个路径都要给（不留本机默认值）
 ```
 
 > **`check-freshness` 是 2026-09-26 搬进来的**（原先在 `working-memory/check-freshness.mjs`）：
@@ -44,3 +45,7 @@ tsx scripts/one-off/add-dates.ts <collab-dir> --dry-run   # 迁移脚本：先 d
 
 **迁移脚本的前置警告**：`one-off/` 里的目录清单已经改为派生，但**别直接跑** ——
 它们是 2026-09 那几次迁移的现场存档，跑之前先照现契约核对一遍。
+
+> **2026-09-26 追加**：`one-off/` 里的 `reach-check.cjs` 原先在 `working-memory/` 下，
+> 且写着作者本机的两个绝对路径。搬过来时改成**必填参数**（不留默认值）——
+> 标本可以失效，但不该把某台机器的盘符带进公开仓。
