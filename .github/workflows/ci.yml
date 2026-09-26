@@ -21,24 +21,45 @@ on:
     branches: [main, master, collab-new]
   workflow_dispatch:
 
+# 最小权限：这个 job 只读仓库（GitHub 的推荐默认；不写就是 token 权限较宽）
+permissions:
+  contents: read
+
+# 同一分支连推多次：**取消上一轮** —— 省额度，也省"对着旧红灯发呆"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
+    name: typecheck + lint + test
     runs-on: ubuntu-latest
+    timeout-minutes: 20          # 卡住的 job 默认能拖 6 小时
     steps:
-      - uses: actions/checkout@v4
+      # action 用**当前大版本**（2026-09 实测：checkout v7.0.1 / setup-node v7.0.0 /
+      # pnpm/action-setup v6.1.0）。旧的 v4 会收到 "Node.js 20 is deprecated …
+      # forced to run on Node.js 24" 的注解 —— 那是未来的硬故障，提前换掉。
+      #
+      # `persist-credentials: false`：本 job **不 push**，就不该把 GITHUB_TOKEN
+      # 留在 checkout 出来的 `.git/config` 里（公共仓的推荐加固；token 只读也一样）。
+      # 本仓的测试自己 `git init` 临时库（并覆盖 GIT_CONFIG_GLOBAL），不依赖这个凭据。
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # 真库 checkout 到工作区里：三条"要 KB 才能验"的测试（模板 / 文档↔--help / MCP）
       # 就不再是静默 skip，而是真的跑。见 .vitest-skip-allowlist.json 的删除条件。
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: chahuajia/collaboration
           path: .collab-kb
+          persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: "12"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: pnpm

@@ -124,5 +124,18 @@ src/cli             命令与渲染
 另外 `npm run memory` 的默认值绑定**本机三仓布局**（见 `repoRoots.ts`），
 对使用者没有意义 —— 这是故意的：它读的是"作者本机的状态"，不是通用功能。
 
+### CI 与仓库设置（一次性，人工）
+
+CI 跑在 GitHub 上（`.github/workflows/ci.yml`）。**本地 `npm run check` 不能替代它** ——
+2026-09-26 实测：本仓 CI 从 #1 到 #38 **38 次全红、一次没绿过**，而本地一直是绿的。
+下面两件只能在 GitHub 网页上点（代码改不了仓库设置）：
+
+1. **把它设成 required check**（不绿不能合）：
+   `Settings → Branches → Add branch protection rule` → 分支 `main` →
+   勾 `Require status checks to pass before merging` → 选本 workflow 的 check
+   **`typecheck + lint + test`**。（KB 仓对应的是 **`collab validate`**。）
+2. **订阅失败通知**：仓库 `Watch → Custom → Actions`。
+   不订阅的话，失败只静静躺在 Actions 页面里 —— 这正是它红了 38 次没人知道的原因。
+
 > 测试条数不写在这里 —— 手写的可计算量必然腐烂（本行曾写"595 tests / 43 files"）。
 > 想要数字就跑 `npm test`。
