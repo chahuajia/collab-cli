@@ -238,8 +238,17 @@ function probeAll(attested: Attested): RepoProbe[] {
 const readme = fs.readFileSync(README_PATH, "utf8");
 const updatedAt = parseUpdatedAt(readme);
 if (updatedAt === null) {
-  console.error("✖ README 里找不到 `**更新**：YYYY-MM-DD HH:MM` —— 无法判定新鲜度。");
+  console.error("✖ README 里找不到可解析的 `**更新**：YYYY-MM-DD HH:MM` —— 无法判定新鲜度。");
   console.error(`  文件：${README_PATH}`);
+  // 区分"那一行不在"与"那一行在、但格式不对" —— 后者是签名时的格式问题，
+  // 光说"找不到"会让人对着明明存在的一行发呆（2026-09-26 实测过一次）。
+  const found = /^.*\*\*更新\*\*.*$/m.exec(readme);
+  if (found !== null) {
+    console.error(`  找到这一行，但读不出时间：${found[0].trim()}`);
+    console.error("  期望形如：`**更新**：2026-09-26 07:59`（小时写一位数也行，冒号全角半角都行）");
+  } else {
+    console.error("  这一行根本不在 —— 它必须由**人**写在 README 顶部（见 AGENTS.md 的响应协议）");
+  }
   process.exit(1);
 }
 const updatedRaw = updatedAt.toLocaleString("sv-SE").slice(0, 16);

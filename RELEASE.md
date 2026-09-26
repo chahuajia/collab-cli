@@ -18,7 +18,7 @@ npm version 0.6.0        # package.json 现在已经是 0.6.0（人工核对这�
 npm publish --access public   # 作用域包必须显式 public
 ```
 
-> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、826 测试全绿，
+> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、828 测试全绿，
 > 但**还没有第二个真实使用者**。"1.0" 是承诺，现在给不出。
 > （`0.6.0` 同理：它说的是"接口变过、按 semver 让位"，不是"成熟了"。）
 
@@ -26,7 +26,7 @@ npm publish --access public   # 作用域包必须显式 public
 
 | 项 | 结果 |
 | :--- | :--- |
-| 测试 | **826 / 826** · 63 files（`pnpm run test:ci` → 826 通过 · 0 跳过；3 条在允许清单里声明） |
+| 测试 | **828 / 828** · 63 files（`pnpm run test:ci` → 828 通过 · 0 跳过；3 条在允许清单里声明） |
 | 类型 | `tsc --noEmit` 干净 |
 | Lint | `eslint src scripts` **0 error**（8 条 magic-number warning 为既有） |
 | 打包 | `pnpm run build` **先清 dist** → `npm pack --dry-run` → **93 files / 114.4 kB**（unpacked 332.7 kB） |
@@ -34,7 +34,7 @@ npm publish --access public   # 作用域包必须显式 public
 | 装机 | `--version` → **0.6.0**；`init` 两个 profile 均实测（kb 骨架 README 与 consumer wrapper 里的范围都是 `@^0.6`） |
 | 自举 | 对真实 KB 跑 `validate` → **129 entries / 0 issues** |
 | 依赖安装 | `pnpm install --frozen-lockfile` → "Lockfile is up to date"（**修锁文件前它是失败的**，见下） |
-| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 826 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
+| 本地模拟 CI | `COLLAB_REAL_KB=<KB> pnpm run check` → 828 通过；`pnpm exec vitest run scripts/__tests__/kb-*.test.ts` → 通过 |
 | 装机自检 | `npm run memory`（会话开始那步）能跑：`exit 1` + 逐仓列出未对账的提交（**这是当前正确状态**，签名归人） |
 
 > ⚠️ **本地模拟 ≠ CI 绿**。上一次 "CI 是绿的" 就是从这个误会来的：
@@ -139,6 +139,11 @@ npm publish --access public   # 作用域包必须显式 public
 > 其尾随散文与正文**无法区分** —— 工具不猜，由落盘后的人与 `validate` 兜底。
 > 另：`collab init --profile kb` 曾造出一个"工具链认不出"的骨架（空目录进不了 git → 布局 B
 > 的标记丢了），本版修掉：骨架自带六个 kind 目录的空 `_index.md`。
+>
+> **包里没有 `working-memory/` 与 `scripts/`**（见 `files`）—— 它们是**本仓的开发资产**。
+> README 里提到的 `npm run memory*` 是 **checkout 里才有意义**的开发仪式（和 `npm test` 一样，
+> 装了包的人在 `node_modules` 里跑它当然会失败）；使用者侧对应的产品能力是 **`collab memory`**，
+> 检查的是**他们自己仓**的 `working-memory/`。
 
 写不写这段，决定了这份 release 是技术说明还是宣传稿。
 

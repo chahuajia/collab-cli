@@ -108,5 +108,21 @@ src/cli             命令与渲染
 `npm run memory` = 会话开始那一步：工作记忆还配得上被信任吗（`memory:draft` 只读，
 `memory:attest` 记录已对账的 HEAD）。判据在 `scripts/lib/freshness.ts`，有单测。
 
+### 两种 working-memory，别混
+
+`files` 里**没有** `working-memory/` 与 `scripts/` —— 它们**不随包发布**，是本仓的开发资产：
+
+| | 本仓开发用的 | 使用者自己用的 |
+| :--- | :--- | :--- |
+| 在哪 | 本仓 `working-memory/` | **他们自己仓**的 `working-memory/` |
+| 谁生成 | 人写 | `collab init`（默认 consumer profile）生成骨架 |
+| 谁检查 | `npm run memory`（盯**这三个**仓的 HEAD，`.attested.json` 对账） | `collab memory`（产品命令：WM 里"声称当前状态"的文件是否过期、候选池挂多久） |
+
+所以 `npm run memory*` 是 **checkout 里才有意义**的开发仪式 —— 和 `npm test` 一样。
+装了包的人在 `node_modules/@chahuajia/collab-cli` 里跑它会失败（`scripts/` 与 devDependencies
+都不在包里），那不是缺陷；**产品侧对应的能力是 `collab memory`**。
+另外 `npm run memory` 的默认值绑定**本机三仓布局**（见 `repoRoots.ts`），
+对使用者没有意义 —— 这是故意的：它读的是"作者本机的状态"，不是通用功能。
+
 > 测试条数不写在这里 —— 手写的可计算量必然腐烂（本行曾写"595 tests / 43 files"）。
 > 想要数字就跑 `npm test`。

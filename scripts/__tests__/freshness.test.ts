@@ -39,6 +39,21 @@ describe("parseUpdatedAt", () => {
     expect(parseUpdatedAt("**更新**: 2026-09-25 21:00")?.getTime()).toBe(README_AT.getTime());
   });
 
+  // 2026-09-26 实测：签名写成 `7:59`（小时一位数），旧正则要求 `\d{2}` → 报"找不到"。
+  // 人手写签名不该有关卡；机器侧的输出一律规范化。
+  it("小时可以是一位数（`7:59`）", () => {
+    const t = parseUpdatedAt("**更新**：2026-09-26 7:59");
+    expect(t?.getUTCFullYear()).toBe(2026);
+    expect(t?.getHours()).toBe(7);
+    expect(t?.getMinutes()).toBe(59);
+  });
+
+  it("时刻也用全角冒号（`7：59`）也能读", () => {
+    const t = parseUpdatedAt("**更新**：2026-09-26 7：59");
+    expect(t?.getHours()).toBe(7);
+    expect(t?.getMinutes()).toBe(59);
+  });
+
   it("没有那一行 → null（**不是**新鲜）", () => {
     expect(parseUpdatedAt("# 没有时间戳的 README")).toBeNull();
   });

@@ -56,7 +56,12 @@ export interface FreshnessVerdict {
  * 它不在就等于这份记忆没人签过。
  */
 export function parseUpdatedAt(readme: string): Date | null {
-  const m = /\*\*更新\*\*\s*[：:]\s*(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/.exec(readme);
+  // **宽进**：小时允许一位数（`7:59` 是人手写的自然写法），时刻的分隔符全角半角都收。
+  // 2026-09-26 实测：签名写成 `**更新**：2026-09-26 7:59`，旧正则要求 `\d{2}` → 报
+  // "找不到时间戳"，而**那一行明明就在那里**。人手写签名这件事不该有关卡；
+  // 机器这边的输出**一律规范化**成 `YYYY-MM-DD HH:MM`（见 check-freshness 的 `updatedRaw`）。
+  const m =
+    /\*\*更新\*\*\s*[：:]\s*(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2})\s*[：:]\s*(\d{2})/.exec(readme);
   if (m === null) return null;
   const [, y, mo, d, h, mi] = m;
   if (
