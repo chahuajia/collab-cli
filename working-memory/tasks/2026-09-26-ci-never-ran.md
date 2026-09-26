@@ -4,6 +4,20 @@
 
 ## 一、证据（不是推理，是 API 读出来的）
 
+### 完整时间线（2026-09-26 补，`actions/runs` 全量拉取）
+
+| 仓 / workflow | 运行 | 结论 |
+| :--- | :--- | :--- |
+| `collab-cli` · `CI` | **#1（09-14 10:51）→ #38（09-26 00:08）**，含所有 PR（`collab-new`）与所有 push（`main`） | **38 次全部 `failure`** —— 它有史以来**一次都没绿过**。第一次死在第 4 步 `npm ci`（没有 `package-lock.json`）；后来 `setup-node` 加了 `cache: npm`，失败前移到第 3 步 |
+| `collaboration` · 旧的 `evolution.yml`（09-16 已删） | 13 次（09-13 → 09-16） | 全部 `failure`，**且一个 job 都没有**（启动即失败、一步没跑）→ 与当年的记录"五项校验一项未做、实际从未运行"一致 |
+| `collaboration` · 现在的 `Validate` | #1（09-17）→ #11（09-25 23:10）**11 连红**；**#12（09-25 23:52）第一次 `success`**，#13 也绿 | 改动落地（`npm ci` → pnpm）之后才第一次真的跑完 |
+
+**"之前推送都正常"的真相**：`git push` 的成功**与 CI 成败无关**（push 只看远端接不接受提交），
+而 GitHub 的失败**默认不通知**。于是"每天都推成功"和"CI 从来没绿过"长期并存 ——
+它一直红着，只是**没有一条线把它说出来**。
+
+### 逐次核对用的两个接口
+
 ```bash
 curl -s "https://api.github.com/repos/chahuajia/collaboration/actions/runs?per_page=5"
 curl -s "https://api.github.com/repos/chahuajia/collab-cli/actions/runs?per_page=5"
@@ -67,9 +81,13 @@ pnpm run test:ci  ⏭ skipped
 
 **失败原文（不用登录就能拿到）**——两把扳手：
 
-```bash
-curl -s "https://api.github.com/repos/<owner>/<repo>/commits/<sha>/check-runs"
-curl -s "https://api.github.com/repos/<owner>/<repo>/check-runs/<id>/annotations"
+```powershell
+# PowerShell 原生写法（**别用 `curl -s …` —— 见下面第七节的两个坑**）
+$sha = 'cce5199'
+$cr  = (Invoke-RestMethod "https://api.github.com/repos/chahuajia/collab-cli/commits/$sha/check-runs").check_runs
+Invoke-RestMethod "https://api.github.com/repos/chahuajia/collab-cli/check-runs/$($cr[0].id)/annotations" |
+  Where-Object annotation_level -eq 'failure' |
+  Select-Object path, start_line, message
 ```
 
 ```
@@ -115,3 +133,33 @@ COLLAB_PROJECTS_DIR=/nonexistent EVOLUTIONARY_DIR= COLLAB_KB_DIR= COLLAB_CLI_DIR
 红的时候：用第六节的 `check-runs` / `annotations` 两把扳手（**免登录**）。
 想更硬：加 job summary / artifact（runner 的 `GITHUB_RUN_ID` 本地伪造不出来）；
 再狠一点：把这条 check 设成 **required**（不绿不能合）—— 那是把"CI 绿"从提示变成门禁。
+
+### 可直接粘贴的两段（PowerShell；本仓这两个仓的**完整 URL**，没有占位符）
+
+```powershell
+$ProgressPreference = 'SilentlyContinue'
+
+# ① 最近几次运行：谁、哪个 sha、哪个分支、成败
+foreach ($repo in 'chahuajia/collab-cli','chahuajia/collaboration') {
+  "===== $repo"
+  (Invoke-RestMethod "https://api.github.com/repos/$repo/actions/runs?per_page=3").workflow_runs |
+    Select-Object run_number, name, event, status, conclusion, head_branch,
+                  @{n='sha'; e={$_.head_sha.Substring(0,7)}} |
+    Format-Table -AutoSize
+}
+
+# ② 某一次运行的**逐步**结论（找 skipped / failure）
+$run = (Invoke-RestMethod 'https://api.github.com/repos/chahuajia/collab-cli/actions/runs?per_page=1').workflow_runs[0]
+"run #$($run.run_number)  sha=$($run.head_sha.Substring(0,7))  $($run.status)/$($run.conclusion)"
+(Invoke-RestMethod "https://api.github.com/repos/chahuajia/collab-cli/actions/runs/$($run.id)/jobs").jobs |
+  ForEach-Object { $_.steps } | Select-Object number, name, conclusion | Format-Table -AutoSize
+```
+
+### PowerShell 的两个坑（都是 2026-09-26 实测踩到的）
+
+1. **`curl` 不是 curl，是 `Invoke-WebRequest` 的别名。** `curl -s "<url>"` 里的 `-s`
+   会被当成 **`-SessionVariable`** 的缩写，于是你的 URL 被吃成它的值 → PowerShell 反问 `Uri:`。
+   要用真 curl 就写 **`curl.exe`**；在 PowerShell 里就用 `Invoke-RestMethod`（上面两段）。
+2. **`<原生命令> 2>&1 | Select-Object …` 的退出码会说谎**（stderr 被当作错误记录 →
+   最后一条语句为假 → PowerShell 进程退出 1，而命令其实成功了）。
+   判据：先 `$out = & cmd 2>&1; $LASTEXITCODE`，再对 `$out` 做筛选。

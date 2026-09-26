@@ -95,6 +95,10 @@ npm run memory
   可能返回 **exit 1**，而命令其实成功了（stderr 被当作错误记录，最后一条语句因此为假）。
   2026-09-26 实测两次假红（`test:ci` 打印了"✔ 829 通过 · 0 跳过"却报 1）。
   **判据：先 `$out = & cmd 2>&1; $LASTEXITCODE`，再对 `$out` 做筛选。**
+- **`curl` 在 PowerShell 里是 `Invoke-WebRequest` 的别名**：`curl -s "<url>"` 的 `-s` 会被
+  当成 `-SessionVariable` 的缩写，URL 被吃成它的值 → 反问 `Uri:`。
+  要真 curl 写 **`curl.exe`**；查 GitHub Actions 用 `Invoke-RestMethod`（现成两段见
+  `tasks/2026-09-26-ci-never-ran.md` 第七节）。
 
 
 ## 仓职责（跨仓分工）

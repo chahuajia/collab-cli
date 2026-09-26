@@ -2,7 +2,8 @@
 #
 # 2026-09-26 修：这段曾写 `cache: npm` + `npm ci`，而本仓**只有 pnpm-lock.yaml**
 # （没有 package-lock.json）——于是 `actions/setup-node` 在"找依赖锁文件"这一步当场失败，
-# 后面每一步都是 skipped。实测 GitHub API：`conclusion = failure`，5 次全红，
+# 后面每一步都是 skipped。实测 GitHub API：#1（09-14）→ #38（09-26）**38 次全红、一次没绿过**
+# （最早死在第 4 步 `npm ci`，后来前移到 `setup-node`），
 # 而本地 `npm run check` 一直是绿的 —— **本地绿 + CI 红，是两条独立的线**。
 #
 # 现在：pnpm 走 action-setup，装依赖用 `pnpm install --frozen-lockfile`。
