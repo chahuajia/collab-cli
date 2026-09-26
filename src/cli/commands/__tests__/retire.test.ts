@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { EntryKindValues } from "@/domain/entry/types";
@@ -175,6 +175,12 @@ describe("collab retire", () => {
     // 而它声称的固化根本不存在。这条必须拦住。
     await seedPattern("live-entry");
 
+    // **自己造一个"可达、但没有那个文件"的仓**。
+    // 不能靠"作者本机恰好有 evolutionary"：2026-09-26 CI 上那台机器没有 →
+    // 命令走"无法判定 → 警告放行"（exit 0），而这条断言期待失败 → 本地绿、CI 红。
+    const fakeRepo = path.join(ctx().root, "fake-evolutionary");
+    await mkdir(fakeRepo, { recursive: true });
+
     const result = await toFail(
       [
         "retire",
@@ -186,7 +192,7 @@ describe("collab retire", () => {
         "已毕业: x",
       ],
       ctx().root,
-      ctx().envOverrides,
+      { ...ctx().envOverrides, EVOLUTIONARY_DIR: fakeRepo },
     );
 
     expect(result.stderr + result.stdout).toContain("不存在");
@@ -220,5 +226,39 @@ describe("collab retire", () => {
     );
 
     expect(result.stderr + result.stdout).toContain("no-such-id");
+  });
+
+  /**
+   * `--enforced` 的另一条分支：**仓名认识、但这台机器上没有那个仓**。
+   *
+   * @remarks
+   * 这条**刻意放行**（警告 + exit 0），不是漏了检查：
+   * 换台机器做维护时不应该被"拿不到业务仓"拦住；查形态仍然照做，
+   * 事后还有 `collab validate --check-enforced` 兜底。
+   *
+   * 这个用例是 2026-09-26 CI 红出来的：那台 runner 上 `evolutionary` 不可达，
+   * 而 R10 期待"目标不存在 → 失败" —— 两条分支必须**分开写、各自钉住**，
+   * 否则测试就在赌"跑它的机器上有没有那两个仓"。
+   */
+  it("R12: 仓不可达 → 不假装查过：警告后放行（刻意选择，别改成硬失败）", async () => {
+    await seedPattern("live-entry");
+
+    const result = await toSucceed(
+      [
+        "retire",
+        "live-entry",
+        "--enforced",
+        "evolutionary:backend/src/test/java/com/evolutionary/Whatever.java",
+        "--confirm",
+        "--reason",
+        "已毕业: x",
+      ],
+      ctx().root,
+      { ...ctx().envOverrides, EVOLUTIONARY_DIR: path.join(ctx().root, "no-such-repo") },
+    );
+
+    // 出声，但不拦：说出来的是"没法判定"，不是"不存在"
+    expect(result.stdout).toContain("跳过存在性检查");
+    expect(result.stdout).toContain("evolutionary");
   });
 });

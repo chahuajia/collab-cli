@@ -22,6 +22,7 @@ function probe(over: Partial<RepoProbe> & { name: string }): RepoProbe {
     delta: null,
     lastCommitAt: null,
     baselineLost: false,
+    baselineDiverged: false,
     ...over,
   };
 }
@@ -89,6 +90,20 @@ describe("verdictOf", () => {
       README_AT,
     );
     expect(v.stale.map((s) => s.kind)).toEqual(["baseline-lost"]);
+  });
+
+  // 2026-09-26 实测的假绿：`--attest` 时在 topic 分支（HEAD=ac7aa6c），之后切回更旧的 main。
+  // `rev-list --count ac7aa6c..HEAD` 返回 0 → 旧逻辑报"0 个提交，新鲜"，
+  // 而账本覆盖的**是另一条分支**。判据补了"基准必须是当前 HEAD 的祖先"。
+  it("基准不在当前分支上（切分支/回退）→ 不新鲜（哪怕增量算出来是 0）", () => {
+    const v = verdictOf(
+      [probe({ name: "evolutionary", from: "ac7aa6c", baselineDiverged: true })],
+      README_AT,
+    );
+    expect(v.fresh).toBe(false);
+    expect(v.stale).toEqual([
+      { name: "evolutionary", kind: "diverged", delta: null, from: "ac7aa6c" },
+    ]);
   });
 
   it("无基线：最后一次产品提交晚于 README → 不新鲜", () => {

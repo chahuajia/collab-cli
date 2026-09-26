@@ -29,10 +29,26 @@ export interface RepoProbe {
   readonly lastCommitAt: Date | null;
   /** 有基线，但那个 commit 已不可达（分支被重写 / rebase 过） */
   readonly baselineLost: boolean;
+  /**
+   * 有基线、那个 commit 也还在，但**它不在当前 HEAD 的历史上**。
+   *
+   * @remarks
+   * 2026-09-26 实测的假绿：`--attest` 时人在 **topic 分支**上（HEAD = `ac7aa6c`），
+   * 之后切回 `main`（`dc3b366`，比它旧）—— 而 `rev-list --count ac7aa6c..HEAD`
+   * 在这种"HEAD 是基准的祖先"的情况下**返回 0**，于是脚本报"0 个提交，新鲜"。
+   * 真相是：**账本覆盖的是另一条分支**，它对当前 checkout 什么都没说。
+   */
+  readonly baselineDiverged: boolean;
 }
 
 /** 一条"不新鲜"的理由。分门别类，因为三种理由的下一步动作不同。 */
-export type StaleKind = "unreachable" | "baseline-lost" | "unknown" | "delta" | "no-baseline";
+export type StaleKind =
+  | "unreachable"
+  | "baseline-lost"
+  | "diverged"
+  | "unknown"
+  | "delta"
+  | "no-baseline";
 
 export interface StaleReason {
   readonly name: string;
@@ -115,6 +131,10 @@ export function verdictOf(
     }
     if (p.baselineLost) {
       stale.push({ name: p.name, kind: "baseline-lost", delta: null, from: p.from });
+      continue;
+    }
+    if (p.baselineDiverged) {
+      stale.push({ name: p.name, kind: "diverged", delta: null, from: p.from });
       continue;
     }
     if (p.delta !== null) {

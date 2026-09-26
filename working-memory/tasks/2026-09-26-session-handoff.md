@@ -124,6 +124,21 @@ BOM（Windows 编辑器/`Set-Content` 默认写）让 vite 解析 `package.json`
 | `parse -` 经 **PowerShell 文本管道** | 字节流（node spawn）验过；PowerShell 管道会转码，属使用注意 |
 | `--with-ci` / `--with-hook` 生成物的**真实执行**（GitHub Actions / husky） | 只验过文件生成与内容 |
 
+> **2026-09-26 晚：这张表的状态变了，先看这里再决定要不要重新验。**
+>
+> | 维度 | 现状 |
+> | :--- | :--- |
+> | 空格 / 中文路径 | ✅ 已变成测试（`src/cli/commands/__tests__/robustness.test.ts`） |
+> | 大 KB（400 条）性能 | ✅ 同上（时间预算断言） |
+> | 并发 `apply` | ✅ 同上（两进程同路径，不半写） |
+> | **Windows 长路径（>260）** | ⚠️ 仍**没验** —— 那条测试只覆盖空格与中文，长路径是另一回事 |
+> | 真 MCP 客户端（Claude Desktop / Cursor） | ⚠️ 仍没验（只有自写 JSON-RPC 脚本 + 协议单测） |
+> | `push` 到真远端（GitHub + 认证） | ⚠️ 真远端推送**成功过**（认证通过）；但**是不是经 `collab push`** 未记录 —— 手工 `git push` 只验了网络与认证，没验 CLI 那条链 |
+> | PowerShell 文本管道 | ⚠️ 仍没验（已知会转码，属使用注意） |
+> | **生成的 CI 真实执行** | ✅ **已验**（2026-09-26 晚）：KB 仓 `Validate` **success**；`collab-cli` 的 CI **真的在执行**——`pnpm install --frozen-lockfile` 已过、卡在 `pnpm run check`，并**抓到一个本地抓不到的缺陷**（测试默默依赖"作者机器上有 evolutionary 仓"）→ 已修，待下一次 push 复验。见 `2026-09-26-ci-never-ran.md` 第六、七节（含"**不用登录读 CI 失败原文**"的两把扳手） |
+>
+> 这一节的价值当天就兑现了：**列出来的东西真的会坏，而且坏在列表里。**
+
 ## 4. 怎么验证（一条条可复现）
 
 ```bash

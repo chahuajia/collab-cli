@@ -300,6 +300,19 @@ export async function createWorkspace(
   const envOverrides = {
     GIT_CONFIG_GLOBAL: emptyGitConfig,
     GIT_CONFIG_SYSTEM: emptyGitConfig,
+    // ── 仓位置也钉死在临时目录里（默认 = "三个仓都不存在"）──────────────────
+    //
+    // 为什么必须钉：不钉的话，测试会**悄悄依赖"作者本机恰好有那三个仓"**。
+    // 2026-09-26 CI 实测：GitHub runner 上 `evolutionary` 不可达 →
+    // `retire --enforced` 走"无法判定 → 警告放行"（exit 0）→ R10 断言"应当失败"落空，
+    // 而本地一直绿（本地那份绝对路径真实存在）。**本地绿 ≠ CI 绿。**
+    //
+    // 需要某个仓的测试**自己**把它指到一个临时目录（见 R10 / validate F1、F2）。
+    // 逐仓变量显式置空：否则开发机/CI 的环境变量会漏进来，把"钉死"变成"看运气"。
+    COLLAB_PROJECTS_DIR: path.join(root, "no-such-projects"),
+    COLLAB_CLI_DIR: "",
+    COLLAB_KB_DIR: "",
+    EVOLUTIONARY_DIR: "",
   };
 
   if (useGit) {

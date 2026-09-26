@@ -89,6 +89,32 @@ function repoExists(dir: string): boolean {
   }
 }
 
+/** `execFileSync` 抛出来的东西里有退出码吗（不用类型断言 —— 本仓禁 `as`）。 */
+function isExecError(value: unknown): value is { readonly status?: number } {
+  return typeof value === "object" && value !== null && "status" in value;
+}
+
+/**
+ * `from` 是不是当前 HEAD 的祖先？
+ *
+ * @remarks
+ * **这一条是 2026-09-26 补的假绿补丁。** `rev-list --count from..HEAD` 在
+ * "HEAD 是 from 的祖先"（切回了更旧的分支 / 回退过）时**返回 0** ——
+ * 报出来是"自上次对账以来 0 个提交，新鲜"，而真相是**账本覆盖的是另一条分支**。
+ * `git merge-base --is-ancestor` 退出码 0/1 正好区分"是/不是"。
+ */
+function isAncestorOfHead(dir: string, from: string): boolean {
+  try {
+    execFileSync("git", ["-C", dir, "merge-base", "--is-ancestor", from, "HEAD"], {
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return true;
+  } catch (error) {
+    if (isExecError(error) && error.status === 1) return false;
+    throw error;
+  }
+}
+
 function head(dir: string): string {
   return git(dir, ["rev-parse", "--short", "HEAD"]);
 }
@@ -187,6 +213,7 @@ function probeAll(attested: Attested): RepoProbe[] {
         delta: null,
         lastCommitAt: null,
         baselineLost: false,
+        baselineDiverged: false,
       });
       continue;
     }
@@ -203,20 +230,23 @@ function probeAll(attested: Attested): RepoProbe[] {
         delta: null,
         lastCommitAt: lastCodeCommitAt(repo),
         baselineLost: false,
+        baselineDiverged: false,
       });
       continue;
     }
 
     try {
+      const ancestor = isAncestorOfHead(repo.dir, from);
       probes.push({
         name: repo.name,
         dir: repo.dir,
         reachable: true,
         head: head(repo.dir),
         from,
-        delta: deltaCount(repo, from),
+        delta: ancestor ? deltaCount(repo, from) : null,
         lastCommitAt: null,
         baselineLost: false,
+        baselineDiverged: !ancestor,
       });
     } catch {
       // 基准 commit 已不可达（分支重写 / rebase）
@@ -229,6 +259,7 @@ function probeAll(attested: Attested): RepoProbe[] {
         delta: null,
         lastCommitAt: null,
         baselineLost: true,
+        baselineDiverged: false,
       });
     }
   }
@@ -298,25 +329,35 @@ if (DRAFT) {
   console.log("");
   console.log("自上次对账以来（只看产品代码提交）：");
 
-  for (const repo of REPOS) {
-    if (!repoExists(repo.dir)) {
-      console.log(`  x ${repo.name}: 仓库路径不可达（${repo.dir}）`);
+  // 与默认判定**共用同一套探测**（`probeAll`）—— 两条路各写一遍必然漂移：
+  // 2026-09-26 实测，"基准不在当前分支上"这条只补进了默认判定，
+  // 于是 `--draft` 里还在报"0 个提交，ok"。**能派生就别复制。**
+  for (const p of probeAll(prev)) {
+    if (!p.reachable) {
+      console.log(`  x ${p.name}: 仓库路径不可达（${p.dir}）`);
       continue;
     }
-    const from = prev.heads[repo.name];
-    if (from === undefined) {
-      console.log(`  ? ${repo.name}: 无基准（先跑 --attest 建立基线）  HEAD ${head(repo.dir)}`);
+    if (p.from === null) {
+      console.log(`  ? ${p.name}: 无基准（先跑 --attest 建立基线）  HEAD ${p.head}`);
       continue;
     }
-    let n: number;
-    try {
-      n = deltaCount(repo, from);
-    } catch {
-      console.log(`  ! ${repo.name}: 基准 ${from} 已不可达（分支重写？）—— 需要重新对账`);
+    if (p.baselineLost) {
+      console.log(`  ! ${p.name}: 基准 ${p.from} 已不可达（分支重写？）—— 需要重新对账`);
       continue;
     }
-    console.log(`  ${n === 0 ? "ok" : "->"} ${repo.name}: ${n} 个提交  (${from} → ${head(repo.dir)})`);
-    for (const s of deltaSubjects(repo, from)) console.log(`       ${s}`);
+    if (p.baselineDiverged) {
+      console.log(
+        `  ! ${p.name}: 基准 ${p.from} **不在当前分支的历史上**（切了分支 / 回退过）` +
+          `  (当前 HEAD ${p.head}) —— 需要重新对账`,
+      );
+      continue;
+    }
+    const n = p.delta ?? 0;
+    const repo = REPOS.find((r) => r.name === p.name);
+    console.log(`  ${n === 0 ? "ok" : "->"} ${p.name}: ${n} 个提交  (${p.from} → ${p.head})`);
+    if (repo !== undefined) {
+      for (const s of deltaSubjects(repo, p.from)) console.log(`       ${s}`);
+    }
   }
 
   console.log("");
@@ -391,6 +432,8 @@ function describeStale(
       return "仓库路径不可达";
     case "baseline-lost":
       return `基准 ${from} 已不可达 —— 重新对账（--draft 看现状，改表后 --attest）`;
+    case "diverged":
+      return `基准 ${from} **不在当前分支的历史上**（切了分支 / 回退过）—— 账本覆盖的是另一条分支，重新对账`;
     case "unknown":
       return `拿不到产品提交时间（HEAD ${probe.head}）—— 不要当成"新鲜"`;
     case "no-baseline":

@@ -18,7 +18,7 @@ npm version 0.6.0        # package.json 现在已经是 0.6.0（人工核对这�
 npm publish --access public   # 作用域包必须显式 public
 ```
 
-> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、828 测试全绿，
+> 为什么还是 `0.x` 而不是 `1.0.0`：核心命令稳定、830 测试全绿，
 > 但**还没有第二个真实使用者**。"1.0" 是承诺，现在给不出。
 > （`0.6.0` 同理：它说的是"接口变过、按 semver 让位"，不是"成熟了"。）
 
@@ -26,7 +26,7 @@ npm publish --access public   # 作用域包必须显式 public
 
 | 项 | 结果 |
 | :--- | :--- |
-| 测试 | **828 / 828** · 63 files（`pnpm run test:ci` → 828 通过 · 0 跳过；3 条在允许清单里声明） |
+| 测试 | **830 / 830** · 63 files（`pnpm run test:ci` → 830 通过 · 0 跳过；3 条在允许清单里声明） |
 | 类型 | `tsc --noEmit` 干净 |
 | Lint | `eslint src scripts` **0 error**（8 条 magic-number warning 为既有） |
 | 打包 | `pnpm run build` **先清 dist** → `npm pack --dry-run` → **93 files / 114.4 kB**（unpacked 332.7 kB） |
@@ -88,7 +88,8 @@ npm publish --access public   # 作用域包必须显式 public
   连本地都过不了。本次按删除项**外科式**同步锁文件（10 行），实测
   `pnpm install --frozen-lockfile` → "Lockfile is up to date"。
 - **不再把作者的盘符发给你**（本次新增）：`enforcedTargets.ts` 曾把三个 `D:\actto\...`
-  写成 `??` 的兜底，而 `dist/` 会打包 —— **实测已发布的 0.5.1 tgz 里就是那三个绝对路径**。
+  写成 `??` 的兜底，而 `dist/` 会打包 —— **实测 npm 上的 `0.5.1`**
+  （`package/dist/cli/lib/enforcedTargets.js`）里就是那三个绝对路径。
   现在三仓路径走 `src/infrastructure/fs/repoRoots.ts` 的**唯一一份**解析链
   （`COLLAB_CLI_DIR` / `COLLAB_KB_DIR` / `EVOLUTIONARY_DIR` → `COLLAB_PROJECTS_DIR` 或从包位置
   上溯 + 一处声明的相对布局 → 不可达就是"无法判定"）。**这是行为变更**：
@@ -146,6 +147,43 @@ npm publish --access public   # 作用域包必须显式 public
 > 检查的是**他们自己仓**的 `working-memory/`。
 
 写不写这段，决定了这份 release 是技术说明还是宣传稿。
+
+## 六、老版本怎么办：**不删，标弃用**（2026-09-26 决定）
+
+问过一次："0.5.0 / 0.5.1 是不是问题很多，要不要删掉，只留 0.6.0？"
+**不删。** 四条理由，按硬度排：
+
+| 理由 | 具体 |
+| :--- | :--- |
+| **证据链会断** | KB 的 `meta/interceptions.md` 明写"复现：`npm pack @chahuajia/collab-cli@0.5.1`"；本仓 `RELEASE.md` / `decisions.md` / `clean-dist.ts` 注释等 10+ 处引用它。删了版本 = 把"实测证据"变成**死引用**（正是这几轮在修的那类问题），也违反 KB 那条"证据必须可复跑" |
+| **消费者会断** | 任何锁了 `0.5.0` / `0.5.1` 的 `package-lock.json` / `pnpm-lock.yaml` 会直接 E404 —— 和我们刚修的"CI 装不上"同类事故，只是发生在**别人**的机器上 |
+| **npm 政策** | 72 小时内可 unpublish，之后基本不允许；而且**一个版本号一旦被 unpublish 就永久不可再用**（不能重发）—— 历史不可恢复 |
+| **`latest` 不用删也能修** | 发布 `0.6.0` 之后 `latest` 自动指向它 |
+
+正确动作（顺序不能换）：
+
+```bash
+npm publish --access public                                   # 1. 先发 0.6.0（latest 自动迁移）
+npm deprecate "@chahuajia/collab-cli@0.5.0" "parse 契约与落盘命名已变，请用 >=0.6.0"
+npm deprecate "@chahuajia/collab-cli@0.5.1" "同上；包里另带 5 个无源模块（不影响功能，只是脏）"
+git tag v0.6.0                                                # 2. 打出对外标签
+```
+
+`npm deprecate` **可撤销**（`npm deprecate "<pkg>@<ver>" ""`），装的时候打印警告但**仍然能装** ——
+这正是"劝退而不是消失"。
+
+**什么时候才真的该删**（本轮没有一条成立）：① 包里泄露了敏感信息（密钥 / 内网地址）；
+② 完全装不上或跑不起来；③ 发布 72 小时内且确认无人依赖。
+三条都不成立时，unpublish 只会毁掉别人和未来的自己。
+
+### 顺带核清：**同名 tgz 不是同一个东西**
+
+- **npm 上的 `0.5.1`**：97 files，布局 `dist/cli/lib/*`；带那 5 个无源模块；
+  `dist/cli/lib/enforcedTargets.js` 里确实是**作者的三个盘符**。tag `v0.5.1`（`12e67c6`）
+  的源码布局与它一致 ✓（结构核对，非逐字节重建）。
+- **仓库根那份 `chahuajia-collab-cli-0.5.1.tgz`**：93 files，布局 `application/` + `infrastructure/`
+  —— 它是**发布之后用同一个版本号重新 pack 的产物**。**别拿它当"已发布产物"引用**
+  （本轮就差点这么写错）。建议删掉它：留着就是下一次误引证的种子。
 
 ## 六、配套文章
 

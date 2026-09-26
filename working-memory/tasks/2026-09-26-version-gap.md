@@ -38,11 +38,24 @@
 | **`pnpm-lock.yaml` 陈旧**（`prettier` 已从 `package.json` 删除、锁文件还在） | `pnpm install --frozen-lockfile` 直接失败 —— 这是 CI 装依赖的那一步。已外科式同步（删 10 行） |
 | **两个 CI 从没跑起来**（`npm ci` + pnpm 锁文件） | 见 `2026-09-26-ci-never-ran.md` |
 
+### 已核（2026-09-26 晚，直接从 npm 拉产物）
+
+1. **npm 上的 `0.5.1` 与 tag `v0.5.1` 结构一致** ✓ —— tag `12e67c6` 的源码是
+   `src/cli/lib/`，包内是 `dist/cli/lib/`，同一套布局；`package.json` 版本都是 `0.5.1`。
+   （**不是**逐字节重建比对：没有从 tag 重新构建后对比。）
+2. npm 上的 `0.5.1` = **97 files**，带 5 个无源模块（`GitAdapter` / `ConsoleReporter` /
+   `extractAllIdsByKind` / `falsifierRatchet` / `rules/index.js`）—— KB `meta/interceptions.md`
+   引用的"复现：`npm pack @chahuajia/collab-cli@0.5.1`"**成立**。
+3. **⚠️ 仓库根那份 `chahuajia-collab-cli-0.5.1.tgz` 不是 npm 上那个**：它是 **93 files**、
+   布局是 `application/` + `infrastructure/` —— **发布之后用同一个版本号重新 pack 的产物**。
+   我此前把它当"已发布产物"引用来着（`RELEASE.md` / `decisions.md` / `repoRoots.ts` 注释），
+   现已一律改成"**npm 上的** 0.5.1"并写清路径。
+   这就是 KB 那条"**fixture ≠ 真产物 / 借来的证据**"的复发：**产物也可能被本地重造**。
+
 ### 仍需人确认（**本次未核**）
 
-1. `npm view` 上的 `0.5.1` 与 tag `v0.5.1` 内容一致（上一版就没核，这次仍未核）
-2. parse 的 WARNING 通道（`ParseSkippedBlock`）在文档里有说明 ——
-   它改变的是"宽容 ≠ 静默"的对外承诺
+parse 的 WARNING 通道（`ParseSkippedBlock`）在文档里有说明 ——
+它改变的是"宽容 ≠ 静默"的对外承诺。
 
 > 这条记在 WM 而不是 KB：它是**本仓的发布流程问题**，
 > 不是跨项目的长期知识（见 [[W10-working-memory]]）。
