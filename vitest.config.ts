@@ -25,6 +25,9 @@ export default defineConfig({
     environment: "node",
     testTimeout: E2E_TIMEOUT_MS,
     hookTimeout: E2E_TIMEOUT_MS,
+    // 进程级环境卫生：删掉落进测试进程的 `COLLAB_DIR` 等指向变量。
+    // 不加这一条，开发机上"设了 COLLAB_DIR"就会让一堆用例**指向真知识库**（2026-10-06 实测）。
+    setupFiles: ["./scripts/vitest.setup.ts"],
     include: [
       "src/**/__tests__/**/*.test.ts",
       // 工具链的测试也要跑：门禁的判据（跳过记账）与仓库卫生都在 `scripts/` 下

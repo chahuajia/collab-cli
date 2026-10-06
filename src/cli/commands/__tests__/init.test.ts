@@ -66,6 +66,9 @@ beforeEach(async () => {
   envOverrides = {
     GIT_CONFIG_GLOBAL: emptyGitConfig,
     GIT_CONFIG_SYSTEM: emptyGitConfig,
+    // 开发机在**用户级**设了 `COLLAB_DIR=<共享库>`，而它优先于"向上找 `.git`" ——
+    // 不钉死的话，本文件里"不带 --dir 也能用"那几条会在**真库**上跑（详见 testHelpers）。
+    COLLAB_DIR: '',
   };
 });
 
@@ -204,6 +207,15 @@ describe('collab init — profile=kb', () => {
     expect(readme).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE} validate`);
     expect(r.stdout).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE}`);
   });
+
+  // 同 I13c：kb profile 的入口也必须**点名工具**（2026-10-06 事故：入口只写"读什么"，没写"有工具"）
+  it('I12d kb 的 AGENTS.md 必须点名工具，并写清"选项的权威是 --help"', async () => {
+    await runCli(['init', '--profile', 'kb', '--dir', '.']);
+    const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
+    expect(agents).toContain('@chahuajia/collab-cli');
+    expect(agents).toContain('--help');
+    expect(agents, '必备的确认门不能漏（照抄会报错）').toContain('--confirm');
+  });
 });
 
 
@@ -234,7 +246,24 @@ describe('collab init — profile=consumer（默认）', () => {
     expect(r.stdout).toContain('--kb');
   });
 
-  it('I13b consumer wrapper 里的安装范围同样派生', async () => {
+  /**
+   * 事故回归（2026-10-06）：消费者入口**通篇没提 CLI** → 某项目的 agent 通读入口后，
+   * 整段会话 `collab` 用了 **0 次**：判据全写进 `working-memory/`（下一个人读不到），
+   * `catalog.json` 停在很久以前，知识库一次都没增长。
+   * **入口只说"去哪读"，不说"有工具"，等于这条规范不存在。**
+   */
+  it('I13c consumer 的 AGENTS.md 必须点名工具、并指回真 KB', async () => {
+    const r = await runCli(['init', '--dir', '.', '--kb', 'D:/fake-kb']);
+    expect(r.exitCode, r.stderr).toBe(0);
+
+    const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
+    expect(agents, '入口必须点名 CLI').toContain('@chahuajia/collab-cli');
+    expect(agents, '命令要指回真 KB，而不是本仓').toMatch(/fake-kb/);
+    expect(agents, '要写清"选项的权威是 --help"（防表格漂移）').toContain('--help');
+    expect(agents, '要写清"别对本仓 validate"（尺子拿错）').toContain('UNDECLARED_DIR');
+  });
+
+  it('I13b consumer wrapper：安装范围派生，且**校验对象**被钉在 KB 上', async () => {
     const r = await runCli(['init', '--dir', '.', '--kb', 'D:/fake-kb']);
     expect(r.exitCode, r.stderr).toBe(0);
 
@@ -243,5 +272,30 @@ describe('collab init — profile=consumer（默认）', () => {
       'utf8',
     );
     expect(wrapper).toContain(`@chahuajia/collab-cli@${COLLAB_NPM_RANGE}`);
+
+    // **校验对象**必须写死在 wrapper 里，而且必须带 `--dir`。
+    //
+    // 为什么单列一条断言：2026-10-06 实测到一份**手写的** wrapper
+    // （`"npx --yes collab-cli@^1" validate` —— 既没有 KB 常量、也没有 `--dir`），
+    // 它 `validate` 的是**当前目录**，于是把业务仓的 `docs/` `packages/` `working-memory/`
+    // 全报成 `UNDECLARED_DIR`（10 条），而所有人以为那是"知识库的缺陷"。
+    // **"用 KB 的尺子量业务仓"是这套工具最贵的误用。**
+    expect(wrapper).toContain('const KB =');
+    expect(wrapper).toContain('--dir ${KB} validate');
+    // 路径可能被 resolve 成反斜杠，所以只断言"指回了那个库"这件事
+    expect(wrapper, 'wrapper 必须指回 --kb 给的共享库').toMatch(/fake-kb/);
+  });
+
+  it('I15 --with-ci 生成的 CI：调唯一调用点 + 最小权限 + 取消旧轮 + 不用过时的 action', async () => {
+    const r = await runCli(['init', '--dir', '.', '--kb', 'D:/fake-kb', '--with-ci']);
+    expect(r.exitCode, r.stderr).toBe(0);
+
+    const yml = await readFile(path.join(root, '.github/workflows/validate.yml'), 'utf8');
+    // 唯一调用点：CLI 来源的差异（本机装 / npx / 本地构建）都收在 wrapper 里
+    expect(yml).toContain('node scripts/collab-validate.mjs');
+    expect(yml).toContain('permissions:');
+    expect(yml).toContain('cancel-in-progress: true');
+    // 2026-10-06 实测：`@v4` 会被强制跑在 node24 上并报弃用注解 —— 生成物不该教用户踩这个
+    expect(yml, '别生成已弃用的 action major').not.toContain('@v4');
   });
 });

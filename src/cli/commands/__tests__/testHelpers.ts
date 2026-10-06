@@ -313,6 +313,13 @@ export async function createWorkspace(
     COLLAB_CLI_DIR: "",
     COLLAB_KB_DIR: "",
     EVOLUTIONARY_DIR: "",
+    // **`COLLAB_DIR` 与"向上找 .git"同级吗？不 —— 它优先于 cwd。**
+    // 2026-10-06 实测：开发机在**用户级**设了 `COLLAB_DIR=<共享库>`，
+    // 于是 `findCollabRoot` 的优先级（`--dir` > `COLLAB_DIR` > 向上找 `.git`）
+    // 让**任何不带 `--dir` 的测试命令都指向真库** —— 不是临时工作区。
+    // 那一刻 `collab new` 会往**真知识库**里写条目（这次只是被"拿不到作者标识"挡住了）。
+    // 钉死它：测试永远不许碰开发机的真库。
+    COLLAB_DIR: "",
   };
 
   if (useGit) {

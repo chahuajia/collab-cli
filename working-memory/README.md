@@ -99,6 +99,11 @@ npm run memory
   当成 `-SessionVariable` 的缩写，URL 被吃成它的值 → 反问 `Uri:`。
   要真 curl 写 **`curl.exe`**；查 GitHub Actions 用 `Invoke-RestMethod`（现成两段见
   `tasks/2026-09-26-ci-never-ran.md` 第七节）。
+- **`COLLAB_DIR` 会夺走 cwd**：工作区解析优先级是 **`--dir` > `COLLAB_DIR` > 向上找 `.git`**。
+  开发机若在**用户级**设了它（合理需求：让 `collab` 在任何目录都能找到共享库），
+  那么**任何不带 `--dir` 的命令都会指向那个库** —— 包括在别的项目里跑 `new` / `commit`。
+  2026-10-06 实测：它让测试往真库写了 3 条、并把真库 7 项改动 `git add` 进暂存区。
+  **对策：测试进程里由 `scripts/vitest.setup.ts` 统一删除；脚本/CI 里一律显式 `--dir`。**
 
 
 ## 仓职责（跨仓分工）

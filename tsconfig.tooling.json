@@ -11,5 +11,7 @@
     "sourceMap": false,
     "rootDir": "."
   },
-  "include": ["scripts/**/*.ts"]
+  // `vitest.config.ts` 也在这里：它是"工具链的配置"，却一直不在任何 tsconfig 的 include 里
+  // —— 又一个"逃逸层"（2026-10-06 顺手收进来）。
+  "include": ["scripts/**/*.ts", "vitest.config.ts"]
 }
