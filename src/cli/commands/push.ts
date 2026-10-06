@@ -23,6 +23,8 @@ const MAX_COMMITS_SHOWN = 5;
  * - D5：无新 commit 时**成功退出**（`✔ up-to-date`）。
  * - D6：`--dry-run` 显示待推送内容，不实际推送。
  * - D7：成功后显示最近 ≤5 个 commit 的 subject。
+ * - D8：**默认拒绝推送** —— 需 `--allow-push` 或 `COLLAB_ALLOW_PUSH=1` 显式授权。
+ *   （`--dry-run` 是只读的，不需要授权。）
  * - 额外：分支未关联时**自动 `--set-upstream`**。
  */
 export async function cmdPush(args: string[]): Promise<void> {
@@ -32,9 +34,15 @@ export async function cmdPush(args: string[]): Promise<void> {
       "dry-run": { type: "boolean", default: false },
       remote: { type: "string" },
       branch: { type: "string" },
+      "allow-push": { type: "boolean", default: false },
     },
     strict: false,
   })
+
+  // 0. 授权门（D8）—— **在 validate 之前**：未授权就没必要往下算
+  if (values["dry-run"] !== true) {
+    assertPushAllowed(values["allow-push"] === true);
+  }
 
   const { collabDir, gitRoot } = findCollabRoot(process.cwd());
 
@@ -119,6 +127,35 @@ export async function cmdPush(args: string[]): Promise<void> {
   console.log("");
   console.log(`✔ pushed ${pending.length} commit(s) to ${upstreamRef}`);
   printCommits(pending);
+}
+
+/**
+ * 推送授权：**默认拒绝**，要 `--allow-push` 或 `COLLAB_ALLOW_PUSH=1`。
+ *
+ * @remarks
+ * 边界写在这里：KB `integrations/cli-agent-boundaries.md` —— **AI 可以 commit，但不 push**
+ * （主干与远端归人）。CLI **分不清调用者是人还是 agent**，所以把它做成**显式授权**：
+ * 人要么这一次打 `--allow-push`，要么在 shell 里设一次 `COLLAB_ALLOW_PUSH=1`。
+ *
+ * 为什么以前没有这道门：这条规则原来只写在散文里，而 `collab push` 谁都能跑 ——
+ * 2026-10-06 实测的"承诺 vs 现实"。**能装成门禁的边界，别只写在文档里。**
+ *
+ * 刻意**不加**"主干分支黑名单"：那会让正常的人肉 push 多一道手续，
+ * 而"多一道手续"的典型结局是绕过 CLI 直接 `git push`（仪器被无视）。
+ * 主干归人这条留在 KB 的边界表里，由人和 review 流程承担。
+ */
+function assertPushAllowed(allowFlag: boolean): void {
+  const fromEnv = (process.env["COLLAB_ALLOW_PUSH"] ?? "").trim();
+  if (allowFlag || fromEnv.length > 0) return;
+
+  console.error("✖ 拒绝推送：**没有显式授权**。");
+  console.error("");
+  console.error("  边界（KB integrations/cli-agent-boundaries）：AI 可 commit，**不 push** —— 远端归人。");
+  console.error("  CLI 分不清调用者，所以要求显式授权：");
+  console.error("    1) 这一次：  collab push --allow-push");
+  console.error("    2) 长期：    $env:COLLAB_ALLOW_PUSH = \"1\"   （PowerShell；bash: export COLLAB_ALLOW_PUSH=1）");
+  console.error("    3) 只想看：  collab push --dry-run   （只读，不需要授权）");
+  process.exit(1);
 }
 
 // ─────────────────────────────────────────────

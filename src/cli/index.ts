@@ -87,11 +87,13 @@ Command options (only where listed):
   --index                      apply — refresh affected _index.md files
   --commit                     apply — commit after validate passes
   -m, --message <message>      commit — commit message
+  --agent <id>                 commit — 署名 trailer（Generated-by）；缺省读 COLLAB_AGENT_ID
   --no-validate                commit — skip validation
   --author <name>              new — 覆盖作者。缺省时按 git 的优先级链取：
                                GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL → git config user.name / user.email
   --remote <name>              push — remote, default "origin"
   --branch <name>              push — branch, default current
+  --allow-push                 push — **显式授权**才推送（默认拒绝；也可用 COLLAB_ALLOW_PUSH=1）
 
 Other:
   --help, -h                   Show this help

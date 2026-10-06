@@ -134,7 +134,8 @@ function agentsMd(): string {
         "",
         "## 边界",
         "",
-        "- **AI 不 commit、不 push**：改动留在工作区，由人确认。",
+        "- **AI 可以 commit，但不 push、不 merge 主干**：commit 走 `collab commit`（先 validate）+ 署名"
+            + "（`Generated-by:`）、**一任务一分支**；push 要人显式授权。",
         "- 本文件**不存放**日常进度、任务、决策。",
         "",
     ]);
@@ -427,7 +428,8 @@ function consumerAgentsMd(kb: string | null): string {
         "- 回答从 H2 开始；不客套、不堆砌。",
         "- **先给规格再写实现**：规格 > 测试 > 类型 > 实现。",
         "- 拿不准就去全局 KB 的症状表查；查不到就**报「找不到」**，别凭空发明规范。",
-        "- **AI 不 commit、不 push**：改动留在工作区，由人确认。",
+        "- **AI 可以 commit，但不 push、不 merge 主干**：commit 走 `collab commit`（先 validate）+ 署名"
+            + "（`Generated-by:`）、**一任务一分支**；push 要人显式授权。",
         "",
         "## 撞墙了怎么办",
         "",

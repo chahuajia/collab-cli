@@ -399,4 +399,42 @@ describe("collab commit", () => {
       expect(status.stdout.trim().length).toBeGreaterThan(0);
     });
   });
+
+  /**
+   * 署名 trailer（2026-10-06）。
+   *
+   * @remarks
+   * 边界改成"**AI 可以 commit**"之后，必须同时给出**归因手段** ——
+   * 否则"让 agent 提交有利于观察历史"会反过来变成"历史里全是无法归因的提交"
+   * （这正是原条目反对 commit 的两条理由之一）。
+   *
+   * 优先级链与 `new` 的 `--author` 同形：`--agent` > `COLLAB_AGENT_ID`；都没有就不加。
+   */
+  describe("署名 trailer", () => {
+    beforeEach(() => setupWorkspace());
+
+    async function commitAndReadMessage(extraEnv: Record<string, string>) {
+      await runCli(["new", "skill", "S30"], testRoot);
+      await runCli(["index", "skills"], testRoot);
+      envOverrides = { ...envOverrides, ...extraEnv };
+      const result = await runCli(["commit", "-m", "feat: add S30"], testRoot);
+      const body = await git(["log", "-1", "--pretty=%B"], testRoot);
+      return { result, body: body.stdout };
+    }
+
+    it("设了 COLLAB_AGENT_ID → 提交信息带 Generated-by", async () => {
+      const { result, body } = await commitAndReadMessage({
+        COLLAB_AGENT_ID: "codex/gpt-5",
+      });
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(body).toContain("Generated-by: codex/gpt-5");
+      expect(result.stdout).toContain("署名");
+    });
+
+    it("什么都没设 → **不编署名**（宁缺勿造）", async () => {
+      const { result, body } = await commitAndReadMessage({ COLLAB_AGENT_ID: "" });
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(body).not.toContain("Generated-by");
+    });
+  });
 });

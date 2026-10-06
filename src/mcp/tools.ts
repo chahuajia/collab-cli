@@ -2,11 +2,15 @@
  * MCP 工具清单 —— **只有声明，没有实现**。
  *
  * @remarks
- * 工具集刻意是"**读 + 计划**"，不含"写 + 提交"：
+ * 工具集是"**读 + 计划 + 一个带门禁的写（commit）**"：
  *
- * - `commit` / `push` **根本不存在**：[[A7-分发与社区边界]] 的可执行版是
- *   "AI 不 commit、不 push" —— 在这里它不再是散文，而是**工具表里没有这一项**。
- *   能被规避的规则靠自觉，**不存在的工具**不靠自觉。
+ * - **`collab_commit` 默认就有**（2026-10-06 人拍板："为了统一，默认开"）：
+ *   它**先跑 validate**、有阻断级 Issue 就拒绝，并给提交加 `Generated-by:` 署名。
+ *   起因：长任务里 agent 需要**切分支 / 合并 / 出错回滚**，而"改动只在工作区"让
+ *   git 历史看不出过程、回滚只能靠人。边界随之改成
+ *   **"可 commit（带门禁 + 署名 + 一任务一分支），不 push，不 merge 主干"**。
+ * - **`push` 仍然根本不存在**：远端归人。CLI 里 `collab push` 也要**显式授权**
+ *   （`--allow-push` / `COLLAB_ALLOW_PUSH=1`）才放行 —— 那边是"门"，这边是"没有这个工具"。
  * - 写盘（`collab apply`）也不暴露：MCP 的 `collab_apply_plan` 只出计划，
  *   真正的落盘由人在 CLI 执行。原因见 `working-memory` 的决策记录 ——
  *   一旦在 MCP 里重写"落盘 → 刷 catalog → 门禁"这条流水线，
@@ -43,6 +47,37 @@ const READ_ONLY = {
 } as const;
 
 export const MCP_TOOLS: readonly McpToolDefinition[] = [
+  {
+    name: "collab_commit",
+    title: "提交知识库改动（validate 通过才提交）",
+    description:
+      "把知识库的改动 `git add` + `git commit`。**提交前先跑 validate**，有阻断级 Issue 就拒绝提交。" +
+      "提交信息自动追加 `Generated-by: <agent>` 署名（传 `agent`，或用 `COLLAB_AGENT_ID`）——" +
+      "这是让人能在 `git log` 里认出机器提交。**不 push**：远端由人操作。" +
+      "典型用法：一任务一分支，做完一条判据就提交一次（而不是攒到最后）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dir: DIR_PROPERTY,
+        message: { type: "string", description: "提交信息（必填、非空）。" },
+        agent: {
+          type: "string",
+          description: "署名标识；缺省读环境变量 COLLAB_AGENT_ID；都没有则不加署名。",
+        },
+        validate: {
+          type: "boolean",
+          description: "默认 true。false 跳过校验（危险 —— 只在明知要提交半成品时用）。",
+        },
+      },
+      required: ["message"],
+    },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+  },
   {
     name: "collab_catalog",
     title: "COLLABORATION 路由表",

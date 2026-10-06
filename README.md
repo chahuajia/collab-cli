@@ -72,10 +72,11 @@ codex mcp list
 服务器在 stdio 上说话，支持**两个协议时代**：`2026-07-28` 起 MCP 无状态
 （版本随每个请求的 `_meta`，入口是 `server/discover`），此前是 `initialize` 握手。
 
-暴露 6 个工具，**全是只读或只出计划**：
+暴露 **7** 个工具：6 个**只读或只出计划**，加 1 个**带门禁的写**（`collab_commit`）：
 
 | 工具 | 作用 |
 | :--- | :--- |
+| `collab_commit` | **提交知识库改动** —— 先跑 `validate`（阻断级就拒绝），提交信息加 `Generated-by:` 署名。**不 push** |
 | `collab_catalog` | 路由表：先定位，再读条目正文（上下文成本从 O(n) 降到 O(命中数)） |
 | `collab_read` | 按 id 或路径读单条（`bodyOnly` 可只取正文） |
 | `collab_search` | 在 id / 标题 / 正文里搜，返回片段与排序 |
@@ -83,8 +84,9 @@ codex mcp list
 | `collab_parse` | 粘贴的 AI 输出 → bundle（不落盘；跳过的块走 `warnings`） |
 | `collab_apply_plan` | 预演落盘计划（**永不写盘**） |
 
-**没有 `commit` / `push` 工具，也不打算有** —— "AI 不 commit、不 push"这条规则
-在这里不是散文，而是**工具表里不存在这一项**。
+**`commit` 有（`collab_commit`，默认开）：它先跑 `validate`、拒绝阻断级提交，并给信息加
+`Generated-by:` 署名。`push` 仍然没有、也不打算有** —— 远端归人；
+CLI 侧 `collab push` 也默认拒绝，要 `--allow-push` / `COLLAB_ALLOW_PUSH=1` 才放行。
 
 ## 架构
 

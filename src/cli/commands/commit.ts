@@ -1,28 +1,25 @@
-import { execFileSync } from "node:child_process";
-import path from "node:path";
 import { parseArgs } from "node:util";
-import {
-  ValidateUseCase,
-  standardRules,
-} from "@/application/ValidateUseCase";
-import { FileWorkspaceLoader } from "@/infrastructure/fs/FileWorkspaceLoader";
+import { commitWorkspace, resolveAgentId } from "@/application/CommitUseCase";
 import { findCollabRoot } from "@/infrastructure/fs/findCollabRoot";
-import { gitRun } from "@/infrastructure/git/gitRunner";
 
 /**
- * `collab commit -m "<message>" [--no-validate]`
+ * `collab commit -m "<message>" [--no-validate] [--agent <id>]`
  *
  * 校验（可选）+ git add COLLABORATION/ + git commit。
  *
  * @remarks
- * 决策落地：
+ * 决策落地（**核心在 `application/CommitUseCase.ts`** —— CLI 与 MCP 共用一份；
+ * 这里只负责命令行表面：解析、打印、退出码）：
  * - D1：`-m` 必填且非空。
  * - D2：无变更时报错（与 git 一致）。
  * - D3：只 `git add COLLABORATION/`。
- * - D4：validate 失败时阻止提交；`--no-validate` 可跳过。
+ * - D4：validate 失败时阻止提交；`--no-validate` 可跳过（**会出声**）。
  * - D5：`--no-validate` 时打印 `⚠ validate skipped`。
  * - D6：成功后提示下一步 `collab push`。
  * - D7：push 由独立命令负责，本命令不涉及。
+ * - D8：`--agent <id>`（或 `COLLAB_AGENT_ID`）存在时，提交信息自动追加
+ *   `Generated-by: <id>` trailer —— **AI 的提交要能在 `git log` 里认出来**，
+ *   否则"让 agent commit 有利于观察历史"会反过来变成"历史里全是无法归因的提交"。
  */
 export async function cmdCommit(args: string[]): Promise<void> {
   const { values } = parseArgs({
@@ -30,6 +27,7 @@ export async function cmdCommit(args: string[]): Promise<void> {
     options: {
       message: { type: "string", short: "m" },
       "no-validate": { type: "boolean", default: false },
+      agent: { type: "string" },
     },
     strict: false,
   });
@@ -44,73 +42,39 @@ export async function cmdCommit(args: string[]): Promise<void> {
 
   // 2. 定位 COLLABORATION
   const { collabDir, gitRoot } = findCollabRoot(process.cwd());
-  /**
-   * 相对 `gitRoot` 的路径。
-   *
-   * @remarks
-   * - **布局 A**（`repo/COLLABORATION/`）→ `'COLLABORATION'`
-   * - **布局 B**（`repo/` 即知识库根）→ **`''`** → 转为 `'.'`（git 的"当前目录"）
-   *
-   * 空字符串不是有效的 git pathspec —— 所以 `''` 要转 `.`。
-   */
-  const rawRelPath = path.relative(gitRoot, collabDir);
-  const relCollabDir = rawRelPath === "" ? "." : rawRelPath;
 
   // 3. 校验（D4 / D5）
-  if (values["no-validate"]) {
+  const skipValidate = values["no-validate"] === true;
+  if (skipValidate) {
     console.log("⚠ validate skipped (--no-validate)");
-  } else {
-    const loader = new FileWorkspaceLoader(collabDir);
-    const useCase = new ValidateUseCase(loader, standardRules);
-    const { entries, report } = useCase.execute();
+  }
 
-    if (report.hasBlocking()) {
+  // 4. 干（validate → add → commit），核心在 use case
+  const outcome = commitWorkspace({
+    gitRoot,
+    collabDir,
+    message,
+    agentId: resolveAgentId(values.agent),
+    validate: !skipValidate,
+  });
+
+  switch (outcome.kind) {
+    case "validate-failed":
       console.log(
-        `✖ validate failed: ${report.count()} issues (${report.errors().length} errors)`,
+        `✖ validate failed: ${outcome.issues} issues (${outcome.errors} errors)`,
       );
       console.log("");
       console.log("Run `collab validate` for details. Aborting commit.");
-      process.exit(1);
-    }
-
-    console.log(`✔ validate passed (${entries.length} entries, 0 issues)`);
-  }
-
-  // 4. git add COLLABORATION（D3）
-  gitRun(["add", relCollabDir], gitRoot);
-
-  // 5. 检查是否有 staged 变更（D2）
-  if (!hasStagedChanges(gitRoot, relCollabDir)) {
-    throw new Error("nothing to commit (COLLABORATION has no changes)");
-  }
-
-  // 6. git commit
-  gitRun(["commit", "-m", message], gitRoot);
-
-  console.log(`✔ committed: "${message}"`);
-  console.log("");
-  console.log("Next: run `collab push` to push to remote."); // D6
-}
-
-/**
- * 检查指定路径是否有 staged 变更。
- *
- * @remarks
- * `git diff --cached --quiet` 的退出码语义：
- * - 0 → 无差异
- * - 1 → 有差异
- *
- * 用 `-- <path>` 限定范围——只关心 COLLABORATION 下的变更，
- * 不影响其他目录的 staged 状态。
- */
-function hasStagedChanges(cwd: string, relPath: string): boolean {
-  try {
-    execFileSync("git", ["diff", "--cached", "--quiet", "--", relPath], {
-      cwd,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    return false; // exit 0 = 无差异
-  } catch {
-    return true; // exit 1 = 有差异
+      return process.exit(1);
+    case "nothing-to-commit":
+      throw new Error("nothing to commit (COLLABORATION has no changes)");
+    case "ok":
+      if (!skipValidate) {
+        console.log(`✔ validate passed (${outcome.entries} entries, 0 issues)`);
+      }
+      console.log(`✔ committed: "${message}"`);
+      if (outcome.agentId !== null) console.log(`  署名：Generated-by: ${outcome.agentId}`);
+      console.log("");
+      console.log("Next: run `collab push` to push to remote."); // D6
   }
 }

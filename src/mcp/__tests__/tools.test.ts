@@ -12,6 +12,7 @@ import { EntryKindValues } from "@/domain/entry/types";
 import { sha256Hex } from "@/infrastructure/crypto/sha256";
 import { repoRoot } from "@/infrastructure/fs/repoRoots";
 import { runTool } from "@/mcp/handlers";
+import { MCP_TOOLS } from "@/mcp/tools";
 import type { ToolContext, ToolOutcome } from "@/mcp/handlers";
 
 const AGREEMENT_REL = "agreements/A10-测试条目.md";
@@ -51,6 +52,64 @@ afterEach(async () => {
 });
 
 describe("MCP 工具", () => {
+  /**
+   * `collab_commit`（2026-10-06 新增，**默认开**）。
+   *
+   * @remarks
+   * 边界改成"AI 可 commit、不 push"之后：
+   * - **commit 进工具表**（这里是唯一的写工具，且**先 validate**、带 `Generated-by` 署名）；
+   * - **push 永不进工具表** —— 远端归人；CLI 侧也要显式授权才放行。
+   */
+  describe("collab_commit", () => {
+    async function initGitRepo(): Promise<void> {
+      await execa("git", ["init", "-q", "-b", "main"], { cwd: root });
+      await execa("git", ["config", "--local", "user.email", "t@example.com"], { cwd: root });
+      await execa("git", ["config", "--local", "user.name", "Test"], { cwd: root });
+    }
+
+    async function writeAgreementIndex(): Promise<void> {
+      await writeFile(
+        path.join(root, "agreements/_index.md"),
+        "| ID | 名称 | 领域 | 状态 |\n| :-- | :-- | :-- | :-- |\n| [[A10]] | x | | |\n",
+        "utf8",
+      );
+    }
+
+    it("validate 通过 → 提交成功，且信息里带 Generated-by 署名", async () => {
+      await initGitRepo();
+      await writeAgreementIndex();
+
+      const outcome = runTool(
+        "collab_commit",
+        { message: "test: 提交一条", agent: "codex/test" },
+        ctx,
+      );
+      expect(outcome.isError).toBe(false);
+      expect(outcome.text).toContain("已提交");
+
+      const log = await execa("git", ["log", "-1", "--pretty=%B"], { cwd: root });
+      expect(log.stdout).toContain("test: 提交一条");
+      expect(log.stdout).toContain("Generated-by: codex/test");
+    });
+
+    it("validate 不过 → 拒绝提交（isError，且不产生 commit）", async () => {
+      await initGitRepo();
+      // 故意不写 `_index.md` → MISSING_FROM_INDEX 是阻断级
+      const outcome = runTool("collab_commit", { message: "bad" }, ctx);
+      expect(outcome.isError).toBe(true);
+      expect(outcome.text).toContain("拒绝提交");
+
+      const log = await execa("git", ["log", "--oneline"], { cwd: root, reject: false });
+      expect(log.stdout.trim(), "被拒时不能留下 commit").toBe("");
+    });
+
+    it("工具表里**没有 push**（远端归人）", () => {
+      const names = MCP_TOOLS.map((t) => t.name);
+      expect(names).toContain("collab_commit");
+      expect(names.some((n) => n.includes("push"))).toBe(false);
+    });
+  });
+
   describe("collab_catalog", () => {
     it("列出条目（id / 类型 / 状态 / 路径）", () => {
       const { parsed, outcome } = call("collab_catalog", {});

@@ -68,6 +68,10 @@ async function setupWorkspace(opts: SetupOptions = {}): Promise<void> {
   envOverrides = {
     GIT_CONFIG_GLOBAL: emptyGitConfig,
     GIT_CONFIG_SYSTEM: emptyGitConfig,
+    // 2026-10-06 起 `collab push` **默认拒绝**（边界：AI 可 commit，不 push）——
+    // 要 `--allow-push` 或这个环境变量才放行。本文件测的是 push 自身的行为，
+    // 所以默认扮演"已授权的人"；**未授权那条分支**由 E13 专门钉住。
+    COLLAB_ALLOW_PUSH: "1",
   };
 
   // 1. 创建远程裸仓库
@@ -427,6 +431,59 @@ describe("collab push", () => {
       const again = await runCli(["push"], localDir);
       expect(again.exitCode).toBe(0);
       expect(again.stdout.toLowerCase()).toMatch(/up-to-date|nothing to push/);
+    });
+  });
+
+  /**
+   * E13：**默认拒绝推送**（2026-10-06 的边界：AI 可 commit，不 push）。
+   *
+   * @remarks
+   * 这条以前只写在散文里（KB `integrations/cli-agent-boundaries.md`），
+   * 而 `collab push` 谁都能跑 —— 典型的"承诺 vs 现实"。
+   * 现在做成**显式授权**：`--allow-push` 或 `COLLAB_ALLOW_PUSH=1`。
+   *
+   * 三条断言分别锁住：① 未授权 → 非零退出；② 提示里给出两种授权方式；③ **远端没被动过**。
+   */
+  describe("E13: 未授权 → 拒绝推送", () => {
+    beforeEach(() => setupWorkspace());
+
+    /** 造一条能通过 validate 的提交（E13 的 Arrange；`publishNewSkill` 是 round-8 块的局部函数）。 */
+    async function commitNewSkill(id: string, message: string): Promise<void> {
+      await writeIndex(collabDir, "skills", []);
+      expect((await runCli(["new", "skill", id], localDir)).exitCode).toBe(0);
+      expect((await runCli(["index", "skills"], localDir)).exitCode).toBe(0);
+      expect((await runCli(["commit", "-m", message], localDir)).exitCode).toBe(0);
+    }
+
+    it("没有 --allow-push 也没有 COLLAB_ALLOW_PUSH → 拒，且远端不动", async () => {
+      await commitNewSkill("S30", "feat: add S30");
+      const before = await git(["rev-parse", "origin/main"], localDir);
+
+      envOverrides = { ...envOverrides, COLLAB_ALLOW_PUSH: "" };
+      const refused = await runCli(["push"], localDir);
+
+      expect(refused.exitCode).not.toBe(0);
+      expect(refused.stderr).toContain("拒绝推送");
+      expect(refused.stderr).toContain("--allow-push");
+      expect(refused.stderr).toContain("COLLAB_ALLOW_PUSH");
+      const after = await git(["rev-parse", "origin/main"], localDir);
+      expect(after.stdout, "被拒时不能碰远端").toBe(before.stdout);
+    });
+
+    it("`--allow-push` 是这一次的授权（不开环境变量也能推）", async () => {
+      await commitNewSkill("S30", "feat: add S30");
+      envOverrides = { ...envOverrides, COLLAB_ALLOW_PUSH: "" };
+
+      const pushed = await runCli(["push", "--allow-push"], localDir);
+      expect(pushed.exitCode, pushed.stderr).toBe(0);
+    });
+
+    it("`--dry-run` 是只读的：不需要授权", async () => {
+      await commitNewSkill("S30", "feat: add S30");
+      envOverrides = { ...envOverrides, COLLAB_ALLOW_PUSH: "" };
+
+      const dry = await runCli(["push", "--dry-run"], localDir);
+      expect(dry.exitCode, dry.stderr).toBe(0);
     });
   });
 });

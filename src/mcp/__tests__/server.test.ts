@@ -120,7 +120,9 @@ describe("MCP 服务器", () => {
       for (const tool of parsed.result.tools) {
         expect(typeof tool.name).toBe("string");
         expect(tool.inputSchema.type).toBe("object");
-        expect(tool.annotations.readOnlyHint).toBe(true);
+        // 除 `collab_commit`（带门禁的写）外，其余都应声明只读
+        const expectedReadOnly = tool.name !== "collab_commit";
+        expect(tool.annotations.readOnlyHint, tool.name).toBe(expectedReadOnly);
         expect(tool.description.length).toBeGreaterThan(0);
       }
     });
@@ -143,12 +145,19 @@ describe("MCP 服务器", () => {
       expect(names(first)).toEqual(names(second));
     });
 
-    it("没有 commit / push 这类工具（规则靠'不存在'执行）", () => {
+    /**
+     * 边界（2026-10-06 修订）：**commit 有，push 没有**。
+     *
+     * @remarks
+     * 原文是"两样都没有"。改成"可 commit"之后，**push 这条更要用'不存在'来执行** ——
+     * 远端归人；CLI 侧同样要显式授权才放行。
+     */
+    it("有 commit（带门禁），但**没有 push**（规则靠'不存在'执行）", () => {
       const response = send(
         JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
       );
       const text = JSON.stringify(response);
-      expect(text).not.toContain("collab_commit");
+      expect(text).toContain("collab_commit");
       expect(text).not.toContain("collab_push");
     });
   });

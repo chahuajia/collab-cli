@@ -236,3 +236,14 @@ git tag v0.6.0                                                # 2. 打出对外�
   → 修前 `1 error`，修后 `0 issues`。`resolvesRef` / `refersToIdentity` 都补了 `.md` 归一化。
 - 预防侧：`init` 生成的两种 `AGENTS.md` 模板的 `new` 行都加了"**写「关联」时用 `[[id]]`** ——
   裸路径不是链接，会报 `RELATIONS_NOT_LINKED`"。
+
+### 同批：写权限边界改了（**行为变更**）
+
+- **`collab push` 默认拒绝**：要 `--allow-push` 或 `COLLAB_ALLOW_PUSH=1` 才放行（`--dry-run` 只读，不需要）。
+  以前"AI 不 push"只写在 KB 的散文里，而 CLI 谁都能跑 —— 典型的**承诺 vs 现实**，
+  现在变成门。刻意**没加**"主干分支黑名单"：那会让人绕过 CLI 直接 `git push`（仪器被无视）。
+- **`collab commit --agent <id>` / `COLLAB_AGENT_ID`** → 提交信息自动追加 `Generated-by: <id>` 署名。
+  没有就不编（宁缺勿造）。这是"允许 agent commit"的**前提**：否则历史里全是无法归因的提交。
+- **MCP 新增 `collab_commit`（默认开）**：先 `validate`（阻断级就拒绝）、带同样的署名；
+  **push 仍然没有那个工具**。核心逻辑抽到 `application/CommitUseCase.ts`，**CLI 与 MCP 共用一份** ——
+  "CLI 允许、MCP 拒绝"这种漂移最坏。

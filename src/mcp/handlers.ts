@@ -2,6 +2,7 @@ import path from "node:path";
 import { ApplyUseCase } from "@/application/ApplyUseCase";
 import { buildBundle } from "@/application/buildBundle";
 import { buildCatalog } from "@/application/buildCatalog";
+import { commitWorkspace, resolveAgentId } from "@/application/CommitUseCase";
 import {
   ValidateUseCase,
   contentRules,
@@ -72,6 +73,8 @@ export function runTool(
   ctx: ToolContext,
 ): ToolOutcome {
   switch (name) {
+    case "collab_commit":
+      return commitTool(rawArgs, ctx);
     case "collab_catalog":
       return catalogTool(rawArgs, ctx);
     case "collab_read":
@@ -327,6 +330,61 @@ function parseTool(
     }),
     isError: false,
   };
+}
+
+/**
+ * `collab_commit` —— 提交知识库改动（validate 通过才提交）。
+ *
+ * @remarks
+ * 核心走 `application/CommitUseCase`（**与 CLI 的 `collab commit` 同一份**）——
+ * 两份必然漂移，而"CLI 允许、MCP 拒绝"这种漂移最坏。
+ *
+ * `gitRoot` 直接取**知识库根**：`git add .` / `git commit` 的 cwd 落在库根，
+ * git 自己会向上找到真正的仓根；`path.relative` 随之得 `.`，作用域正好是知识库。
+ *
+ * **不 push**：这里没有那个工具，CLI 侧也要显式授权才放行。
+ */
+function commitTool(
+  args: Readonly<Record<string, unknown>>,
+  ctx: ToolContext,
+): ToolOutcome {
+  const dir = resolveCollabDir(args, ctx);
+  const message = readString(args, "message");
+  if (message === null || message.trim().length === 0) {
+    throw new ToolArgumentError("`message` is required and must be non-empty");
+  }
+  const shouldValidate = args["validate"] !== false;
+
+  const outcome = commitWorkspace({
+    gitRoot: dir,
+    collabDir: dir,
+    message,
+    agentId: resolveAgentId(readString(args, "agent")),
+    validate: shouldValidate,
+  });
+
+  switch (outcome.kind) {
+    case "validate-failed":
+      return {
+        text:
+          `✖ 拒绝提交：validate 未通过（${outcome.issues} issues / ${outcome.errors} errors）。` +
+          `\n先修干净再提交 —— 用 \`collab_validate\` 看具体条目。`,
+        isError: true,
+      };
+    case "nothing-to-commit":
+      return { text: "没有可提交的改动（知识库目录下没有 staged 变更）。", isError: false };
+    case "ok":
+      return {
+        text:
+          `✔ 已提交："${message}"` +
+          (outcome.agentId === null ? "" : `（署名 Generated-by: ${outcome.agentId}）`) +
+          (shouldValidate ? `\n校验：${outcome.entries} entries, 0 issues` : "\n⚠ 本次跳过了校验（validate=false）") +
+          "\n**未 push** —— 远端由人操作。",
+        isError: false,
+      };
+    default:
+      return { text: "unreachable", isError: true };
+  }
 }
 
 /**
