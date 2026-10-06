@@ -5,6 +5,7 @@ import { cmdIndex } from "@/cli/commands";
 import { cmdApply } from "@/cli/commands/apply";
 import { cmdCatalog } from "@/cli/commands/catalog";
 import { cmdCommit } from "@/cli/commands/commit";
+import { cmdDoctor } from "@/cli/commands/doctor";
 import { cmdFix } from "@/cli/commands/fix";
 import { cmdInit, SUPPORTED_PROFILES } from "@/cli/commands/init";
 import { cmdMcp } from "@/cli/commands/mcp";
@@ -34,6 +35,7 @@ export const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   index: cmdIndex,
   validate: cmdValidate,
   commit: cmdCommit,
+  doctor: cmdDoctor,
   fix: cmdFix,
   retire: cmdRetire,
   push: cmdPush,
@@ -57,6 +59,7 @@ Commands:
   catalog                      Generate catalog.json (the routing table)
   index [dir]                  Update _index.md for a directory (or all)
   validate                     Validate the entire workspace
+  doctor                       Check the wiring: workspace / validate / generated / entry / git
   fix                          Fill in mechanical frontmatter fields (add-only)
   retire <id>                  Retire an entry from the routing index (not deleted).
                                --candidates lists islands (report only, never writes)
@@ -81,7 +84,7 @@ Command options (only where listed):
   --grace-days <n>             retire — 孤岛宽限期，默认 30（新条目还没轮到被引用）
   --max-age <days>             memory — 状态文件的过期阈值，默认 7
   --max-candidate-age <days>   memory — 候选池"挂了多久未 harvest"的阈值，默认 14
-  --json                       validate / apply / init — machine-readable (shapes differ)
+  --json                       validate / apply / init / doctor — machine-readable (shapes differ)
   --check-enforced             validate — 复查已毕业条目的 enforced 目标是否还在
                                （要读跨仓文件系统，故非默认；无法判定不算错，但会报 WARNING）
   --index                      apply — refresh affected _index.md files

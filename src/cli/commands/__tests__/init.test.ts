@@ -218,6 +218,10 @@ describe('collab init — profile=kb', () => {
     expect(agents).toContain('@chahuajia/collab-cli');
     expect(agents).toContain('--help');
     expect(agents, '必备的确认门不能漏（照抄会报错）').toContain('--confirm');
+    // 协议五条（2026-10-06 实测事故：入口只写"读什么"，agent 整段会话 0 次用工具）
+    expect(agents).toContain('接在哪');
+    expect(agents).toContain('红灯协议');
+    expect(agents, '两本账本都要点名（收益侧 / 缺口侧）').toContain('interceptions');
   });
 });
 
@@ -264,6 +268,8 @@ describe('collab init — profile=consumer（默认）', () => {
     expect(agents, '命令要指回真 KB，而不是本仓').toMatch(/fake-kb/);
     expect(agents, '要写清"选项的权威是 --help"（防表格漂移）').toContain('--help');
     expect(agents, '要写清"别对本仓 validate"（尺子拿错）').toContain('UNDECLARED_DIR');
+    expect(agents).toContain('接在哪');
+    expect(agents).toContain('红灯协议');
   });
 
   it('I13b consumer wrapper：安装范围派生，且**校验对象**被钉在 KB 上', async () => {

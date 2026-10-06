@@ -247,3 +247,19 @@ git tag v0.6.0                                                # 2. 打出对外�
 - **MCP 新增 `collab_commit`（默认开）**：先 `validate`（阻断级就拒绝）、带同样的署名；
   **push 仍然没有那个工具**。核心逻辑抽到 `application/CommitUseCase.ts`，**CLI 与 MCP 共用一份** ——
   "CLI 允许、MCP 拒绝"这种漂移最坏。
+
+### 同批：新增 `collab doctor`（接线体检）
+
+一条命令回答**"这套接线还活着吗"**（`validate` 查内容，`doctor` 查接线）：
+
+| 检查 | 通不过时 |
+| :--- | :--- |
+| 工作区能否定位 | ❌ + 给 `--dir` 写法 |
+| 知识库校验 | ❌ + 指向 `collab validate` |
+| 生成物是否新鲜（`CATALOG_STALE` / `MISSING_FROM_INDEX`） | ❌ + 直接给 `collab catalog` / `index` |
+| **入口点名工具了吗**（`AGENTS.md` 里有没有 `collab <cmd>`） | ⚠ + 给出该补的那一行 |
+| 有没有 `.git`（`commit` 的门） | ⚠ + `git init` |
+
+**两个根分开**（第一版踩过）：**知识库**是校验对象（`--dir` / `COLLAB_DIR` / 向上找），
+而**入口与 git 属于"你人在的那个仓"**（cwd）—— 否则"在一个没 git 的项目里跑"会报"是 git 仓"（看的是 KB）✗。
+退出码：有 ❌ → `1`；只有 ⚠ → `0`。

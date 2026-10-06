@@ -32,6 +32,7 @@ node bin/collab.js --help
 | `collab apply <bundle.json> [--dry-run] [--index] [--commit]` | 落盘：**要么全部成功，要么一个字节都不写** |
 | `collab index [dir]` | 增量同步 `_index.md`（保留人工列） |
 | `collab validate [--json]` | 全量校验（链接 / 索引 / id / 目录 / 生成物） |
+| `collab doctor [--json]` | **接线体检**：工作区能否定位 / 校验过不过 / 生成物新不新 / **入口有没有点名工具** / 有没有 git（有 ❌ → exit 1；只有 ⚠ → 0） |
 | `collab catalog [--out] [--stdout]` | 生成 `catalog.json`（agent 的路由表） |
 | `collab fix [--dry-run]` | 补齐机械字段（**只补不删**，补不了就报错） |
 | `collab retire <id> --dormant --reason "<分类>: <证据>" [--dry-run]` | 让条目**退出路由索引**（不是删除）——被冷落（过时 / 重复 / 表达差 / 未成熟） |
@@ -61,6 +62,11 @@ node bin/collab.js --help
 
 退出码：`0` 通过、`1` 有阻断性问题或参数错误。**没有退出码 2**
 （未知命令 / 缺参数 / 校验红 都走 `1`）。
+
+> **`doctor` 与 `validate` 的分工**：`validate` 查**内容对不对**，`doctor` 查**接线还在不在** ——
+> 起因（2026-10-06 实测）：某新项目的 agent 通读了入口，整段会话 `collab` 用了 **0 次**，
+> 因为入口里**一个字没提工具**。`doctor` 把这条变成一行能红的检查：
+> `⚠ 入口：AGENTS.md 没有提到 collab 命令 → 在入口补一行 …`。
 
 ## MCP 接入
 

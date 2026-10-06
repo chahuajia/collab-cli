@@ -104,6 +104,10 @@ npm run memory
   那么**任何不带 `--dir` 的命令都会指向那个库** —— 包括在别的项目里跑 `new` / `commit`。
   2026-10-06 实测：它让测试往真库写了 3 条、并把真库 7 项改动 `git add` 进暂存区。
   **对策：测试进程里由 `scripts/vitest.setup.ts` 统一删除；脚本/CI 里一律显式 `--dir`。**
+- **`build` 失败会留下半成品 `dist`**：`npm run build` = `clean-dist && tsc && tsc-alias` ——
+  `tsc` 一旦报错（比如测试文件类型错），`tsc-alias` 就不会跑，**别名没被重写成相对路径**；
+  于是之后每条 E2E 都会以一个莫名其妙的 `ERR_MODULE_NOT_FOUND: Cannot find package '@/cli'` 失败
+  （2026-10-06 实测踩了一次，浪费一轮排查）。**判据：E2E 报模块找不到时，先 `npm run build` 看它是否真的成功。**
 
 
 ## 仓职责（跨仓分工）
