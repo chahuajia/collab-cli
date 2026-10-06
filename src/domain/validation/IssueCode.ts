@@ -94,6 +94,17 @@ export const IssueCodeValues = {
     /** 门槛生效日之后创建的条目缺 `falsifier`（存量条目豁免） */
     FalsifierRequired: 'FALSIFIER_REQUIRED',
 
+    /**
+     * 「关联」节里的引用写成了**纯文本**（如 `patterns/agent-delegation-criteria`），而不是 `[[双链]]`。
+     *
+     * @remarks
+     * 死链规则管不到它：**它根本不是链接** —— 但边同样丢了，
+     * 可达性扫描与 `catalog` 的图都少一条边（目标看起来像孤岛）。
+     * 只查「## 关联」节：正文里用反引号写路径是**正当写法**（本库到处是），
+     * 全库扫会一片假阳性。
+     */
+    RelationsNotLinked: 'RELATIONS_NOT_LINKED',
+
     // ─────────────────────────────────────────────
     // collab parse —— 条目块（自描述 frontmatter）的切分问题
     // ─────────────────────────────────────────────

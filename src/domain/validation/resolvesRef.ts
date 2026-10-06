@@ -9,8 +9,11 @@ import type { RuleContext } from "@/domain/validation/Rule";
  *
  * @remarks
  * 三种匹配（任一命中即合法）：
- * 1. **完整路径**：`agreements/A1-output-format` → `allMarkdownPaths.has(完整)`
- * 2. **末段 = 文件名**：`A1-output-format`、`patterns/rooted-graph`
+ * 1. **完整路径**：`agreements/A1-output-format` → `allMarkdownPaths.has(完整)`。
+ *    **`.md` 后缀两种写法都收** —— `allMarkdownPaths` 与 `fileNameOf` 同口径（**不带**扩展名），
+ *    所以 `[[patterns/x.md]]` 必须归一化后再比，否则"文件明明在"却报死链
+ *    （2026-10-06 实测的最小复现：`[[patterns/alpha.md]]` → `DEAD_LINK`）。
+ * 2. **末段 = 文件名**：`A1-output-format`、`patterns/rooted-graph`（同样容忍 `.md`）
  * 3. **末段 = id**：`A1` —— **前提是 id 已登记进 `aliases`**（由 `idIsAlias` 规则强制）。
  *    渲染层（Obsidian）靠 alias 解析 id 形式的链接；没有那条规则，
  *    "忘了写 aliases" 就会静默断链 —— 这正是历史上那批 id 断链的成因。
@@ -24,11 +27,15 @@ import type { RuleContext } from "@/domain/validation/Rule";
  * @see refersTo —— 用于 `checkIndexForward`（判据是"指向给定 entry"）
  */
 export function resolvesRef(ref: string, context: RuleContext): boolean {
-  // 1. 完整路径直接匹配
-  if (context.allMarkdownPaths.has(ref)) return true;
+  // 1. 完整路径直接匹配 —— **`.md` 与不带 `.md` 两种写法等价**
+  //    （`allMarkdownPaths` 是无扩展名的口径，见上方 @remarks）
+  const withoutMd = ref.replace(/\.md$/, "");
+  if (context.allMarkdownPaths.has(ref) || context.allMarkdownPaths.has(withoutMd)) {
+    return true;
+  }
 
   // 2. 末段匹配：id 或文件名
-  const last = lastSegmentOf(ref);
+  const last = lastSegmentOf(withoutMd);
 
   if (context.allEntryIds.has(last)) return true;
 
@@ -73,7 +80,8 @@ export function refersToIdentity(
   id: string,
   fileName: string,
 ): boolean {
-  const last = lastSegmentOf(ref);
+  // 同样容忍 `.md`：`foo.md` 与 `foo` 指同一条（`fileName` 是无扩展名的口径）
+  const last = lastSegmentOf(ref).replace(/\.md$/, "");
   return last === id || last === fileName;
 }
 

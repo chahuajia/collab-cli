@@ -400,6 +400,24 @@ export class Issue {
     }
 
     /**
+     * 「关联」节里的引用没写成 `[[双链]]`。
+     *
+     * @remarks
+     * **阻断**（与 `indexRefPreferId` 那种"推荐"不同）：纯文本引用**不是链接**，
+     * 边真的丢了 —— 可达性扫描与 `catalog` 的图会少一条边，目标看起来像孤岛。
+     * 「关联」节按定义就是"这一条与哪些条目有关"，所以这里写裸路径没有第二种解释。
+     */
+    static relationsNotLinked(path: string, token: string, suggestion: string): Issue {
+        return Issue.of({
+            severity: SeverityValues.Error,
+            code: IssueCodeValues.RelationsNotLinked,
+            message: `relation reference is plain text: "${token}" — it is not a [[link]], so the graph loses that edge`,
+            path,
+            suggestion: `write [[${suggestion}]]（或删掉它 —— 如果那本来就是散文，不是一条关联）`,
+        });
+    }
+
+    /**
      * `enforced` 的目标**没能被检查**（仓名不认识 / 那个仓在本机不可达）。
      *
      * @remarks

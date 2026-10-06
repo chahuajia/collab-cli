@@ -175,3 +175,43 @@ describe("refersTo", () => {
     expect(refersTo("A2", entry)).toBe(false);
   });
 });
+
+// ─────────────────────────────────────────────
+// `.md` 后缀：两种写法等价（2026-10-06 修的 bug）
+// ─────────────────────────────────────────────
+describe("resolvesRef —— `.md` 后缀", () => {
+  /**
+   * 最小复现（真跑过）：`[[patterns/alpha.md]]`，而 `patterns/alpha.md` **确实存在** ——
+   * 修之前报 `DEAD_LINK`。根因：`allMarkdownPaths` 与 `fileNameOf` 都是**不带扩展名**的口径，
+   * 而第 1 步的完整路径匹配拿原文去比 → 带 `.md` 的引用永远匹配不上。
+   */
+  it("带 .md 的完整路径能解析（修之前会误报 DEAD_LINK）", () => {
+    expect(
+      resolvesRef(
+        "patterns/alpha.md",
+        ctx({ markdownPaths: ["patterns/alpha"] }),
+      ),
+    ).toBe(true);
+  });
+
+  it("不带 .md 的写法仍然解析（没退化）", () => {
+    expect(
+      resolvesRef("patterns/alpha", ctx({ markdownPaths: ["patterns/alpha"] })),
+    ).toBe(true);
+  });
+
+  it("带 .md 的文件名末段也能解析", () => {
+    expect(
+      resolvesRef(
+        "alpha.md",
+        ctx({ entryIds: ["alpha"], markdownPaths: ["patterns/alpha"] }),
+      ),
+    ).toBe(true);
+  });
+
+  it("不存在的路径带 .md 仍然解析失败（别把宽容做成假绿）", () => {
+    expect(
+      resolvesRef("patterns/nope.md", ctx({ markdownPaths: ["patterns/alpha"] })),
+    ).toBe(false);
+  });
+});

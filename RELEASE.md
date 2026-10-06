@@ -216,3 +216,23 @@ git tag v0.6.0                                                # 2. 打出对外�
   CI 里那句 `node scripts/collab-validate.mjs` **原本就在**（"唯一调用点"）—— 这次只是把它周围补齐。
 - 回归测试：`I12d`（kb 的 AGENTS.md 必须点名工具 + 写清 `--help` 权威 + 带 `--confirm`）、
   `I15`（生成的 CI 必须调 wrapper、有最小权限/取消旧轮、且**不含 `@v4`**）。
+
+## 八、0.7.0（未发布）：新规则 `RELATIONS_NOT_LINKED` + `.md` 解析修复
+
+**为什么是 minor 而不是 patch**：新增一条**会让旧库由绿转红**的校验规则（有人写裸路径的关联节），
+属于行为变更，按 semver 走 minor。`0.6.1` 那批（入口模板 + CI 模板）**合并进这一版** —— 它没发过。
+
+- **新规则：`RELATIONS_NOT_LINKED`** —— 「## 关联」节里的引用必须是 `[[双链]]`。
+  起因（用户实测）：agent 用 CLI 落盘条目后，关联节写的是 `patterns/agent-delegation-criteria` 这种**裸路径**。
+  **死链规则看不见它**（那根本不是链接），但边真的丢了 —— 可达性扫描与 `catalog` 的图各少一条边，
+  目标看起来更像孤岛（`retire --candidates` 的判据也跟着失真）。
+  **范围即判据**：只查「## 关联」节（正文里用反引号写路径是正当写法，本库到处是 —— 全库扫会一片假阳性）；
+  只报"能指向某条**条目**"的 token（解析不到的多半是散文/外部路径）。
+  上线前**先量真库**：真库 132 条 **0 假阳性**；某项目正好报出 **3 条真缺陷**。
+  错误信息直接给出替换写法（推荐 `[[id]]`，不可变快照）。
+- **同一次排查撞出的真 bug：`.md` 引用被误报死链**。`allMarkdownPaths` 与 `fileNameOf` 都是
+  **不带扩展名**的口径，而 `resolvesRef` 第 1 步拿**原文**比 —— 于是 `[[patterns/x.md]]`
+  （文件**确实存在**）被报 `DEAD_LINK`。最小复现：新库两条例目、beta 关联写 `[[patterns/alpha.md]]`
+  → 修前 `1 error`，修后 `0 issues`。`resolvesRef` / `refersToIdentity` 都补了 `.md` 归一化。
+- 预防侧：`init` 生成的两种 `AGENTS.md` 模板的 `new` 行都加了"**写「关联」时用 `[[id]]`** ——
+  裸路径不是链接，会报 `RELATIONS_NOT_LINKED`"。

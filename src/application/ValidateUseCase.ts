@@ -11,6 +11,7 @@ import {idIsAlias} from "@/domain/validation/rules/idIsAlias";
 import {idMatchesFileName} from "@/domain/validation/rules/idMatchesFileName";
 import {linksResolve} from "@/domain/validation/rules/linksResolve";
 import {linksResolveInRootDocs} from "@/domain/validation/rules/linksResolveInRootDocs";
+import {relationsNotLinked} from "@/domain/validation/rules/relationsNotLinked";
 import {routingToGraduated} from "@/domain/validation/rules/routingToGraduated";
 import {sectionsPresent} from "@/domain/validation/rules/sectionsPresent";
 import {typeMatchesDir} from "@/domain/validation/rules/typeMatchesDir";
@@ -38,6 +39,9 @@ export const contentRules: RuleRegistry = {
         typeMatchesDir,
         sectionsPresent,
         linksResolve,
+        // 「关联」节里的引用必须是 `[[双链]]` —— 裸路径**不是链接**，死链规则看不见它，
+        // 而边同样丢了（见 rules/relationsNotLinked.ts）。不依赖索引，故进 contentRules。
+        relationsNotLinked,
         // `enforced` 的形态（`<repo>:<path>`）。不依赖索引，故进 contentRules ——
         // 一条刚写下的条目也该被查。存在性检查归 `collab retire`（它有 IO）。
         enforcedShape,

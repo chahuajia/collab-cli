@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execa } from 'execa';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { extractLinks } from '@/domain/validation/rules/_shared';
 import { COLLAB_NPM_RANGE } from '@/infrastructure/version';
 import { CLI_ENTRY } from './testHelpers.js';
 
@@ -175,12 +176,14 @@ describe('collab init — profile=kb', () => {
     expect(existsSync(path.join(nested, 'AGENTS.md'))).toBe(true);
   });
 
-  it('I12 生成的 AGENTS.md 不含指向未落盘条目的双链', async () => {
+  it('I12 生成的 AGENTS.md 不含指向未落盘条目的**链接**', async () => {
     await runCli(['init', '--profile', 'kb', '--dir', '.']);
     const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
-    const links = [...agents.matchAll(/\[\[([^\]]+)\]\]/g)]
-      .map((m) => (m[1] ?? '').trim())
-      .filter((s) => s !== '');
+
+    // 判据用**项目自己的链接提取器**，不是裸正则 —— base-contract 第五条第 3 项：
+    // 「围栏与行内代码里的双括号**不算链接**」。骨架里可以有 `` `[[id]]` `` 这种**示例**
+    // （它在教怎么写关联），但不能有**真链接** —— 一个刚 init 的库里一条条目都没有。
+    const links = extractLinks(agents).filter((s) => s.trim() !== '');
     expect(links, `kb 骨架不应制造死链：${links.join(', ')}`).toEqual([]);
   });
 
