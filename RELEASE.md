@@ -204,3 +204,15 @@ git tag v0.6.0                                                # 2. 打出对外�
   "选项的权威是 `--help`"、以及收工那条（**只写进 `working-memory/` 的经验下一个人读不到**）。
 - 回归测试：`I13c`（生成的 `AGENTS.md` 必须点名 CLI / 指回真 KB / 提 `--help` / 提 `UNDECLARED_DIR`）。
 - 附带：`0.6.1` 不需要改任何生成物 —— `COLLAB_NPM_RANGE` 仍是 `^0.6`。
+
+### 同一批的另外两处（模板层的"同一个毛病"）
+
+- **`kb` profile 的 `AGENTS.md` 也没点名工具**（`agentsMd()`）—— 形态完全一样：
+  阅读顺序 5 条全是"去哪儿读"。已补同一节（命令改成 `--dir .`，因为在这条 profile 里**本仓就是知识库根**），
+  并加一句 `COLLAB_DIR` 的提醒（它**优先于当前目录**，脚本/CI 里一律显式 `--dir`）。
+- **生成的 CI 用的是过时 action**：`checkout@v4` / `setup-node@v4` 会被强制跑在 node24 上并报弃用注解
+  （今天我们自己的 CI 就收到了这条注解）。已升到 `@v7`，并补上行业常用的三件：
+  `permissions: contents: read`、`concurrency` + `cancel-in-progress`、`timeout-minutes: 20`。
+  CI 里那句 `node scripts/collab-validate.mjs` **原本就在**（"唯一调用点"）—— 这次只是把它周围补齐。
+- 回归测试：`I12d`（kb 的 AGENTS.md 必须点名工具 + 写清 `--help` 权威 + 带 `--confirm`）、
+  `I15`（生成的 CI 必须调 wrapper、有最小权限/取消旧轮、且**不含 `@v4`**）。
